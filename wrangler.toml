@@ -2,3 +2,12 @@ name = "wservice-wedding-mass-guide"
 compatibility_date = "2026-01-12"
 pages_build_output_dir = ".svelte-kit/cloudflare"
 compatibility_flags = ["nodejs_compat"]
+
+# Cloudflare Pages build configuration
+[build]
+command = "npm run build"
+cwd = ""
+watch_dirs = ["src", "static"]
+
+[build.upload]
+format = "service-worker"
