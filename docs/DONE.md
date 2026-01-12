@@ -8,5 +8,6 @@
 - [x] Cloudflare Workers adapter 설정
 - [x] Tailwind CSS 3 설정
 - [x] 프로젝트 구조 생성 (TODO.md, docs/DONE.md)
+- [x] 시작 화면에서 테마 선택 버튼 제거 (설정에서만 테마 변경 가능)
 
 ## 해결된 이슈
