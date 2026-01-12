@@ -1,0 +1,279 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+	:root {
+		/* Ivory Gold Theme (Default) - Classic wedding elegance */
+		--background: 48 100% 98%;
+		--foreground: 30 45% 16%;
+
+		--card: 40 33% 94%;
+		--card-foreground: 30 45% 16%;
+
+		--popover: 48 100% 98%;
+		--popover-foreground: 30 45% 16%;
+
+		--primary: 32 30% 58%;
+		--primary-foreground: 48 100% 98%;
+
+		--secondary: 342 74% 31%;
+		--secondary-foreground: 48 100% 98%;
+
+		--muted: 36 27% 92%;
+		--muted-foreground: 30 45% 38%;
+
+		--accent: 342 74% 31%;
+		--accent-foreground: 48 100% 98%;
+
+		--destructive: 0 84% 60%;
+		--destructive-foreground: 0 0% 100%;
+
+		--border: 32 20% 85%;
+		--input: 32 20% 85%;
+		--ring: 32 30% 58%;
+
+		--radius: 0.75rem;
+
+		/* Custom theme tokens */
+		--prayer-bg: 36 33% 93%;
+		--prayer-border: 32 30% 58%;
+		--hymn-bg: 100 20% 94%;
+		--hymn-border: 100 20% 70%;
+
+		/* Posture badge colors */
+		--posture-standing: 32 30% 58%;
+		--posture-seated: 200 50% 50%;
+		--posture-kneeling: 342 74% 31%;
+
+		/* Role colors */
+		--role-priest: 342 74% 31%;
+		--role-assembly: 32 30% 45%;
+		--role-reader: 200 50% 40%;
+		--role-couple: 340 60% 50%;
+		--role-narrator: 30 20% 50%;
+	}
+
+	/* White Rose Theme */
+	.theme-white-rose {
+		--background: 0 0% 100%;
+		--foreground: 0 0% 18%;
+
+		--card: 0 0% 99%;
+		--card-foreground: 0 0% 18%;
+
+		--popover: 0 0% 100%;
+		--popover-foreground: 0 0% 18%;
+
+		--primary: 350 35% 55%;
+		--primary-foreground: 0 0% 100%;
+
+		--secondary: 340 60% 35%;
+		--secondary-foreground: 0 0% 100%;
+
+		--muted: 30 20% 97%;
+		--muted-foreground: 0 0% 40%;
+
+		--accent: 350 30% 58%;
+		--accent-foreground: 0 0% 100%;
+
+		--border: 350 20% 90%;
+		--input: 350 20% 90%;
+		--ring: 350 30% 58%;
+
+		--prayer-bg: 0 40% 98%;
+		--prayer-border: 350 30% 58%;
+		--hymn-bg: 40 30% 98%;
+		--hymn-border: 40 30% 70%;
+
+		--posture-standing: 350 30% 58%;
+		--posture-seated: 200 40% 55%;
+		--posture-kneeling: 340 50% 45%;
+
+		--role-priest: 340 60% 35%;
+		--role-assembly: 350 30% 50%;
+		--role-reader: 200 40% 45%;
+		--role-couple: 350 40% 55%;
+		--role-narrator: 0 0% 45%;
+	}
+
+	/* Cathedral Classic Theme */
+	.theme-cathedral {
+		--background: 43 33% 97%;
+		--foreground: 0 0% 10%;
+
+		--card: 43 25% 95%;
+		--card-foreground: 0 0% 10%;
+
+		--popover: 43 33% 97%;
+		--popover-foreground: 0 0% 10%;
+
+		--primary: 0 100% 27%;
+		--primary-foreground: 43 33% 97%;
+
+		--secondary: 45 60% 52%;
+		--secondary-foreground: 0 0% 10%;
+
+		--muted: 40 15% 93%;
+		--muted-foreground: 0 0% 29%;
+
+		--accent: 45 60% 52%;
+		--accent-foreground: 0 0% 10%;
+
+		--border: 40 15% 85%;
+		--input: 40 15% 85%;
+		--ring: 0 100% 27%;
+
+		--prayer-bg: 35 15% 93%;
+		--prayer-border: 0 100% 27%;
+		--hymn-bg: 45 40% 95%;
+		--hymn-border: 45 60% 52%;
+
+		--posture-standing: 0 100% 27%;
+		--posture-seated: 210 50% 45%;
+		--posture-kneeling: 0 80% 35%;
+
+		--role-priest: 0 100% 27%;
+		--role-assembly: 0 60% 35%;
+		--role-reader: 210 50% 40%;
+		--role-couple: 0 70% 40%;
+		--role-narrator: 0 0% 35%;
+	}
+
+	/* Natural Sage Theme */
+	.theme-sage {
+		--background: 60 20% 98%;
+		--foreground: 120 15% 21%;
+
+		--card: 80 15% 95%;
+		--card-foreground: 120 15% 21%;
+
+		--popover: 60 20% 98%;
+		--popover-foreground: 120 15% 21%;
+
+		--primary: 100 15% 52%;
+		--primary-foreground: 60 20% 98%;
+
+		--secondary: 45 40% 58%;
+		--secondary-foreground: 120 15% 21%;
+
+		--muted: 80 15% 94%;
+		--muted-foreground: 100 10% 38%;
+
+		--accent: 45 40% 58%;
+		--accent-foreground: 120 15% 21%;
+
+		--border: 80 10% 88%;
+		--input: 80 10% 88%;
+		--ring: 100 15% 52%;
+
+		--prayer-bg: 90 20% 95%;
+		--prayer-border: 100 15% 52%;
+		--hymn-bg: 45 25% 96%;
+		--hymn-border: 45 40% 58%;
+
+		--posture-standing: 100 15% 52%;
+		--posture-seated: 200 30% 50%;
+		--posture-kneeling: 100 25% 40%;
+
+		--role-priest: 100 25% 35%;
+		--role-assembly: 100 15% 45%;
+		--role-reader: 200 30% 45%;
+		--role-couple: 100 20% 45%;
+		--role-narrator: 100 10% 45%;
+	}
+}
+
+@layer base {
+	* {
+		@apply border-border;
+	}
+
+	html {
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	body {
+		@apply bg-background text-foreground antialiased;
+		font-family: 'Noto Serif KR', serif;
+	}
+
+	/* Text size classes */
+	.text-size-1 {
+		font-size: 14px;
+	}
+	.text-size-2 {
+		font-size: 16px;
+	}
+	.text-size-3 {
+		font-size: 18px;
+	}
+	.text-size-4 {
+		font-size: 20px;
+	}
+	.text-size-5 {
+		font-size: 24px;
+	}
+}
+
+@layer components {
+	.prayer-box {
+		@apply rounded-lg p-4 border-l-4;
+		background-color: hsl(var(--prayer-bg));
+		border-left-color: hsl(var(--prayer-border));
+	}
+
+	.hymn-box {
+		@apply rounded-lg p-4 border-l-4;
+		background-color: hsl(var(--hymn-bg));
+		border-left-color: hsl(var(--hymn-border));
+	}
+
+	.posture-badge {
+		@apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium;
+	}
+
+	.posture-standing {
+		background-color: hsl(var(--posture-standing) / 0.15);
+		color: hsl(var(--posture-standing));
+	}
+
+	.posture-seated {
+		background-color: hsl(var(--posture-seated) / 0.15);
+		color: hsl(var(--posture-seated));
+	}
+
+	.posture-kneeling {
+		background-color: hsl(var(--posture-kneeling) / 0.15);
+		color: hsl(var(--posture-kneeling));
+	}
+
+	.role-badge {
+		@apply inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium;
+	}
+
+	.role-priest {
+		background-color: hsl(var(--role-priest) / 0.12);
+		color: hsl(var(--role-priest));
+	}
+
+	.role-assembly {
+		background-color: hsl(var(--role-assembly) / 0.12);
+		color: hsl(var(--role-assembly));
+	}
+
+	.role-reader {
+		background-color: hsl(var(--role-reader) / 0.12);
+		color: hsl(var(--role-reader));
+	}
+
+	.role-couple {
+		background-color: hsl(var(--role-couple) / 0.12);
+		color: hsl(var(--role-couple));
+	}
+
+	.role-narrator {
+		background-color: hsl(var(--role-narrator) / 0.12);
+		color: hsl(var(--role-narrator));
+	}
+}
