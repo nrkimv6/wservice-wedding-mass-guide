@@ -2,11 +2,12 @@
 	import { browser } from '$app/environment';
 	import { Settings } from 'lucide-svelte';
 	import { localStorageStore } from '$lib/stores/localStorageStore.svelte';
-	import { massSteps } from '$lib/data/massSteps';
+	import { massSteps, sections } from '$lib/data/massSteps';
+	import { massStepsMerged, sectionsMerged } from '$lib/data/massStepsMerged';
 	import Header from '$lib/components/Header.svelte';
 	import StepCard from '$lib/components/StepCard.svelte';
 	import TableOfContents from '$lib/components/TableOfContents.svelte';
-	import IntroScreen from '$lib/components/IntroScreen.svelte';
+	import IntroScreen, { type ViewMode } from '$lib/components/IntroScreen.svelte';
 	import ThemeSelector, { type ThemeOption } from '$lib/components/ThemeSelector.svelte';
 
 	// Persisted state
@@ -14,15 +15,22 @@
 	const currentStepIdStore = localStorageStore('mass-current-step', 1);
 	const textSizeStore = localStorageStore('mass-text-size', 3);
 	const themeStore = localStorageStore<ThemeOption>('mass-theme', 'ivory-gold');
+	const viewModeStore = localStorageStore<ViewMode>('mass-view-mode', 'detailed');
 
 	// UI state
 	let showToc = $state(false);
 	let showTheme = $state(false);
 	let swipeStart = $state<number | null>(null);
 
+	// Get data based on view mode
+	const currentMassSteps = $derived(viewModeStore.value === 'merged' ? massStepsMerged : massSteps);
+	const currentSections = $derived(viewModeStore.value === 'merged' ? sectionsMerged : sections);
+
 	// Get current step
-	const currentStep = $derived(massSteps.find((s) => s.id === currentStepIdStore.value) || massSteps[0]);
-	const totalSteps = massSteps.length;
+	const currentStep = $derived(
+		currentMassSteps.find((s) => s.id === currentStepIdStore.value) || currentMassSteps[0]
+	);
+	const totalSteps = $derived(currentMassSteps.length);
 
 	// Apply theme class to body
 	$effect(() => {
@@ -110,6 +118,13 @@
 		if (textSizeStore.value < 5) textSizeStore.value = textSizeStore.value + 1;
 	}
 
+	// Handle view mode change
+	function handleViewModeChange(mode: ViewMode) {
+		viewModeStore.value = mode;
+		// Reset step to 1 when view mode changes
+		currentStepIdStore.value = 1;
+	}
+
 	// Handle start
 	function handleStart() {
 		hasStartedStore.value = true;
@@ -122,6 +137,8 @@
 		onStart={handleStart}
 		onOpenTheme={() => (showTheme = true)}
 		currentTheme={themeStore.value}
+		viewMode={viewModeStore.value}
+		onViewModeChange={handleViewModeChange}
 	/>
 	{#if showTheme}
 		<ThemeSelector
@@ -135,7 +152,7 @@
 		<!-- Header -->
 		<Header
 			currentStep={currentStep}
-			totalSteps={totalSteps}
+			{totalSteps}
 			textSize={textSizeStore.value}
 			onMenuClick={() => (showToc = true)}
 			onDecreaseSize={decreaseTextSize}
@@ -149,7 +166,7 @@
 			ontouchstart={handleTouchStart}
 			ontouchend={handleTouchEnd}
 		>
-			<StepCard step={currentStep} totalSteps={totalSteps} onPrevious={goToPrevious} onNext={goToNext} />
+			<StepCard step={currentStep} {totalSteps} onPrevious={goToPrevious} onNext={goToNext} />
 
 			<!-- Settings button (theme) -->
 			<div class="fixed bottom-6 right-6">
@@ -169,6 +186,7 @@
 				currentStep={currentStepIdStore.value}
 				onSelectSection={goToStep}
 				onClose={() => (showToc = false)}
+				sections={currentSections}
 			/>
 		{/if}
 

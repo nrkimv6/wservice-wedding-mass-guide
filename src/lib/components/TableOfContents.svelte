@@ -1,14 +1,20 @@
 <script lang="ts">
 	import { X } from 'lucide-svelte';
-	import { sections } from '$lib/data/massSteps';
+
+	interface Section {
+		name: string;
+		nameEn: string;
+		range: number[];
+	}
 
 	interface Props {
 		currentStep: number;
 		onSelectSection: (stepId: number) => void;
 		onClose: () => void;
+		sections: Section[];
 	}
 
-	let { currentStep, onSelectSection, onClose }: Props = $props();
+	let { currentStep, onSelectSection, onClose, sections }: Props = $props();
 
 	function getCurrentSection() {
 		for (const section of sections) {

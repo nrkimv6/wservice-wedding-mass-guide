@@ -1,14 +1,18 @@
 <script lang="ts">
-	import { Heart, Cross, Users, BookOpen, Palette } from 'lucide-svelte';
+	import { Heart, Cross, Users, BookOpen, Palette, List, ListTree } from 'lucide-svelte';
 	import type { ThemeOption } from './ThemeSelector.svelte';
+
+	export type ViewMode = 'detailed' | 'merged';
 
 	interface Props {
 		onStart: () => void;
 		onOpenTheme: () => void;
 		currentTheme: ThemeOption;
+		viewMode: ViewMode;
+		onViewModeChange: (mode: ViewMode) => void;
 	}
 
-	let { onStart, onOpenTheme, currentTheme }: Props = $props();
+	let { onStart, onOpenTheme, currentTheme, viewMode, onViewModeChange }: Props = $props();
 
 	const themeNames: Record<ThemeOption, string> = {
 		'ivory-gold': 'Ivory Gold',
@@ -78,6 +82,35 @@
 						</p>
 					</div>
 				</div>
+			</div>
+		</div>
+
+		<!-- View mode selector -->
+		<div class="w-full mb-4">
+			<p class="text-sm text-muted-foreground mb-2 text-center">순서지 보기 방식</p>
+			<div class="grid grid-cols-2 gap-2">
+				<button
+					onclick={() => onViewModeChange('detailed')}
+					class="flex flex-col items-center gap-1 py-3 px-4 rounded-xl border transition-colors min-h-[72px] {viewMode ===
+					'detailed'
+						? 'bg-primary/10 border-primary text-primary'
+						: 'border-border hover:bg-muted text-foreground'}"
+				>
+					<ListTree class="w-5 h-5" />
+					<span class="text-sm font-medium">상세 (32단계)</span>
+					<span class="text-xs text-muted-foreground">처음 참례하는 분</span>
+				</button>
+				<button
+					onclick={() => onViewModeChange('merged')}
+					class="flex flex-col items-center gap-1 py-3 px-4 rounded-xl border transition-colors min-h-[72px] {viewMode ===
+					'merged'
+						? 'bg-primary/10 border-primary text-primary'
+						: 'border-border hover:bg-muted text-foreground'}"
+				>
+					<List class="w-5 h-5" />
+					<span class="text-sm font-medium">간결 (18단계)</span>
+					<span class="text-xs text-muted-foreground">전체 흐름 파악</span>
+				</button>
 			</div>
 		</div>
 
