@@ -44,7 +44,7 @@
 	</div>
 
 	<!-- Description -->
-	<p class="text-foreground leading-relaxed mb-4 whitespace-pre-line">
+	<p class="text-foreground mb-4 whitespace-pre-line" style="font-size: var(--content-font-size, 18px); line-height: var(--content-line-height, 1.7);">
 		{step.description}
 	</p>
 

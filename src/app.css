@@ -198,21 +198,26 @@
 		font-family: 'Noto Serif KR', serif;
 	}
 
-	/* Text size classes */
+	/* Text size classes - CSS 변수로 본문 텍스트 크기 조절 */
 	.text-size-1 {
-		font-size: 14px;
+		--content-font-size: 14px;
+		--content-line-height: 1.6;
 	}
 	.text-size-2 {
-		font-size: 16px;
+		--content-font-size: 16px;
+		--content-line-height: 1.65;
 	}
 	.text-size-3 {
-		font-size: 18px;
+		--content-font-size: 18px;
+		--content-line-height: 1.7;
 	}
 	.text-size-4 {
-		font-size: 20px;
+		--content-font-size: 20px;
+		--content-line-height: 1.75;
 	}
 	.text-size-5 {
-		font-size: 24px;
+		--content-font-size: 24px;
+		--content-line-height: 1.8;
 	}
 }
 

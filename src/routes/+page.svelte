@@ -43,16 +43,6 @@
 		}
 	});
 
-	// Apply text size class to main content
-	$effect(() => {
-		if (browser) {
-			document.documentElement.style.setProperty(
-				'--base-font-size',
-				`${12 + textSizeStore.value * 2}px`
-			);
-		}
-	});
-
 	// Navigation handlers
 	function goToPrevious() {
 		if (currentStepIdStore.value > 1) {
