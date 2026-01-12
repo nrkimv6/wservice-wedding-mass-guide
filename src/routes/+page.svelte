@@ -49,19 +49,25 @@
 
 	// Navigation handlers
 	function goToPrevious() {
-		if (currentStepIdStore.value > 1) {
-			currentStepIdStore.value = currentStepIdStore.value - 1;
+		const currentIndex = filteredMassSteps.findIndex((s) => s.id === currentStepIdStore.value);
+		if (currentIndex > 0) {
+			currentStepIdStore.value = filteredMassSteps[currentIndex - 1].id;
 		}
 	}
 
 	function goToNext() {
-		if (currentStepIdStore.value < totalSteps) {
-			currentStepIdStore.value = currentStepIdStore.value + 1;
+		const currentIndex = filteredMassSteps.findIndex((s) => s.id === currentStepIdStore.value);
+		if (currentIndex < filteredMassSteps.length - 1) {
+			currentStepIdStore.value = filteredMassSteps[currentIndex + 1].id;
 		}
 	}
 
 	function goToStep(stepId: number) {
-		currentStepIdStore.value = Math.max(1, Math.min(stepId, totalSteps));
+		// Check if the step is in the filtered list
+		const step = filteredMassSteps.find((s) => s.id === stepId);
+		if (step) {
+			currentStepIdStore.value = stepId;
+		}
 	}
 
 	// Keyboard navigation
@@ -127,6 +133,31 @@
 
 	// Mock announcement - 추후 실제 데이터로 교체
 	const announcement = '환영합니다! 혼배미사에 참례해 주셔서 감사합니다. 🙏';
+
+	// Mock liturgical settings - 추후 실제 데이터로 교체
+	// 'lent' (사순시기) = gloria: false, alleluia: false
+	// 'advent' (대림시기) = gloria: false, alleluia: true
+	// 'ordinary' (연중시기) = gloria: true, alleluia: true
+	const liturgicalSettings = {
+		gloria: true,
+		alleluia: true
+	};
+
+	// Filter steps based on optional prayers
+	const filteredMassSteps = $derived(
+		currentMassSteps.filter((step) => {
+			if (step.isOptional && step.optionalKey) {
+				return liturgicalSettings[step.optionalKey];
+			}
+			return true;
+		})
+	);
+
+	// Recalculate current step from filtered list
+	const currentFilteredStep = $derived(
+		filteredMassSteps.find((s) => s.id === currentStepIdStore.value) || filteredMassSteps[0]
+	);
+	const totalFilteredSteps = $derived(filteredMassSteps.length);
 </script>
 
 {#if !hasStartedStore.value}
@@ -139,8 +170,8 @@
 	<div class="min-h-screen bg-background" class:text-size-1={textSizeStore.value === 1} class:text-size-2={textSizeStore.value === 2} class:text-size-3={textSizeStore.value === 3} class:text-size-4={textSizeStore.value === 4} class:text-size-5={textSizeStore.value === 5}>
 		<!-- Header -->
 		<Header
-			currentStep={currentStep}
-			{totalSteps}
+			currentStep={currentFilteredStep}
+			totalSteps={totalFilteredSteps}
 			textSize={textSizeStore.value}
 			onMenuClick={() => (showToc = true)}
 			onInfoClick={() => (showInfo = true)}
@@ -165,7 +196,12 @@
 			ontouchstart={handleTouchStart}
 			ontouchend={handleTouchEnd}
 		>
-			<StepCard step={currentStep} {totalSteps} onPrevious={goToPrevious} onNext={goToNext} />
+			<StepCard
+				step={currentFilteredStep}
+				totalSteps={totalFilteredSteps}
+				onPrevious={goToPrevious}
+				onNext={goToNext}
+			/>
 
 			<!-- Settings button (theme) -->
 			<div class="fixed bottom-6 right-6">

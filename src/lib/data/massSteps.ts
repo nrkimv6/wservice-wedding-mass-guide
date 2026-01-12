@@ -19,6 +19,8 @@ export interface MassStep {
 	description: string;
 	prayers: Prayer[] | null;
 	hymn: HymnPlaceholder | null;
+	isOptional?: boolean;
+	optionalKey?: 'gloria' | 'alleluia';
 }
 
 export const sections = [
@@ -141,7 +143,9 @@ export const massSteps: MassStep[] = [
 				text: '○ 하늘 높은 데서는 하느님께 영광,\n땅에서는 주님께서 사랑하시는 사람들에게 평화.\n\n주님의 큰 영광을 위하여\n주님을 찬미하며 찬송하며\n주님을 흠숭하며 경배하며 영광 드리나이다.\n\n전능하신 아버지 하느님,\n주님께 감사하나이다.\n\n외아들 주 예수 그리스도님,\n하느님의 어린양, 성부의 아드님,\n세상의 죄를 없애시는 주님,\n저희에게 자비를 베푸소서.\n\n세상의 죄를 없애시는 주님,\n저희의 기도를 들어주소서.\n\n성부 오른편에 앉아 계신 주님,\n저희에게 자비를 베푸소서.\n\n홀로 거룩하시고, 홀로 주님이시며,\n홀로 높으신 예수 그리스도님,\n성령과 함께 아버지 하느님의 영광 안에 계시나이다.\n\n아멘.'
 			}
 		],
-		hymn: null
+		hymn: null,
+		isOptional: true,
+		optionalKey: 'gloria'
 	},
 	{
 		id: 8,
@@ -195,7 +199,9 @@ export const massSteps: MassStep[] = [
 		posture: 'standing',
 		description: '복음 선포를 맞이하며 "알렐루야"를 노래합니다.',
 		prayers: [{ speaker: 'assembly', text: '○ 알렐루야, 알렐루야, 알렐루야.' }],
-		hymn: null
+		hymn: null,
+		isOptional: true,
+		optionalKey: 'alleluia'
 	},
 	{
 		id: 12,
