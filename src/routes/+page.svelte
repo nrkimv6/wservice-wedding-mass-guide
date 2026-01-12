@@ -10,6 +10,7 @@
 	import IntroScreen, { type ViewMode } from '$lib/components/IntroScreen.svelte';
 	import ThemeSelector, { type ThemeOption } from '$lib/components/ThemeSelector.svelte';
 	import MassInfoPage from '$lib/components/MassInfoPage.svelte';
+	import AnnouncementBanner from '$lib/components/AnnouncementBanner.svelte';
 
 	// Persisted state
 	const hasStartedStore = localStorageStore('mass-started', false);
@@ -17,6 +18,7 @@
 	const textSizeStore = localStorageStore('mass-text-size', 3);
 	const themeStore = localStorageStore<ThemeOption>('mass-theme', 'ivory-gold');
 	const viewModeStore = localStorageStore<ViewMode>('mass-view-mode', 'detailed');
+	const announcementDismissedStore = localStorageStore('mass-announcement-dismissed', false);
 
 	// UI state
 	let showToc = $state(false);
@@ -122,6 +124,9 @@
 		hasStartedStore.value = true;
 		currentStepIdStore.value = 1;
 	}
+
+	// Mock announcement - 추후 실제 데이터로 교체
+	const announcement = '환영합니다! 혼배미사에 참례해 주셔서 감사합니다. 🙏';
 </script>
 
 {#if !hasStartedStore.value}
@@ -142,6 +147,16 @@
 			onDecreaseSize={decreaseTextSize}
 			onIncreaseSize={increaseTextSize}
 		/>
+
+		<!-- Announcement Banner -->
+		{#if announcement && !announcementDismissedStore.value}
+			<div class="max-w-[600px] mx-auto">
+				<AnnouncementBanner
+					{announcement}
+					onDismiss={() => (announcementDismissedStore.value = true)}
+				/>
+			</div>
+		{/if}
 
 		<!-- Main content -->
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
