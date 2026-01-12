@@ -112,31 +112,63 @@ const config = {
 Authentication error [code: 10000]
 ```
 
+빌드는 성공하지만 배포 단계에서 실패합니다.
+
 ### 원인
 
-GitHub Actions에서 사용하는 `CLOUDFLARE_API_TOKEN`의 권한 문제입니다.
-Cloudflare가 자동으로 생성한 API Token은 Pages 프로젝트 생성 권한이 없을 수 있습니다.
+Dashboard의 **"배포 명령: npx wrangler pages deploy"**가 문제입니다.
+
+Cloudflare가 Workers와 Pages를 통합한 후, Dashboard에서 GitHub 연동을 하면:
+- **빌드만 실행**하고 결과물을 자동으로 Pages로 배포해야 함
+- **하지만** Dashboard가 자동으로 "배포 명령"을 추가하여 `wrangler pages deploy`를 실행
+- 이 명령은 API Token이 필요하고, 자동 생성된 Token은 권한이 부족함
 
 ### 해결 방법
 
-**옵션 1: Dashboard에서 처음부터 설정 (권장)**
+**Dashboard 설정 수정 (필수)**
 
-1. 현재 프로젝트가 CLI로 생성되었다면 삭제:
-   ```powershell
-   npx wrangler pages project delete wservice-wedding-mass-guide
-   ```
+Cloudflare Dashboard에서:
+1. Workers & Pages → wservice-wedding-mass-guide → Settings → Builds & deployments
+2. "빌드 구성" 섹션 찾기
+3. **"배포 명령" 필드를 비워두기** (또는 전체 삭제)
 
-2. Cloudflare Dashboard에서 "Connect to Git" 방식으로 새로 생성
-   - 위의 "1. Cloudflare Dashboard에서 GitHub 연동" 가이드 참고
-   - 이 방법은 API Token 권한 문제가 없습니다
+올바른 설정:
+```
+빌드 명령: npm run build
+배포 명령: (비워두기 또는 설정 없음)
+루트 디렉터리: /
+```
 
-**옵션 2: API Token 권한 수정**
+**왜 배포 명령이 필요 없는가?**
+
+- GitHub 연동 시 Cloudflare Pages는 빌드 결과물을 **자동으로** 배포
+- `wrangler.toml`의 `pages_build_output_dir` 설정을 읽어서 `.svelte-kit/cloudflare/` 를 자동 배포
+- 추가로 `wrangler pages deploy` 명령을 실행하면 이중 배포 시도가 되어 오류 발생
+
+**현재 상황 요약**
+
+- ✅ 빌드 성공: `npm run build`가 `.svelte-kit/cloudflare/` 생성
+- ❌ 배포 실패: 불필요한 `npx wrangler pages deploy` 실행으로 API 인증 오류
+- ✅ 해결: Dashboard에서 "배포 명령" 제거
+
+### 추가 정보: 배포 명령이 있는 경우
+
+만약 Dashboard UI에서 "배포 명령"을 삭제할 수 없다면:
+
+**임시 해결책**: 빌드 명령에 배포까지 포함
+```
+빌드 명령: npm run build && npx wrangler pages deploy
+```
+
+하지만 이 경우 API Token 권한 문제를 해결해야 합니다:
 
 1. https://dash.cloudflare.com/profile/api-tokens 접속
-2. GitHub Actions에서 사용 중인 Token 찾기
-3. "Edit" 클릭하여 다음 권한 추가:
+2. "Workers 빌드 - 2026-01-05 13:42" Token 찾기
+3. "Edit" 클릭하여 다음 권한 확인/추가:
    - Account - Cloudflare Pages - Edit
-4. Token 저장 후 GitHub Actions 재실행
+4. Token 저장
+
+**권장 방법은 "배포 명령"을 아예 제거하는 것입니다.**
 
 ## Cloudflare Pages vs Workers
 
