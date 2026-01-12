@@ -20,6 +20,7 @@
 	// UI state
 	let showToc = $state(false);
 	let showTheme = $state(false);
+	let showInfo = $state(false);
 	let swipeStart = $state<number | null>(null);
 
 	// Get data based on view mode
@@ -136,6 +137,7 @@
 			{totalSteps}
 			textSize={textSizeStore.value}
 			onMenuClick={() => (showToc = true)}
+			onInfoClick={() => (showInfo = true)}
 			onDecreaseSize={decreaseTextSize}
 			onIncreaseSize={increaseTextSize}
 		/>

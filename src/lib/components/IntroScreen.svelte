@@ -28,20 +28,20 @@
 		<!-- Info cards -->
 		<div class="mb-10 w-full space-y-4">
 			<!-- Sign of cross -->
-			<div class="bg-card border-border rounded-xl border p-5">
+			<!-- <div class="bg-card border-border rounded-xl border p-5">
 				<div class="flex items-start gap-4">
 					<div class="bg-primary/10 shrink-0 rounded-lg p-2">
 						<Cross class="text-primary h-5 w-5" />
 					</div>
 					<div>
-						<h3 class="text-foreground mb-1 font-semibold">성호경</h3>
+						<h3 class="text-foreground mb-1 font-semibold">성호경 긋는 방법</h3>
 						<p class="text-muted-foreground text-sm leading-relaxed">
 							이마 → 가슴 → 왼쪽 어깨 → 오른쪽 어깨 순서로<br />
 							"성부와 성자와 성령의 이름으로. 아멘."
 						</p>
 					</div>
 				</div>
-			</div>
+			</div> -->
 
 			<!-- Symbols -->
 			<div class="bg-card border-border rounded-xl border p-5">
@@ -59,7 +59,7 @@
 				</div>
 			</div>
 
-			<!-- Communion guidance -->
+			<!-- Communion guidance : 여기서 말고 해당 스텝에 직접 안내할것. -->
 			<!-- <div class="bg-card rounded-xl p-5 border border-border">
 				<div class="flex items-start gap-4">
 					<div class="p-2 bg-primary/10 rounded-lg shrink-0">
