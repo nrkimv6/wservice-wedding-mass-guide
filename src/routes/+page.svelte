@@ -9,6 +9,7 @@
 	import TableOfContents from '$lib/components/TableOfContents.svelte';
 	import IntroScreen, { type ViewMode } from '$lib/components/IntroScreen.svelte';
 	import ThemeSelector, { type ThemeOption } from '$lib/components/ThemeSelector.svelte';
+	import MassInfoPage from '$lib/components/MassInfoPage.svelte';
 
 	// Persisted state
 	const hasStartedStore = localStorageStore('mass-started', false);
@@ -180,6 +181,11 @@
 				onSelectTheme={(theme) => (themeStore.value = theme)}
 				onClose={() => (showTheme = false)}
 			/>
+		{/if}
+
+		<!-- Mass info page overlay -->
+		{#if showInfo}
+			<MassInfoPage onClose={() => (showInfo = false)} />
 		{/if}
 	</div>
 {/if}
