@@ -15,5 +15,11 @@
   - Service Worker 캐시만 삭제 (IndexedDB/localStorage는 유지)
   - 커스텀 service-worker.ts 생성 및 SKIP_WAITING 핸들러 구현
   - 로딩 상태 표시 (회전 아이콘 애니메이션)
+  - 캐시 초기화 시 앱 진행 상태도 초기화 (처음 화면부터 시작)
 
 ## 해결된 이슈
+
+### 2026-01-12
+- [x] 캐시 초기화 후에도 마지막 본 페이지부터 시작되는 문제
+  - localStorage의 `mass-started`, `mass-current-step` 삭제 추가
+  - 캐시 클리어 후 IntroScreen부터 시작하도록 개선
