@@ -129,7 +129,7 @@
 		onViewModeChange={handleViewModeChange}
 	/>
 {:else}
-	<div class="min-h-screen bg-background text-size-{textSizeStore.value}">
+	<div class="min-h-screen bg-background" class:text-size-1={textSizeStore.value === 1} class:text-size-2={textSizeStore.value === 2} class:text-size-3={textSizeStore.value === 3} class:text-size-4={textSizeStore.value === 4} class:text-size-5={textSizeStore.value === 5}>
 		<!-- Header -->
 		<Header
 			currentStep={currentStep}
