@@ -19,20 +19,24 @@
 	async function handleCacheClear() {
 		if (!browser) return;
 
-		if (!confirm('캐시를 초기화하고 최신 버전으로 업데이트하시겠습니까?\n저장된 데이터는 유지됩니다.')) {
+		if (!confirm('캐시를 초기화하고 최신 버전으로 업데이트하시겠습니까?\n앱이 처음 화면부터 다시 시작됩니다.')) {
 			return;
 		}
 
 		isClearing = true;
 
 		try {
-			// 1. Service Worker 캐시만 삭제 (IndexedDB/localStorage는 유지)
+			// 1. Service Worker 캐시 삭제
 			if ('caches' in window) {
 				const cacheNames = await caches.keys();
 				await Promise.all(cacheNames.map(name => caches.delete(name)));
 			}
 
-			// 2. Service Worker 업데이트 및 강제 활성화
+			// 2. 앱 진행 상태 초기화 (처음부터 시작하도록)
+			localStorage.removeItem('mass-started');
+			localStorage.removeItem('mass-current-step');
+
+			// 3. Service Worker 업데이트 및 강제 활성화
 			if ('serviceWorker' in navigator) {
 				const registration = await navigator.serviceWorker.getRegistration();
 				if (registration) {
