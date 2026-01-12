@@ -135,18 +135,9 @@
 {#if !hasStartedStore.value}
 	<IntroScreen
 		onStart={handleStart}
-		onOpenTheme={() => (showTheme = true)}
-		currentTheme={themeStore.value}
 		viewMode={viewModeStore.value}
 		onViewModeChange={handleViewModeChange}
 	/>
-	{#if showTheme}
-		<ThemeSelector
-			currentTheme={themeStore.value}
-			onSelectTheme={(theme) => (themeStore.value = theme)}
-			onClose={() => (showTheme = false)}
-		/>
-	{/if}
 {:else}
 	<div class="min-h-screen bg-background text-size-{textSizeStore.value}">
 		<!-- Header -->

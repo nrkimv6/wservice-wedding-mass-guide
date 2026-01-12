@@ -1,25 +1,15 @@
 <script lang="ts">
-	import { Heart, Cross, Users, BookOpen, Palette, List, ListTree } from 'lucide-svelte';
-	import type { ThemeOption } from './ThemeSelector.svelte';
+	import { Heart, Cross, Users, BookOpen, List, ListTree } from 'lucide-svelte';
 
 	export type ViewMode = 'detailed' | 'merged';
 
 	interface Props {
 		onStart: () => void;
-		onOpenTheme: () => void;
-		currentTheme: ThemeOption;
 		viewMode: ViewMode;
 		onViewModeChange: (mode: ViewMode) => void;
 	}
 
-	let { onStart, onOpenTheme, currentTheme, viewMode, onViewModeChange }: Props = $props();
-
-	const themeNames: Record<ThemeOption, string> = {
-		'ivory-gold': 'Ivory Gold',
-		'white-rose': 'White Rose',
-		cathedral: 'Cathedral Classic',
-		sage: 'Natural Sage'
-	};
+	let { onStart, viewMode, onViewModeChange }: Props = $props();
 </script>
 
 <div class="min-h-screen bg-background flex flex-col">
@@ -113,15 +103,6 @@
 				</button>
 			</div>
 		</div>
-
-		<!-- Theme selector button -->
-		<button
-			onclick={onOpenTheme}
-			class="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl border border-border hover:bg-muted transition-colors mb-4 min-h-[44px]"
-		>
-			<Palette class="w-5 h-5 text-primary" />
-			<span class="text-foreground">테마: {themeNames[currentTheme]}</span>
-		</button>
 
 		<!-- Start button -->
 		<button
