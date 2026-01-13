@@ -1,0 +1,205 @@
+<script lang="ts">
+	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
+	import { ArrowLeft, QrCode, Copy, Download, ExternalLink, Edit } from 'lucide-svelte';
+	import QRCode from 'qrcode';
+
+	const massId = $derived($page.params.massId);
+
+	// Mock mass data - will be replaced with actual DB data
+	const massData = {
+		id: 'demo-1',
+		churchName: '명동대성당',
+		date: '2026-02-14',
+		time: '14:00',
+		groomName: '홍길동',
+		brideName: '김영희',
+		celebrantName: '김바오로 신부',
+		theme: 'ivory-gold',
+		viewMode: 'detailed'
+	};
+
+	let qrCodeDataUrl = $state('');
+	let massUrl = $state('');
+	let copySuccess = $state(false);
+
+	onMount(async () => {
+		// Generate QR code
+		if (typeof window !== 'undefined') {
+			massUrl = `${window.location.origin}/mass/${massId}`;
+			qrCodeDataUrl = await QRCode.toDataURL(massUrl, {
+				width: 400,
+				margin: 2,
+				color: {
+					dark: '#000000',
+					light: '#FFFFFF'
+				}
+			});
+		}
+	});
+
+	async function copyUrl() {
+		try {
+			await navigator.clipboard.writeText(massUrl);
+			copySuccess = true;
+			setTimeout(() => {
+				copySuccess = false;
+			}, 2000);
+		} catch (err) {
+			console.error('Failed to copy:', err);
+		}
+	}
+
+	function downloadQR() {
+		const link = document.createElement('a');
+		link.download = `혼배미사-QR-${massData.groomName}-${massData.brideName}.png`;
+		link.href = qrCodeDataUrl;
+		link.click();
+	}
+
+	function openPreview() {
+		window.open(massUrl, '_blank');
+	}
+
+	function editMass() {
+		// TODO: Implement edit mode
+		alert('편집 기능은 곧 추가됩니다');
+	}
+
+	function handleBack() {
+		goto('/admin/dashboard');
+	}
+</script>
+
+<svelte:head>
+	<title>{massData.groomName} ❤️ {massData.brideName} - 관리</title>
+</svelte:head>
+
+<div class="min-h-screen bg-background">
+	<!-- Header -->
+	<header class="bg-card border-b border-border sticky top-0 z-10">
+		<div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+			<button
+				onclick={handleBack}
+				class="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+			>
+				<ArrowLeft class="w-5 h-5" />
+				대시보드로
+			</button>
+			<h1 class="text-xl font-bold text-foreground">미사 관리</h1>
+			<button
+				onclick={editMass}
+				class="flex items-center gap-2 px-3 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:opacity-90 transition-opacity"
+			>
+				<Edit class="w-4 h-4" />
+				편집
+			</button>
+		</div>
+	</header>
+
+	<main class="max-w-4xl mx-auto px-4 py-8">
+		<!-- Mass info -->
+		<section class="bg-card border border-border rounded-lg p-6 mb-6">
+			<h2 class="text-2xl font-bold mb-4 text-foreground">
+				{massData.groomName} ❤️ {massData.brideName}
+			</h2>
+			<div class="space-y-2 text-muted-foreground">
+				<p>
+					📅 {new Date(massData.date).toLocaleDateString('ko-KR', {
+						year: 'numeric',
+						month: 'long',
+						day: 'numeric',
+						weekday: 'short'
+					})}
+					{massData.time}
+				</p>
+				<p>💒 {massData.churchName}</p>
+				{#if massData.celebrantName}
+					<p>⛪ 주례: {massData.celebrantName}</p>
+				{/if}
+			</div>
+		</section>
+
+		<!-- QR Code section -->
+		<section class="bg-card border border-border rounded-lg p-6 mb-6">
+			<div class="flex items-center gap-2 mb-4">
+				<QrCode class="w-6 h-6 text-foreground" />
+				<h2 class="text-xl font-semibold text-foreground">QR 코드</h2>
+			</div>
+
+			<div class="space-y-6">
+				<!-- QR Code display -->
+				{#if qrCodeDataUrl}
+					<div class="flex flex-col items-center">
+						<div class="bg-white p-6 rounded-lg border-2 border-border shadow-sm">
+							<img src={qrCodeDataUrl} alt="미사 QR 코드" class="w-64 h-64" />
+						</div>
+						<p class="text-sm text-muted-foreground mt-4 text-center">
+							하객들이 이 QR 코드를 스캔하면 순서지에 접속할 수 있습니다
+						</p>
+					</div>
+				{:else}
+					<div class="flex items-center justify-center h-64">
+						<p class="text-muted-foreground">QR 코드 생성 중...</p>
+					</div>
+				{/if}
+
+				<!-- URL display -->
+				<div>
+					<label class="block text-sm font-medium mb-2">미사 URL</label>
+					<div class="flex gap-2">
+						<input
+							type="text"
+							value={massUrl}
+							readonly
+							class="flex-1 px-3 py-2 bg-accent border border-border rounded-md text-sm"
+						/>
+						<button
+							onclick={copyUrl}
+							class="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:opacity-90 transition-opacity flex items-center gap-2"
+						>
+							<Copy class="w-4 h-4" />
+							{copySuccess ? '복사됨!' : '복사'}
+						</button>
+					</div>
+				</div>
+
+				<!-- Action buttons -->
+				<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+					<button
+						onclick={downloadQR}
+						class="px-4 py-3 bg-primary text-primary-foreground rounded-md hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+					>
+						<Download class="w-5 h-5" />
+						QR 코드 다운로드
+					</button>
+					<button
+						onclick={openPreview}
+						class="px-4 py-3 border border-border rounded-md hover:bg-accent transition-colors flex items-center justify-center gap-2"
+					>
+						<ExternalLink class="w-5 h-5" />
+						미리보기
+					</button>
+				</div>
+			</div>
+		</section>
+
+		<!-- Instructions -->
+		<section class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+			<h3 class="font-semibold mb-3 text-blue-900">📱 사용 방법</h3>
+			<ol class="space-y-2 text-sm text-blue-900">
+				<li>1. QR 코드를 다운로드하여 청첩장이나 웨딩 안내물에 포함하세요</li>
+				<li>2. 미사 당일, 하객들이 QR 코드를 스캔하면 순서지에 접속합니다</li>
+				<li>3. 하객들은 자신의 스마트폰으로 미사 순서를 따라갈 수 있습니다</li>
+			</ol>
+
+			<div class="mt-4 pt-4 border-t border-blue-200">
+				<p class="text-xs text-blue-800">
+					💡 <strong>참고:</strong> 미사 데이터는 익일 자동 삭제됩니다. QR 코드는 그 이후에는 작동하지
+					않습니다.
+				</p>
+			</div>
+		</section>
+	</main>
+</div>
