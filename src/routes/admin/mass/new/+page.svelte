@@ -4,7 +4,8 @@
 	import type { ThemeOption } from '$lib/components/ThemeSelector.svelte';
 	import type { ViewMode } from '$lib/components/IntroScreen.svelte';
 	import { createMass } from '$lib/services/massService';
-	import type { HymnEntry } from '$lib/types/mass';
+	import type { HymnEntry, Announcement } from '$lib/types/mass';
+	import AnnouncementManager from '$lib/components/AnnouncementManager.svelte';
 
 	// Form data
 	let formData = $state({
@@ -26,6 +27,9 @@
 			recessional: { number: '', title: '', page: '' },
 			wedding: { number: '', title: '', page: '' }
 		},
+
+		// 공지사항
+		announcements: [] as Announcement[],
 
 		// 전례시기
 		liturgicalSeason: 'ordinary' as 'ordinary' | 'advent' | 'lent' | 'easter',
@@ -130,6 +134,7 @@
 				bride_name: formData.brideName,
 				celebrant_name: formData.celebrantName || undefined,
 				hymns,
+				announcements: formData.announcements,
 				liturgical_season: formData.liturgicalSeason,
 				gloria_enabled: formData.gloria,
 				alleluia_enabled: formData.alleluia,
@@ -456,6 +461,14 @@
 						</div>
 					</div>
 				</div>
+			</section>
+
+			<!-- 공지사항 -->
+			<section class="bg-card border border-border rounded-lg p-6">
+				<AnnouncementManager
+					announcements={formData.announcements}
+					onUpdate={(announcements) => (formData.announcements = announcements)}
+				/>
 			</section>
 
 			<!-- 전례시기 -->

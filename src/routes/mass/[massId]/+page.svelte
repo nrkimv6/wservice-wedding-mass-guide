@@ -212,8 +212,12 @@
 		currentStepIdStore.value = 1;
 	}
 
-	// No announcement for configured masses (announcement feature not yet implemented)
-	const announcement = '';
+	// Get first announcement from mass configuration
+	const announcement = $derived(
+		massConfig?.announcements && massConfig.announcements.length > 0
+			? massConfig.announcements.sort((a, b) => a.order - b.order)[0].message
+			: ''
+	);
 
 	// Liturgical settings from mass configuration
 	const liturgicalSettings = $derived({

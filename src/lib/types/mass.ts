@@ -6,6 +6,12 @@ export interface HymnEntry {
   page: string;
 }
 
+export interface Announcement {
+  id: string;
+  message: string;
+  order: number;
+}
+
 export interface MassConfiguration {
   id: string;
   user_id: string;
@@ -27,6 +33,9 @@ export interface MassConfiguration {
     recessional?: HymnEntry;
     wedding?: HymnEntry;
   };
+
+  // 공지사항 (JSONB array)
+  announcements: Announcement[];
 
   // 전례시기
   liturgical_season: 'ordinary' | 'advent' | 'lent' | 'easter';
@@ -56,6 +65,7 @@ export const LITURGICAL_PRESETS = {
 // 새 미사 생성 시 기본값
 export const DEFAULT_MASS_CONFIG: Partial<MassConfiguration> = {
   hymns: {},
+  announcements: [],
   liturgical_season: 'ordinary',
   gloria_enabled: true,
   alleluia_enabled: true,
