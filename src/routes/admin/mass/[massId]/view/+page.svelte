@@ -206,7 +206,7 @@
 </svelte:head>
 
 <div
-	class="min-h-screen bg-background {themeStore.value}"
+	class="min-h-screen bg-background theme-{themeStore.value}"
 	class:text-size-1={textSizeStore.value === 1}
 	class:text-size-2={textSizeStore.value === 2}
 	class:text-size-3={textSizeStore.value === 3}

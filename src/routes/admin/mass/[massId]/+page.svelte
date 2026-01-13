@@ -5,8 +5,10 @@
 	import { ArrowLeft, QrCode, Copy, Download, ExternalLink, Edit, Play } from 'lucide-svelte';
 	import QRCode from 'qrcode';
 	import { getMass } from '$lib/services/massService';
+	import { isSuperAdmin } from '$lib/services/analyticsService';
 	import type { MassConfiguration } from '$lib/types/mass';
 	import SyncControl from '$lib/components/SyncControl.svelte';
+	import MassAnalytics from '$lib/components/MassAnalytics.svelte';
 	import { realtimeSyncStore } from '$lib/stores/realtimeSync.svelte';
 
 	const massId = $derived($page.params.massId);
@@ -22,7 +24,13 @@
 	// Sync state
 	let syncEnabled = $state(false);
 
+	// Admin permissions
+	let isAdmin = $state(false);
+
 	onMount(async () => {
+		// Check admin permissions
+		isAdmin = await isSuperAdmin();
+
 		// Load mass data
 		const { data, error: loadError } = await getMass(massId);
 
@@ -257,6 +265,13 @@
 				</div>
 			</div>
 		</section>
+
+		<!-- Analytics (Admin Only) -->
+		{#if isAdmin}
+			<section class="mb-6">
+				<MassAnalytics {massId} />
+			</section>
+		{/if}
 
 		<!-- Instructions -->
 		<section class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">

@@ -1,10 +1,11 @@
 <script module lang="ts">
-	export type ThemeOption = 'ivory-gold' | 'white-rose' | 'cathedral' | 'sage';
+	export type ThemeOption = 'ivory-gold' | 'white-rose' | 'cathedral' | 'sage' | 'dark';
 </script>
 
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { Check, Palette, X, RefreshCw } from 'lucide-svelte';
+	import { clearAllCaches } from '$lib/utils/serviceWorker';
 
 	interface Props {
 		currentTheme: ThemeOption;
@@ -27,10 +28,7 @@
 
 		try {
 			// 1. Service Worker 캐시 삭제
-			if ('caches' in window) {
-				const cacheNames = await caches.keys();
-				await Promise.all(cacheNames.map(name => caches.delete(name)));
-			}
+			await clearAllCaches();
 
 			// 2. 앱 진행 상태 초기화 (처음부터 시작하도록)
 			localStorage.removeItem('mass-started');
@@ -93,6 +91,12 @@
 			name: 'Natural Sage',
 			description: '눈이 편안한 그린 톤',
 			colors: ['#FAFAF8', '#7D9471', '#C4A962']
+		},
+		{
+			id: 'dark',
+			name: 'Dark Mode',
+			description: '어두운 성당에 적합',
+			colors: ['#1A1A1A', '#D4A962', '#E8D4B0']
 		}
 	];
 </script>

@@ -182,6 +182,52 @@
 		--role-couple: 100 20% 45%;
 		--role-narrator: 100 10% 45%;
 	}
+
+	/* Dark Mode Theme */
+	.theme-dark {
+		--background: 0 0% 10%;
+		--foreground: 45 40% 85%;
+
+		--card: 0 0% 13%;
+		--card-foreground: 45 40% 85%;
+
+		--popover: 0 0% 10%;
+		--popover-foreground: 45 40% 85%;
+
+		--primary: 45 40% 58%;
+		--primary-foreground: 0 0% 10%;
+
+		--secondary: 45 35% 45%;
+		--secondary-foreground: 45 40% 95%;
+
+		--muted: 0 0% 18%;
+		--muted-foreground: 45 20% 60%;
+
+		--accent: 45 40% 58%;
+		--accent-foreground: 0 0% 10%;
+
+		--destructive: 0 70% 45%;
+		--destructive-foreground: 45 40% 95%;
+
+		--border: 0 0% 20%;
+		--input: 0 0% 20%;
+		--ring: 45 40% 58%;
+
+		--prayer-bg: 0 0% 15%;
+		--prayer-border: 45 40% 58%;
+		--hymn-bg: 45 15% 17%;
+		--hymn-border: 45 40% 58%;
+
+		--posture-standing: 45 40% 58%;
+		--posture-seated: 200 40% 55%;
+		--posture-kneeling: 45 35% 45%;
+
+		--role-priest: 45 50% 60%;
+		--role-assembly: 45 35% 55%;
+		--role-reader: 200 40% 60%;
+		--role-couple: 45 40% 58%;
+		--role-narrator: 45 20% 60%;
+	}
 }
 
 @layer base {

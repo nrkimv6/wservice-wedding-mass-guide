@@ -9,6 +9,8 @@
 	import { wakeLockStore } from '$lib/stores/wakeLock.svelte';
 	import { realtimeSyncStore } from '$lib/stores/realtimeSync.svelte';
 	import { getMass } from '$lib/services/massService';
+	import { cacheMassData } from '$lib/utils/serviceWorker';
+	import { trackMassVisit } from '$lib/services/analyticsService';
 	import type { MassConfiguration } from '$lib/types/mass';
 	import Header from '$lib/components/Header.svelte';
 	import StepCard from '$lib/components/StepCard.svelte';
@@ -35,6 +37,16 @@
 			massError = error.message;
 		} else if (data) {
 			massConfig = data;
+
+			// Track analytics visit
+			if (browser) {
+				await trackMassVisit(massId);
+			}
+
+			// Cache mass data for offline use
+			if (browser) {
+				await cacheMassData(massId, data);
+			}
 
 			// Connect to realtime channel if sync is enabled
 			if (data.sync_enabled && browser) {
@@ -268,32 +280,34 @@
 </script>
 
 {#if loadingMass}
-	<div class="flex flex-col items-center justify-center min-h-screen bg-background">
+	<div class="flex flex-col items-center justify-center min-h-screen bg-background theme-{themeStore.value}">
 		<div class="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
 		<p class="mt-4 text-muted-foreground">미사 정보를 불러오는 중...</p>
 	</div>
 {:else if massError}
-	<div class="flex flex-col items-center justify-center min-h-screen bg-background">
+	<div class="flex flex-col items-center justify-center min-h-screen bg-background theme-{themeStore.value}">
 		<div class="text-red-500 text-5xl mb-4">✗</div>
 		<p class="text-red-600 mb-4">{massError}</p>
 		<p class="text-muted-foreground">유효하지 않은 미사 링크입니다.</p>
 	</div>
 {:else if !hasStartedStore.value}
-	<IntroScreen
-		onStart={handleStart}
-		viewMode={viewModeStore.value}
-		onViewModeChange={handleViewModeChange}
-		massInfo={massConfig ? {
-			groomName: massConfig.groom_name,
-			brideName: massConfig.bride_name,
-			churchName: massConfig.church_name,
-			date: massConfig.date,
-			time: massConfig.time,
-			celebrantName: massConfig.celebrant_name || undefined
-		} : undefined}
-	/>
+	<div class="theme-{themeStore.value}">
+		<IntroScreen
+			onStart={handleStart}
+			viewMode={viewModeStore.value}
+			onViewModeChange={handleViewModeChange}
+			massInfo={massConfig ? {
+				groomName: massConfig.groom_name,
+				brideName: massConfig.bride_name,
+				churchName: massConfig.church_name,
+				date: massConfig.date,
+				time: massConfig.time,
+				celebrantName: massConfig.celebrant_name || undefined
+			} : undefined}
+		/>
+	</div>
 {:else}
-	<div class="min-h-screen bg-background" class:text-size-1={textSizeStore.value === 1} class:text-size-2={textSizeStore.value === 2} class:text-size-3={textSizeStore.value === 3} class:text-size-4={textSizeStore.value === 4} class:text-size-5={textSizeStore.value === 5}>
+	<div class="min-h-screen bg-background theme-{themeStore.value}" class:text-size-1={textSizeStore.value === 1} class:text-size-2={textSizeStore.value === 2} class:text-size-3={textSizeStore.value === 3} class:text-size-4={textSizeStore.value === 4} class:text-size-5={textSizeStore.value === 5}>
 		<!-- Header -->
 		<Header
 			currentStep={currentFilteredStep}
