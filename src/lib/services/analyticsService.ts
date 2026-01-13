@@ -124,7 +124,7 @@ export async function isSuperAdmin(): Promise<boolean> {
 
 		// Check if user email matches the fixed admin account
 		// TODO: Replace with actual admin email from environment variable
-		const ADMIN_EMAIL = 'admin@woory.day'; // Replace with actual admin email
+		const ADMIN_EMAIL = 'orangepie2236@gmail.com'; // Replace with actual admin email
 
 		return user.email === ADMIN_EMAIL;
 	} catch (error) {
