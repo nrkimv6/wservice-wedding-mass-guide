@@ -5,6 +5,7 @@
 	import { localStorageStore } from '$lib/stores/localStorageStore.svelte';
 	import { massSteps, sections } from '$lib/data/massSteps';
 	import { massStepsMerged, sectionsMerged } from '$lib/data/massStepsMerged';
+	import { wakeLockStore } from '$lib/stores/wakeLock.svelte';
 	import Header from '$lib/components/Header.svelte';
 	import StepCard from '$lib/components/StepCard.svelte';
 	import TableOfContents from '$lib/components/TableOfContents.svelte';
@@ -63,6 +64,29 @@
 			if (themeStore.value !== 'ivory-gold') {
 				body.classList.add(`theme-${themeStore.value}`);
 			}
+		}
+	});
+
+	// Wake Lock: prevent screen from turning off during mass
+	$effect(() => {
+		if (browser && hasStartedStore.value) {
+			// Enable wake lock when mass starts
+			wakeLockStore.enable();
+
+			// Re-acquire wake lock when page becomes visible
+			const handleVisibilityChange = () => {
+				if (document.visibilityState === 'visible') {
+					wakeLockStore.reacquire();
+				}
+			};
+
+			document.addEventListener('visibilitychange', handleVisibilityChange);
+
+			// Cleanup: release wake lock when leaving
+			return () => {
+				document.removeEventListener('visibilitychange', handleVisibilityChange);
+				wakeLockStore.disable();
+			};
 		}
 	});
 
