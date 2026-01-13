@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import { onMount } from 'svelte';
-	import { ArrowLeft, QrCode, Copy, Download, ExternalLink, Edit } from 'lucide-svelte';
+	import { onMount, onDestroy } from 'svelte';
+	import { ArrowLeft, QrCode, Copy, Download, ExternalLink, Edit, Play } from 'lucide-svelte';
 	import QRCode from 'qrcode';
 	import { getMass } from '$lib/services/massService';
 	import type { MassConfiguration } from '$lib/types/mass';
+	import SyncControl from '$lib/components/SyncControl.svelte';
+	import { realtimeSyncStore } from '$lib/stores/realtimeSync.svelte';
 
 	const massId = $derived($page.params.massId);
 
@@ -16,6 +18,9 @@
 	let qrCodeDataUrl = $state('');
 	let massUrl = $state('');
 	let copySuccess = $state(false);
+
+	// Sync state
+	let syncEnabled = $state(false);
 
 	onMount(async () => {
 		// Load mass data
@@ -42,6 +47,14 @@
 				}
 			});
 		}
+
+		// Connect to realtime channel
+		realtimeSyncStore.connect(massId);
+	});
+
+	onDestroy(() => {
+		// Disconnect from realtime channel
+		realtimeSyncStore.disconnect();
 	});
 
 	async function copyUrl() {
@@ -75,6 +88,15 @@
 
 	function handleBack() {
 		goto('/admin/dashboard');
+	}
+
+	function toggleSync() {
+		syncEnabled = !syncEnabled;
+		realtimeSyncStore.setSyncEnabled(syncEnabled);
+	}
+
+	function startMass() {
+		goto(`/admin/mass/${massId}/view`);
 	}
 </script>
 
@@ -143,6 +165,32 @@
 					{#if massData.celebrant_name}
 						<p>⛪ 주례: {massData.celebrant_name}</p>
 					{/if}
+				</div>
+			</section>
+
+			<!-- Mass Control -->
+			<section class="mb-6">
+				<h2 class="text-xl font-semibold mb-3 text-foreground">미사 진행</h2>
+				<div class="space-y-4">
+					<!-- Start Mass Button -->
+					<button
+						onclick={startMass}
+						class="w-full px-6 py-4 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-3 text-lg font-semibold"
+					>
+						<Play class="w-6 h-6" />
+						미사 진행하기 (관리자 뷰)
+					</button>
+
+					<!-- Sync Control -->
+					<div>
+						<h3 class="text-sm font-medium mb-2 text-muted-foreground">실시간 동기화 설정</h3>
+						<SyncControl
+							syncEnabled={syncEnabled}
+							connected={realtimeSyncStore.state.connected}
+							connectedUsers={realtimeSyncStore.state.connectedUsers}
+							onToggle={toggleSync}
+						/>
+					</div>
 				</div>
 			</section>
 
