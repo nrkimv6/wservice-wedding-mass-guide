@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
+	import { page } from '$app/stores';
 	import { Settings } from 'lucide-svelte';
 	import { localStorageStore } from '$lib/stores/localStorageStore.svelte';
 	import { massSteps, sections } from '$lib/data/massSteps';
@@ -35,6 +36,24 @@
 		currentMassSteps.find((s) => s.id === currentStepIdStore.value) || currentMassSteps[0]
 	);
 	const totalSteps = $derived(currentMassSteps.length);
+
+	// Handle direct step URL parameter
+	$effect(() => {
+		if (browser) {
+			const stepParam = $page.url.searchParams.get('step');
+			if (stepParam) {
+				const stepId = parseInt(stepParam);
+				if (!isNaN(stepId) && stepId >= 1) {
+					// Check if step exists in filtered steps
+					const stepExists = filteredMassSteps.some((s) => s.id === stepId);
+					if (stepExists) {
+						currentStepIdStore.value = stepId;
+						hasStartedStore.value = true;
+					}
+				}
+			}
+		}
+	});
 
 	// Apply theme class to body
 	$effect(() => {
