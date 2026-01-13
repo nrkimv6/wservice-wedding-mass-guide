@@ -4,27 +4,32 @@
 	import { onMount } from 'svelte';
 	import { ArrowLeft, QrCode, Copy, Download, ExternalLink, Edit } from 'lucide-svelte';
 	import QRCode from 'qrcode';
+	import { getMass } from '$lib/services/massService';
+	import type { MassConfiguration } from '$lib/types/mass';
 
 	const massId = $derived($page.params.massId);
 
-	// Mock mass data - will be replaced with actual DB data
-	const massData = {
-		id: 'demo-1',
-		churchName: '명동대성당',
-		date: '2026-02-14',
-		time: '14:00',
-		groomName: '홍길동',
-		brideName: '김영희',
-		celebrantName: '김바오로 신부',
-		theme: 'ivory-gold',
-		viewMode: 'detailed'
-	};
+	let massData = $state<MassConfiguration | null>(null);
+	let loading = $state(true);
+	let error = $state('');
 
 	let qrCodeDataUrl = $state('');
 	let massUrl = $state('');
 	let copySuccess = $state(false);
 
 	onMount(async () => {
+		// Load mass data
+		const { data, error: loadError } = await getMass(massId);
+
+		if (loadError || !data) {
+			error = loadError?.message || '미사 정보를 불러올 수 없습니다.';
+			loading = false;
+			return;
+		}
+
+		massData = data;
+		loading = false;
+
 		// Generate QR code
 		if (typeof window !== 'undefined') {
 			massUrl = `${window.location.origin}/mass/${massId}`;
@@ -52,8 +57,9 @@
 	}
 
 	function downloadQR() {
+		if (!massData) return;
 		const link = document.createElement('a');
-		link.download = `혼배미사-QR-${massData.groomName}-${massData.brideName}.png`;
+		link.download = `혼배미사-QR-${massData.groom_name}-${massData.bride_name}.png`;
 		link.href = qrCodeDataUrl;
 		link.click();
 	}
@@ -73,53 +79,72 @@
 </script>
 
 <svelte:head>
-	<title>{massData.groomName} ❤️ {massData.brideName} - 관리</title>
+	<title>{massData ? `${massData.groom_name} ❤️ ${massData.bride_name} - 관리` : '미사 관리'}</title>
 </svelte:head>
 
 <div class="min-h-screen bg-background">
-	<!-- Header -->
-	<header class="bg-card border-b border-border sticky top-0 z-10">
-		<div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+	<!-- Loading state -->
+	{#if loading}
+		<div class="flex items-center justify-center min-h-screen">
+			<div class="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+		</div>
+	<!-- Error state -->
+	{:else if error || !massData}
+		<div class="flex flex-col items-center justify-center min-h-screen px-4">
+			<div class="text-red-500 text-5xl mb-4">✗</div>
+			<p class="text-xl text-foreground mb-4">{error || '미사 정보를 찾을 수 없습니다'}</p>
 			<button
 				onclick={handleBack}
-				class="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+				class="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:opacity-90"
 			>
-				<ArrowLeft class="w-5 h-5" />
-				대시보드로
-			</button>
-			<h1 class="text-xl font-bold text-foreground">미사 관리</h1>
-			<button
-				onclick={editMass}
-				class="flex items-center gap-2 px-3 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:opacity-90 transition-opacity"
-			>
-				<Edit class="w-4 h-4" />
-				편집
+				대시보드로 돌아가기
 			</button>
 		</div>
-	</header>
-
-	<main class="max-w-4xl mx-auto px-4 py-8">
-		<!-- Mass info -->
-		<section class="bg-card border border-border rounded-lg p-6 mb-6">
-			<h2 class="text-2xl font-bold mb-4 text-foreground">
-				{massData.groomName} ❤️ {massData.brideName}
-			</h2>
-			<div class="space-y-2 text-muted-foreground">
-				<p>
-					📅 {new Date(massData.date).toLocaleDateString('ko-KR', {
-						year: 'numeric',
-						month: 'long',
-						day: 'numeric',
-						weekday: 'short'
-					})}
-					{massData.time}
-				</p>
-				<p>💒 {massData.churchName}</p>
-				{#if massData.celebrantName}
-					<p>⛪ 주례: {massData.celebrantName}</p>
-				{/if}
+	<!-- Loaded state -->
+	{:else}
+		<!-- Header -->
+		<header class="bg-card border-b border-border sticky top-0 z-10">
+			<div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+				<button
+					onclick={handleBack}
+					class="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+				>
+					<ArrowLeft class="w-5 h-5" />
+					대시보드로
+				</button>
+				<h1 class="text-xl font-bold text-foreground">미사 관리</h1>
+				<button
+					onclick={editMass}
+					class="flex items-center gap-2 px-3 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:opacity-90 transition-opacity"
+				>
+					<Edit class="w-4 h-4" />
+					편집
+				</button>
 			</div>
-		</section>
+		</header>
+
+		<main class="max-w-4xl mx-auto px-4 py-8">
+			<!-- Mass info -->
+			<section class="bg-card border border-border rounded-lg p-6 mb-6">
+				<h2 class="text-2xl font-bold mb-4 text-foreground">
+					{massData.groom_name} ❤️ {massData.bride_name}
+				</h2>
+				<div class="space-y-2 text-muted-foreground">
+					<p>
+						📅 {new Date(massData.date).toLocaleDateString('ko-KR', {
+							year: 'numeric',
+							month: 'long',
+							day: 'numeric',
+							weekday: 'short'
+						})}
+						{massData.time}
+					</p>
+					<p>💒 {massData.church_name}</p>
+					{#if massData.celebrant_name}
+						<p>⛪ 주례: {massData.celebrant_name}</p>
+					{/if}
+				</div>
+			</section>
 
 		<!-- QR Code section -->
 		<section class="bg-card border border-border rounded-lg p-6 mb-6">
@@ -202,4 +227,5 @@
 			</div>
 		</section>
 	</main>
+	{/if}
 </div>

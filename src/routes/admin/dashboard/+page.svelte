@@ -1,22 +1,29 @@
 <script lang="ts">
 	import { Plus, Calendar, Settings, LogOut } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
+	import { getUserMasses } from '$lib/services/massService';
+	import { authStore } from '$lib/stores/auth.svelte';
+	import type { MassConfiguration } from '$lib/types/mass';
 
-	// Mock data - will be replaced with actual DB data
-	const masses = [
-		{
-			id: 'demo-1',
-			date: '2026-02-14',
-			time: '14:00',
-			churchName: '명동대성당',
-			groomName: '홍길동',
-			brideName: '김영희',
-			isActive: true
+	let masses = $state<MassConfiguration[]>([]);
+	let loading = $state(true);
+	let error = $state('');
+
+	onMount(async () => {
+		const { data, error: loadError } = await getUserMasses();
+
+		if (loadError) {
+			error = loadError.message;
+		} else {
+			masses = data;
 		}
-	];
 
-	function handleLogout() {
-		// TODO: Implement actual logout
+		loading = false;
+	});
+
+	async function handleLogout() {
+		await authStore.signOut();
 		goto('/admin');
 	}
 
@@ -53,6 +60,13 @@
 
 	<!-- Main content -->
 	<main class="max-w-6xl mx-auto px-4 py-8">
+		<!-- Error message -->
+		{#if error}
+			<div class="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md mb-6">
+				{error}
+			</div>
+		{/if}
+
 		<!-- Quick actions -->
 		<div class="mb-8">
 			<button
@@ -68,7 +82,11 @@
 		<div>
 			<h2 class="text-xl font-semibold mb-4 text-foreground">미사 목록</h2>
 
-			{#if masses.length === 0}
+			{#if loading}
+				<div class="flex items-center justify-center py-12">
+					<div class="animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent"></div>
+				</div>
+			{:else if masses.length === 0}
 				<div class="bg-card border border-border rounded-lg p-8 text-center">
 					<Calendar class="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
 					<p class="text-muted-foreground mb-4">아직 생성된 미사가 없습니다</p>
@@ -87,15 +105,13 @@
 								<div class="flex-1">
 									<div class="flex items-center gap-3 mb-3">
 										<h3 class="text-lg font-semibold text-foreground">
-											{mass.groomName} ❤️ {mass.brideName}
+											{mass.groom_name} ❤️ {mass.bride_name}
 										</h3>
-										{#if mass.isActive}
-											<span
-												class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded"
-											>
-												활성
-											</span>
-										{/if}
+										<span
+											class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded"
+										>
+											활성
+										</span>
 									</div>
 
 									<div class="space-y-1 text-sm text-muted-foreground">
@@ -108,7 +124,7 @@
 											})}
 											{mass.time}
 										</p>
-										<p>💒 {mass.churchName}</p>
+										<p>💒 {mass.church_name}</p>
 									</div>
 								</div>
 

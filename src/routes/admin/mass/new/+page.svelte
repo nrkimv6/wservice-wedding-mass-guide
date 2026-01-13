@@ -3,6 +3,8 @@
 	import { ArrowLeft, Save, QrCode } from 'lucide-svelte';
 	import type { ThemeOption } from '$lib/components/ThemeSelector.svelte';
 	import type { ViewMode } from '$lib/components/IntroScreen.svelte';
+	import { createMass } from '$lib/services/massService';
+	import type { HymnEntry } from '$lib/types/mass';
 
 	// Form data
 	let formData = $state({
@@ -37,6 +39,9 @@
 		viewMode: 'detailed' as ViewMode
 	});
 
+	let saving = $state(false);
+	let errorMessage = $state('');
+
 	// 전례시기 프리셋
 	const liturgicalPresets = {
 		ordinary: { label: '연중시기', gloria: true, alleluia: true },
@@ -59,12 +64,91 @@
 		formData.hymns.communion = formData.hymns.communion.filter((_, i) => i !== index);
 	}
 
-	function handleSave(e: Event) {
+	function isHymnEmpty(hymn: { number: string; title: string; page: string }): boolean {
+		return !hymn.number && !hymn.title && !hymn.page;
+	}
+
+	async function handleSave(e: Event) {
 		e.preventDefault();
-		// TODO: Save to database
-		console.log('Saving mass configuration:', formData);
-		// For now, redirect to a demo mass ID
-		goto('/admin/mass/demo-1');
+
+		if (saving) return;
+
+		// 필수 필드 검증
+		if (!formData.churchName || !formData.date || !formData.time ||
+		    !formData.groomName || !formData.brideName) {
+			errorMessage = '필수 항목을 모두 입력해주세요.';
+			return;
+		}
+
+		saving = true;
+		errorMessage = '';
+
+		try {
+			// hymns 데이터 정리
+			const hymns: any = {};
+
+			// entrance
+			if (!isHymnEmpty(formData.hymns.entrance)) {
+				hymns.entrance = formData.hymns.entrance;
+			}
+
+			// responsorial
+			if (formData.hymns.responsorial === '주보 참조') {
+				hymns.responsorial = '주보 참조';
+			} else if (formData.hymns.responsorial === '직접 입력' && formData.hymns.responsorialText) {
+				hymns.responsorial = formData.hymns.responsorialText;
+			} else if (formData.hymns.responsorial === '미표시') {
+				hymns.responsorial = null;
+			}
+
+			// offertory
+			if (!isHymnEmpty(formData.hymns.offertory)) {
+				hymns.offertory = formData.hymns.offertory;
+			}
+
+			// communion (복수)
+			const communionHymns = formData.hymns.communion.filter(h => !isHymnEmpty(h));
+			if (communionHymns.length > 0) {
+				hymns.communion = communionHymns;
+			}
+
+			// recessional
+			if (!isHymnEmpty(formData.hymns.recessional)) {
+				hymns.recessional = formData.hymns.recessional;
+			}
+
+			// wedding (optional)
+			if (!isHymnEmpty(formData.hymns.wedding)) {
+				hymns.wedding = formData.hymns.wedding;
+			}
+
+			const { data, error } = await createMass({
+				church_name: formData.churchName,
+				date: formData.date,
+				time: formData.time,
+				groom_name: formData.groomName,
+				bride_name: formData.brideName,
+				celebrant_name: formData.celebrantName || undefined,
+				hymns,
+				liturgical_season: formData.liturgicalSeason,
+				gloria_enabled: formData.gloria,
+				alleluia_enabled: formData.alleluia,
+				theme: formData.theme,
+				view_mode: formData.viewMode,
+			});
+
+			if (error || !data) {
+				throw error || new Error('Failed to create mass');
+			}
+
+			// 성공 시 미사 관리 페이지로 이동
+			goto(`/admin/mass/${data.id}`);
+		} catch (err) {
+			console.error('Save error:', err);
+			errorMessage = err instanceof Error ? err.message : '저장 중 오류가 발생했습니다.';
+		} finally {
+			saving = false;
+		}
 	}
 
 	function handleCancel() {
@@ -456,21 +540,30 @@
 				</div>
 			</section>
 
+			<!-- Error message -->
+			{#if errorMessage}
+				<div class="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
+					{errorMessage}
+				</div>
+			{/if}
+
 			<!-- Submit buttons -->
 			<div class="flex gap-3 sticky bottom-0 bg-background py-4 border-t border-border">
 				<button
 					type="button"
 					onclick={handleCancel}
-					class="flex-1 px-6 py-3 border border-border rounded-md hover:bg-accent transition-colors"
+					disabled={saving}
+					class="flex-1 px-6 py-3 border border-border rounded-md hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 				>
 					취소
 				</button>
 				<button
 					type="submit"
-					class="flex-1 bg-primary text-primary-foreground px-6 py-3 rounded-md font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+					disabled={saving}
+					class="flex-1 bg-primary text-primary-foreground px-6 py-3 rounded-md font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
 				>
 					<Save class="w-5 h-5" />
-					저장하기
+					{saving ? '저장 중...' : '저장하기'}
 				</button>
 			</div>
 		</form>
