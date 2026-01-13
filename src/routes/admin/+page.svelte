@@ -1,15 +1,21 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { ArrowRight } from 'lucide-svelte';
+	import GoogleLoginButton from '$lib/components/GoogleLoginButton.svelte';
+	import KakaoLoginButton from '$lib/components/KakaoLoginButton.svelte';
+	import { authStore } from '$lib/stores/auth.svelte';
 
-	let password = $state('');
+	onMount(async () => {
+		// 인증 상태 초기화
+		if (!authStore.initialized) {
+			await authStore.initialize();
+		}
 
-	function handleLogin(e: Event) {
-		e.preventDefault();
-		// TODO: Implement actual authentication
-		// For now, just redirect to dashboard
-		goto('/admin/dashboard');
-	}
+		// 이미 로그인되어 있으면 대시보드로 리다이렉트
+		if (authStore.isLoggedIn) {
+			goto('/admin/dashboard');
+		}
+	});
 </script>
 
 <svelte:head>
@@ -23,32 +29,13 @@
 			<p class="text-muted-foreground">혼배미사 순서지 관리</p>
 		</div>
 
-		<div class="bg-card border border-border rounded-lg p-6 shadow-sm">
-			<form onsubmit={handleLogin}>
-				<div class="mb-4">
-					<label for="password" class="block text-sm font-medium mb-2">비밀번호</label>
-					<input
-						type="password"
-						id="password"
-						bind:value={password}
-						class="w-full px-4 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-						placeholder="관리자 비밀번호 입력"
-						required
-					/>
-				</div>
-
-				<button
-					type="submit"
-					class="w-full bg-primary text-primary-foreground py-3 rounded-md font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
-				>
-					로그인
-					<ArrowRight class="w-5 h-5" />
-				</button>
-			</form>
+		<div class="bg-card border border-border rounded-lg p-6 shadow-sm space-y-4">
+			<GoogleLoginButton />
+			<KakaoLoginButton />
 
 			<div class="mt-6 pt-6 border-t border-border">
 				<p class="text-sm text-muted-foreground text-center">
-					💡 개발 중: 임시로 비밀번호 없이 접근 가능합니다
+					💡 Google 또는 Kakao 계정으로 로그인하세요
 				</p>
 			</div>
 		</div>

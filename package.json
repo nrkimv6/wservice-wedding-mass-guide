@@ -30,6 +30,7 @@
 		"wrangler": "^4.58.0"
 	},
 	"dependencies": {
+		"@supabase/supabase-js": "^2.90.1",
 		"bits-ui": "^2.15.4",
 		"clsx": "^2.1.1",
 		"date-fns": "^4.1.0",
