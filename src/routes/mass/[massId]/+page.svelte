@@ -7,6 +7,7 @@
 	import { massSteps, sections } from '$lib/data/massSteps';
 	import { massStepsMerged, sectionsMerged } from '$lib/data/massStepsMerged';
 	import { wakeLockStore } from '$lib/stores/wakeLock.svelte';
+	import { realtimeSyncStore } from '$lib/stores/realtimeSync.svelte';
 	import { getMass } from '$lib/services/massService';
 	import type { MassConfiguration } from '$lib/types/mass';
 	import Header from '$lib/components/Header.svelte';
@@ -16,6 +17,7 @@
 	import ThemeSelector, { type ThemeOption } from '$lib/components/ThemeSelector.svelte';
 	import MassInfoPage from '$lib/components/MassInfoPage.svelte';
 	import AnnouncementBanner from '$lib/components/AnnouncementBanner.svelte';
+	import SyncStatusBanner from '$lib/components/SyncStatusBanner.svelte';
 
 	// Mass configuration from database
 	let massConfig = $state<MassConfiguration | null>(null);
@@ -33,9 +35,27 @@
 			massError = error.message;
 		} else if (data) {
 			massConfig = data;
+
+			// Connect to realtime channel if sync is enabled
+			if (data.sync_enabled && browser) {
+				realtimeSyncStore.connect(massId);
+				realtimeSyncStore.setSyncEnabled(true);
+
+				// Listen for step changes from admin
+				realtimeSyncStore.onStepChange((step) => {
+					if (realtimeSyncStore.state.syncing && hasStartedStore.value) {
+						currentStepIdStore.value = step;
+					}
+				});
+			}
 		}
 
 		loadingMass = false;
+
+		// Cleanup on unmount
+		return () => {
+			realtimeSyncStore.disconnect();
+		};
 	});
 
 	// Persisted state (use massId prefix to isolate state per mass)
@@ -212,6 +232,11 @@
 		currentStepIdStore.value = 1;
 	}
 
+	// Disable sync mode (for attendees)
+	function disableSync() {
+		realtimeSyncStore.setSyncEnabled(false);
+	}
+
 	// Get first announcement from mass configuration
 	const announcement = $derived(
 		massConfig?.announcements && massConfig.announcements.length > 0
@@ -278,6 +303,14 @@
 			onInfoClick={() => (showInfo = true)}
 			onDecreaseSize={decreaseTextSize}
 			onIncreaseSize={increaseTextSize}
+		/>
+
+		<!-- Sync Status Banner (for realtime sync) -->
+		<SyncStatusBanner
+			connected={realtimeSyncStore.state.connected}
+			syncing={realtimeSyncStore.state.syncing}
+			error={realtimeSyncStore.state.error}
+			onDisableSync={disableSync}
 		/>
 
 		<!-- Announcement Banner -->
