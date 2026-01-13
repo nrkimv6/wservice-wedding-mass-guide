@@ -3,13 +3,13 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { onMount, onDestroy } from 'svelte';
-	import { ArrowLeft, Settings } from 'lucide-svelte';
+	import { ArrowLeft, Settings, Edit2 } from 'lucide-svelte';
 	import { localStorageStore } from '$lib/stores/localStorageStore.svelte';
 	import { massSteps, sections } from '$lib/data/massSteps';
 	import { massStepsMerged, sectionsMerged } from '$lib/data/massStepsMerged';
 	import { wakeLockStore } from '$lib/stores/wakeLock.svelte';
 	import { realtimeSyncStore } from '$lib/stores/realtimeSync.svelte';
-	import { getMass } from '$lib/services/massService';
+	import { getMass, updateMass } from '$lib/services/massService';
 	import type { MassConfiguration } from '$lib/types/mass';
 	import Header from '$lib/components/Header.svelte';
 	import StepCard from '$lib/components/StepCard.svelte';
@@ -17,6 +17,7 @@
 	import ThemeSelector, { type ThemeOption } from '$lib/components/ThemeSelector.svelte';
 	import MassInfoPage from '$lib/components/MassInfoPage.svelte';
 	import SyncControl from '$lib/components/SyncControl.svelte';
+	import QuickEditModal from '$lib/components/QuickEditModal.svelte';
 
 	// Mass configuration from database
 	let massConfig = $state<MassConfiguration | null>(null);
@@ -49,7 +50,6 @@
 
 	onDestroy(() => {
 		realtimeSyncStore.disconnect();
-		wakeLockStore.release();
 	});
 
 	// Persisted state (use admin-massId prefix for admin view)
@@ -63,6 +63,7 @@
 	let showToc = $state(false);
 	let showTheme = $state(false);
 	let showInfo = $state(false);
+	let showQuickEdit = $state(false);
 	let swipeStart = $state<number | null>(null);
 
 	// Get data based on view mode
@@ -99,7 +100,7 @@
 	// Acquire wake lock when started
 	$effect(() => {
 		if (browser && hasStartedStore.value) {
-			wakeLockStore.acquire();
+			wakeLockStore.request();
 		}
 	});
 
@@ -182,6 +183,20 @@
 	function handleBack() {
 		goto(`/admin/mass/${massId}`);
 	}
+
+	async function handleQuickSave(updates: Partial<MassConfiguration>) {
+		if (!massConfig) return;
+
+		const { data, error } = await updateMass(massId, updates);
+
+		if (error) {
+			throw error;
+		}
+
+		if (data) {
+			massConfig = data;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -229,7 +244,16 @@
 						<ArrowLeft class="w-4 h-4" />
 						관리 페이지
 					</button>
-					<span class="text-sm font-semibold text-blue-900">관리자 모드</span>
+					<div class="flex items-center gap-2">
+						<button
+							onclick={() => (showQuickEdit = true)}
+							class="flex items-center gap-1 text-sm text-blue-900 hover:text-blue-700 px-2 py-1 bg-blue-200 rounded"
+						>
+							<Edit2 class="w-3 h-3" />
+							빠른 수정
+						</button>
+						<span class="text-sm font-semibold text-blue-900">관리자 모드</span>
+					</div>
 				</div>
 
 				<!-- Compact Sync Control -->
@@ -323,6 +347,15 @@
 		<!-- Mass Info Page -->
 		{#if showInfo && massConfig}
 			<MassInfoPage {massConfig} onClose={() => (showInfo = false)} />
+		{/if}
+
+		<!-- Quick Edit Modal -->
+		{#if showQuickEdit && massConfig}
+			<QuickEditModal
+				{massConfig}
+				onClose={() => (showQuickEdit = false)}
+				onSave={handleQuickSave}
+			/>
 		{/if}
 	{/if}
 </div>

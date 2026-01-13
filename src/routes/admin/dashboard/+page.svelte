@@ -1,26 +1,33 @@
 <script lang="ts">
-	import { Plus, Calendar, Settings, LogOut } from 'lucide-svelte';
+	import { Plus, Calendar, Settings, LogOut, Trash2 } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import { getUserMasses } from '$lib/services/massService';
+	import { getUserMasses, deleteMass } from '$lib/services/massService';
 	import { authStore } from '$lib/stores/auth.svelte';
 	import type { MassConfiguration } from '$lib/types/mass';
 
 	let masses = $state<MassConfiguration[]>([]);
 	let loading = $state(true);
 	let error = $state('');
+	let deletingId = $state<string | null>(null);
 
 	onMount(async () => {
+		await loadMasses();
+	});
+
+	async function loadMasses() {
+		loading = true;
 		const { data, error: loadError } = await getUserMasses();
 
 		if (loadError) {
 			error = loadError.message;
 		} else {
 			masses = data;
+			error = '';
 		}
 
 		loading = false;
-	});
+	}
 
 	async function handleLogout() {
 		await authStore.signOut();
@@ -34,6 +41,33 @@
 	function editMass(massId: string) {
 		goto(`/admin/mass/${massId}`);
 	}
+
+	async function handleDeleteMass(massId: string, massName: string) {
+		if (!confirm(`"${massName}" 미사를 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) {
+			return;
+		}
+
+		deletingId = massId;
+		const { error: deleteError } = await deleteMass(massId);
+
+		if (deleteError) {
+			error = `삭제 실패: ${deleteError.message}`;
+			deletingId = null;
+		} else {
+			// Reload masses
+			await loadMasses();
+			deletingId = null;
+		}
+	}
+
+	// Filter and sort masses
+	const upcomingMasses = $derived(
+		masses.filter((m) => new Date(m.date) >= new Date(new Date().toDateString()))
+	);
+
+	const pastMasses = $derived(
+		masses.filter((m) => new Date(m.date) < new Date(new Date().toDateString()))
+	);
 </script>
 
 <svelte:head>
@@ -79,12 +113,12 @@
 		</div>
 
 		<!-- Mass list -->
-		<div>
-			<h2 class="text-xl font-semibold mb-4 text-foreground">미사 목록</h2>
-
+		<div class="space-y-8">
 			{#if loading}
 				<div class="flex items-center justify-center py-12">
-					<div class="animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent"></div>
+					<div
+						class="animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent"
+					></div>
 				</div>
 			{:else if masses.length === 0}
 				<div class="bg-card border border-border rounded-lg p-8 text-center">
@@ -98,49 +132,129 @@
 					</button>
 				</div>
 			{:else}
-				<div class="space-y-4">
-					{#each masses as mass}
-						<div class="bg-card border border-border rounded-lg p-6 hover:shadow-md transition-shadow">
-							<div class="flex items-start justify-between">
-								<div class="flex-1">
-									<div class="flex items-center gap-3 mb-3">
-										<h3 class="text-lg font-semibold text-foreground">
-											{mass.groom_name} ❤️ {mass.bride_name}
-										</h3>
-										<span
-											class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded"
-										>
-											활성
-										</span>
-									</div>
+				<!-- Upcoming Masses -->
+				{#if upcomingMasses.length > 0}
+					<div>
+						<h2 class="text-xl font-semibold mb-4 text-foreground">예정된 미사</h2>
+						<div class="space-y-4">
+							{#each upcomingMasses as mass}
+								<div
+									class="bg-card border border-border rounded-lg p-6 hover:shadow-md transition-shadow"
+								>
+									<div class="flex items-start justify-between">
+										<div class="flex-1">
+											<div class="flex items-center gap-3 mb-3">
+												<h3 class="text-lg font-semibold text-foreground">
+													{mass.groom_name} ❤️ {mass.bride_name}
+												</h3>
+												<span
+													class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded"
+												>
+													예정
+												</span>
+											</div>
 
-									<div class="space-y-1 text-sm text-muted-foreground">
-										<p>
-											📅 {new Date(mass.date).toLocaleDateString('ko-KR', {
-												year: 'numeric',
-												month: 'long',
-												day: 'numeric',
-												weekday: 'short'
-											})}
-											{mass.time}
-										</p>
-										<p>💒 {mass.church_name}</p>
+											<div class="space-y-1 text-sm text-muted-foreground">
+												<p>
+													📅 {new Date(mass.date).toLocaleDateString('ko-KR', {
+														year: 'numeric',
+														month: 'long',
+														day: 'numeric',
+														weekday: 'short'
+													})}
+													{mass.time}
+												</p>
+												<p>💒 {mass.church_name}</p>
+											</div>
+										</div>
+
+										<div class="flex gap-2">
+											<button
+												onclick={() => editMass(mass.id)}
+												class="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:opacity-90 transition-opacity flex items-center gap-2"
+											>
+												<Settings class="w-4 h-4" />
+												관리
+											</button>
+											<button
+												onclick={() =>
+													handleDeleteMass(mass.id, `${mass.groom_name} ❤️ ${mass.bride_name}`)}
+												disabled={deletingId === mass.id}
+												class="px-3 py-2 border border-red-300 text-red-600 rounded-md hover:bg-red-50 transition-colors flex items-center gap-2 disabled:opacity-50"
+											>
+												{#if deletingId === mass.id}
+													<div
+														class="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"
+													></div>
+												{:else}
+													<Trash2 class="w-4 h-4" />
+												{/if}
+											</button>
+										</div>
 									</div>
 								</div>
-
-								<div class="flex gap-2">
-									<button
-										onclick={() => editMass(mass.id)}
-										class="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:opacity-90 transition-opacity flex items-center gap-2"
-									>
-										<Settings class="w-4 h-4" />
-										관리
-									</button>
-								</div>
-							</div>
+							{/each}
 						</div>
-					{/each}
-				</div>
+					</div>
+				{/if}
+
+				<!-- Past Masses -->
+				{#if pastMasses.length > 0}
+					<div>
+						<h2 class="text-xl font-semibold mb-4 text-muted-foreground">지난 미사</h2>
+						<div class="space-y-4">
+							{#each pastMasses as mass}
+								<div class="bg-card border border-border rounded-lg p-6 opacity-60">
+									<div class="flex items-start justify-between">
+										<div class="flex-1">
+											<div class="flex items-center gap-3 mb-3">
+												<h3 class="text-lg font-semibold text-foreground">
+													{mass.groom_name} ❤️ {mass.bride_name}
+												</h3>
+												<span
+													class="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded"
+												>
+													종료
+												</span>
+											</div>
+
+											<div class="space-y-1 text-sm text-muted-foreground">
+												<p>
+													📅 {new Date(mass.date).toLocaleDateString('ko-KR', {
+														year: 'numeric',
+														month: 'long',
+														day: 'numeric',
+														weekday: 'short'
+													})}
+													{mass.time}
+												</p>
+												<p>💒 {mass.church_name}</p>
+											</div>
+										</div>
+
+										<div class="flex gap-2">
+											<button
+												onclick={() =>
+													handleDeleteMass(mass.id, `${mass.groom_name} ❤️ ${mass.bride_name}`)}
+												disabled={deletingId === mass.id}
+												class="px-3 py-2 border border-red-300 text-red-600 rounded-md hover:bg-red-50 transition-colors flex items-center gap-2 disabled:opacity-50"
+											>
+												{#if deletingId === mass.id}
+													<div
+														class="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"
+													></div>
+												{:else}
+													<Trash2 class="w-4 h-4" />
+												{/if}
+												삭제
+											</button>
+										</div>
+									</div>
+								</div>
+							{/each}
+						</div>
+					</div>
+				{/if}
 			{/if}
 		</div>
 

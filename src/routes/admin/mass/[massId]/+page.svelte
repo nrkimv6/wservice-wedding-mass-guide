@@ -259,18 +259,30 @@
 		</section>
 
 		<!-- Instructions -->
-		<section class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+		<section class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
 			<h3 class="font-semibold mb-3 text-blue-900">📱 사용 방법</h3>
 			<ol class="space-y-2 text-sm text-blue-900">
 				<li>1. QR 코드를 다운로드하여 청첩장이나 웨딩 안내물에 포함하세요</li>
 				<li>2. 미사 당일, 하객들이 QR 코드를 스캔하면 순서지에 접속합니다</li>
 				<li>3. 하객들은 자신의 스마트폰으로 미사 순서를 따라갈 수 있습니다</li>
+				<li>
+					4. 동기화 모드를 켜면 관리자가 보는 단계로 모든 하객이 자동으로 이동합니다
+				</li>
 			</ol>
+		</section>
 
-			<div class="mt-4 pt-4 border-t border-blue-200">
-				<p class="text-xs text-blue-800">
-					💡 <strong>참고:</strong> 미사 데이터는 익일 자동 삭제됩니다. QR 코드는 그 이후에는 작동하지
-					않습니다.
+		<!-- Auto-delete warning -->
+		<section class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+			<h3 class="font-semibold mb-2 text-yellow-900 flex items-center gap-2">
+				⚠️ 중요: 데이터 자동 삭제 안내
+			</h3>
+			<div class="space-y-2 text-sm text-yellow-900">
+				<p>
+					<strong>미사 데이터는 미사 날짜 익일 자동으로 삭제됩니다.</strong>
+				</p>
+				<p>
+					삭제 후에는 QR 코드가 작동하지 않으며, 모든 미사 정보가 영구적으로 제거됩니다. 필요한
+					경우 미사 전에 스크린샷이나 백업을 해두시기 바랍니다.
 				</p>
 			</div>
 		</section>
