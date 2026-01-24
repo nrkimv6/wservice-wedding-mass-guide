@@ -160,6 +160,15 @@
 		}
 	});
 
+	// Scroll to top when step changes
+	$effect(() => {
+		// Track step changes
+		const _currentStep = currentStepIdStore.value;
+		if (browser && hasStartedStore.value) {
+			window.scrollTo(0, 0);
+		}
+	});
+
 	// Navigation handlers
 	function goToPrevious() {
 		const currentIndex = filteredMassSteps.findIndex((s) => s.id === currentStepIdStore.value);
