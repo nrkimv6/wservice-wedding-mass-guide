@@ -106,7 +106,7 @@
 	// Acquire wake lock when started
 	$effect(() => {
 		if (browser && hasStartedStore.value) {
-			wakeLockStore.request();
+			wakeLockStore.enable();
 		}
 	});
 
@@ -327,10 +327,11 @@
 		<Header
 			{currentStep}
 			{totalSteps}
-			onTocToggle={() => (showToc = !showToc)}
-			onInfoToggle={() => (showInfo = !showInfo)}
-			onTextSizeChange={handleTextSizeChange}
-			showInfoButton={true}
+			textSize={textSizeStore.value}
+			onMenuClick={() => (showToc = !showToc)}
+			onInfoClick={() => (showInfo = !showInfo)}
+			onDecreaseSize={() => handleTextSizeChange(-1)}
+			onIncreaseSize={() => handleTextSizeChange(1)}
 		/>
 
 		<!-- Main content -->
@@ -341,12 +342,9 @@
 		>
 			<StepCard
 				step={currentStep}
-				{massConfig}
-				onPrev={handlePrev}
+				{totalSteps}
+				onPrevious={handlePrev}
 				onNext={handleNext}
-				canGoPrev={filteredMassSteps.findIndex((s) => s.id === currentStepIdStore.value) > 0}
-				canGoNext={filteredMassSteps.findIndex((s) => s.id === currentStepIdStore.value) <
-					filteredMassSteps.length - 1}
 			/>
 		</main>
 
@@ -362,11 +360,10 @@
 		<!-- Table of Contents -->
 		{#if showToc}
 			<TableOfContents
-				steps={filteredMassSteps}
-				{currentSections}
-				currentStepId={currentStepIdStore.value}
+				currentStep={currentStepIdStore.value}
+				onSelectSection={handleTocSelect}
 				onClose={() => (showToc = false)}
-				onSelect={handleTocSelect}
+				sections={currentSections}
 			/>
 		{/if}
 
@@ -374,7 +371,7 @@
 		{#if showTheme}
 			<ThemeSelector
 				currentTheme={themeStore.value}
-				onSelect={handleThemeChange}
+				onSelectTheme={handleThemeChange}
 				onClose={() => (showTheme = false)}
 			/>
 		{/if}

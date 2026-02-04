@@ -707,15 +707,15 @@ debugLog('Admin', 'Broadcasting step:', stepId);
 
 ## 수정 우선순위 및 작업 순서
 
-### Phase 1: CRITICAL (즉시 수정)
+### Phase 1: CRITICAL (즉시 수정) - ✅ 완료 (2026-02-04)
 
-| 순서 | ID | 작업 | 예상 소요 |
-|------|----|------|----------|
-| 1 | WMG-5 | `wakeLockStore.request()` -> `enable()` | 1분 |
-| 2 | WMG-1 | Header prop 이름 수정 | 3분 |
-| 3 | WMG-2 | StepCard prop 이름 수정 + totalSteps 추가 | 3분 |
-| 4 | WMG-3 | ThemeSelector prop 이름 수정 | 1분 |
-| 5 | WMG-4 | TableOfContents prop 이름 수정 | 3분 |
+| 순서 | ID | 작업 | 상태 |
+|------|----|------|------|
+| 1 | WMG-5 | `wakeLockStore.request()` -> `enable()` | ✅ 완료 |
+| 2 | WMG-1 | Header prop 이름 수정 | ✅ 완료 |
+| 3 | WMG-2 | StepCard prop 이름 수정 + totalSteps 추가 | ✅ 완료 |
+| 4 | WMG-3 | ThemeSelector prop 이름 수정 | ✅ 완료 |
+| 5 | WMG-4 | TableOfContents prop 이름 수정 | ✅ 완료 |
 
 ### Phase 2: MEDIUM (조기 수정)
 

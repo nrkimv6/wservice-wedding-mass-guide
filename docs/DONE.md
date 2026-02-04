@@ -2,6 +2,14 @@
 
 ## 2026-02-04
 
+### Admin View CRITICAL 결함 5건 수정 (WMG-1~5)
+- [x] **WMG-1: Header prop 불일치 수정** — onTocToggle/onInfoToggle/onTextSizeChange → onMenuClick/onInfoClick/onDecreaseSize/onIncreaseSize + textSize
+- [x] **WMG-2: StepCard prop 불일치 수정** — onPrev/massConfig/canGoPrev/canGoNext → onPrevious/totalSteps
+- [x] **WMG-3: ThemeSelector prop 불일치 수정** — onSelect → onSelectTheme
+- [x] **WMG-4: TableOfContents prop 불일치 수정** — steps/currentSections/currentStepId/onSelect → sections/currentStep/onSelectSection
+- [x] **WMG-5: wakeLockStore 메서드 수정** — request() → enable()
+- 빌드 확인 완료
+
 ### 관리자 동기화 컨트롤 통합 (P1)
 - [x] **SyncControl 컴포넌트 admin 페이지 통합**
   - [admin/mass/[massId]/+page.svelte](../src/routes/admin/mass/[massId]/+page.svelte)에 통합 완료
