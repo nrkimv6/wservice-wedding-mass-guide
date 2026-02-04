@@ -4,7 +4,7 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { ArrowLeft, QrCode, Copy, Download, ExternalLink, Edit, Play } from 'lucide-svelte';
 	import QRCode from 'qrcode';
-	import { getMass } from '$lib/services/massService';
+	import { getMass, updateMass } from '$lib/services/massService';
 	import { isSuperAdmin } from '$lib/services/analyticsService';
 	import type { MassConfiguration } from '$lib/types/mass';
 	import SyncControl from '$lib/components/SyncControl.svelte';
@@ -41,6 +41,7 @@
 		}
 
 		massData = data;
+		syncEnabled = data.sync_enabled;
 		loading = false;
 
 		// Generate QR code
@@ -98,9 +99,28 @@
 		goto('/admin/dashboard');
 	}
 
-	function toggleSync() {
-		syncEnabled = !syncEnabled;
-		realtimeSyncStore.setSyncEnabled(syncEnabled);
+	async function toggleSync() {
+		const newSyncEnabled = !syncEnabled;
+
+		// Update DB
+		const { error } = await updateMass(massId, { sync_enabled: newSyncEnabled });
+
+		if (error) {
+			console.error('[Admin] Failed to update sync_enabled:', error);
+			alert('동기화 설정 변경에 실패했습니다.');
+			return;
+		}
+
+		// Update local state
+		syncEnabled = newSyncEnabled;
+		if (massData) {
+			massData.sync_enabled = newSyncEnabled;
+		}
+
+		// Update realtime sync store
+		realtimeSyncStore.setSyncEnabled(newSyncEnabled);
+
+		console.log('[Admin] Sync enabled changed to:', newSyncEnabled);
 	}
 
 	function startMass() {

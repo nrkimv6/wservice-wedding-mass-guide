@@ -38,6 +38,12 @@
 			massError = error.message;
 		} else if (data) {
 			massConfig = data;
+			syncEnabled = data.sync_enabled;
+
+			// Restore current step from DB (if available and valid)
+			if (data.current_step && data.current_step > 0) {
+				currentStepIdStore.value = data.current_step;
+			}
 		}
 
 		loadingMass = false;
@@ -104,11 +110,21 @@
 		}
 	});
 
-	// Broadcast step changes when admin navigates
+	// Broadcast step changes when admin navigates and update DB
 	$effect(() => {
-		if (browser && syncEnabled && currentStepIdStore.value) {
-			console.log('[Admin] Broadcasting step:', currentStepIdStore.value);
-			realtimeSyncStore.broadcastStep(currentStepIdStore.value);
+		if (browser && currentStepIdStore.value) {
+			const stepId = currentStepIdStore.value;
+
+			// Update DB current_step
+			updateMass(massId, { current_step: stepId }).catch((err) => {
+				console.error('[Admin] Failed to update current_step:', err);
+			});
+
+			// Broadcast to attendees if sync is enabled
+			if (syncEnabled) {
+				console.log('[Admin] Broadcasting step:', stepId);
+				realtimeSyncStore.broadcastStep(stepId);
+			}
 		}
 	});
 
@@ -175,9 +191,28 @@
 		swipeStart = null;
 	}
 
-	function toggleSync() {
-		syncEnabled = !syncEnabled;
-		realtimeSyncStore.setSyncEnabled(syncEnabled);
+	async function toggleSync() {
+		const newSyncEnabled = !syncEnabled;
+
+		// Update DB
+		const { error } = await updateMass(massId, { sync_enabled: newSyncEnabled });
+
+		if (error) {
+			console.error('[Admin View] Failed to update sync_enabled:', error);
+			alert('동기화 설정 변경에 실패했습니다.');
+			return;
+		}
+
+		// Update local state
+		syncEnabled = newSyncEnabled;
+		if (massConfig) {
+			massConfig.sync_enabled = newSyncEnabled;
+		}
+
+		// Update realtime sync store
+		realtimeSyncStore.setSyncEnabled(newSyncEnabled);
+
+		console.log('[Admin View] Sync enabled changed to:', newSyncEnabled);
 	}
 
 	function handleBack() {

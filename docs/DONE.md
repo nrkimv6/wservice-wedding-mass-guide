@@ -1,5 +1,25 @@
 # 완료된 작업 (최근 20개)
 
+## 2026-02-04
+
+### 관리자 동기화 컨트롤 통합 (P1)
+- [x] **SyncControl 컴포넌트 admin 페이지 통합**
+  - [admin/mass/[massId]/+page.svelte](../src/routes/admin/mass/[massId]/+page.svelte)에 통합 완료
+  - [admin/mass/[massId]/view/+page.svelte](../src/routes/admin/mass/[massId]/view/+page.svelte)에도 통합
+
+- [x] **동기화 ON/OFF 시 DB 업데이트**
+  - `toggleSync()` 함수에서 `mass_configurations.sync_enabled` 업데이트
+  - `updateMass()` 서비스 사용하여 DB 저장
+  - 관리 페이지와 관리자 뷰 모두 적용
+  - 로컬 상태와 DB 동기화 보장
+
+- [x] **관리자 단계 이동 시 broadcast**
+  - `$effect`로 `currentStepIdStore` 변경 감지
+  - DB `current_step` 자동 업데이트 (관리자 뷰에서)
+  - `syncEnabled`일 때만 `realtimeSyncStore.broadcastStep()` 호출
+  - 초기 로드 시 DB의 `current_step` 복원
+  - 빌드 확인 완료
+
 ## 2026-01-13
 
 ### Phase 4: Supabase Realtime 동기화
