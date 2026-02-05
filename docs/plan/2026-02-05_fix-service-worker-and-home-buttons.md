@@ -269,12 +269,87 @@ WMG-SW-2 (MassInfoPage → CommonInfoPage)
 | 2 | WMG-SW-2 | `CommonInfoPage.svelte` 생성 + 홈페이지에서 사용 | `src/lib/components/CommonInfoPage.svelte`, `src/routes/+page.svelte` |
 | 3 | WMG-SW-3 | WMG-SW-1 배포 후 검증 | — |
 
-### 체크리스트
+---
 
-- [ ] WMG-SW-1: `static/sw.js` 삭제
-- [ ] WMG-SW-1: `serviceWorker.ts` 등록 경로 `/service-worker.js`로 변경
-- [ ] WMG-SW-1: `src/service-worker.ts`에 `CACHE_MASS_DATA` 핸들러 추가
-- [ ] WMG-SW-2: `CommonInfoPage.svelte` 생성
-- [ ] WMG-SW-2: `+page.svelte`에서 `MassInfoPage` → `CommonInfoPage` 교체
-- [ ] WMG-SW-3: 배포 후 브라우저 캐시 초기화 검증
-- [ ] 빌드 확인 (`npm run build`)
+## 세부 체크리스트 (원자 단위)
+
+### WMG-SW-1: Service Worker 통합 (3개 파일)
+
+#### 1-1. `static/sw.js` 삭제
+
+- [ ] `static/sw.js` 파일 삭제 (105행 전체)
+- [ ] 삭제 확인: `static/` 폴더에 `sw.js`가 없는 것을 확인
+
+#### 1-2. `src/lib/utils/serviceWorker.ts` 등록 경로 변경
+
+- [ ] 14행: `'/sw.js'` → `'/service-worker.js'`로 변경
+  - 변경 전: `navigator.serviceWorker.register('/sw.js')`
+  - 변경 후: `navigator.serviceWorker.register('/service-worker.js')`
+- [ ] 다른 부분은 수정하지 않음 (나머지 코드는 `CACHE_MASS_DATA` 메시지 전송 로직이며 SW 경로와 무관)
+
+#### 1-3. `src/service-worker.ts`에 `CACHE_MASS_DATA` 핸들러 추가
+
+- [ ] 65~68행의 기존 `message` 이벤트 리스너 찾기 (`SKIP_WAITING`만 처리 중)
+- [ ] `SKIP_WAITING` 분기 아래에 `CACHE_MASS_DATA` 분기 추가 (계획서 상단 코드 블록 참고)
+  - `event.data.type === 'CACHE_MASS_DATA'` 조건 추가
+  - `event.data`에서 `massId`, `massData` 구조분해
+  - `caches.open(CACHE)` 호출 (4행에 정의된 `CACHE` 상수 사용)
+  - `new Response(JSON.stringify(massData))` 생성 후 `cache.put()` 호출
+  - 캐시 키: `/api/mass/${massId}`
+- [ ] `CACHE` 변수가 이미 4행에 `const CACHE = 'cache-${version}'`으로 선언되어 있는지 확인 (새로 만들지 않기)
+
+---
+
+### WMG-SW-2: 공통앱 Info 페이지 교체 (2개 파일)
+
+#### 2-1. `CommonInfoPage.svelte` 신규 생성
+
+- [ ] `src/lib/components/CommonInfoPage.svelte` 파일 생성 (계획서 상단 코드 블록 참고)
+- [ ] Props 인터페이스: `onClose: () => void` 만 필요 (`massConfig` 불필요)
+- [ ] `$props()`로 `onClose` 받기
+- [ ] 최외곽: `fixed inset-0 z-50` 오버레이 (`MassInfoPage.svelte`와 동일한 레이아웃 구조)
+- [ ] 배경 클릭 시 `onClose` 호출 (최외곽 `div`에 `onclick={onClose}`)
+- [ ] 내부 모달: `bg-background rounded-lg shadow-xl max-w-[500px]` (기존 `MassInfoPage`와 동일한 스타일)
+- [ ] 내부 모달 클릭 시 이벤트 전파 차단: `onclick={(e) => e.stopPropagation()}`
+- [ ] 상단 헤더: 제목 "혼배미사 안내" + X 닫기 버튼 (`lucide-svelte`의 `X` 아이콘 import)
+- [ ] 본문: 앱 설명 텍스트 + 사용 방법 안내 (`ul` 리스트)
+  - 스와이프/화살표로 단계 이동
+  - +/- 버튼으로 글자 크기 조절
+  - ☰ 버튼으로 목차 열기
+  - ⚙ 버튼으로 테마 변경
+- [ ] 접근성 속성: `role="dialog"`, `aria-modal="true"`, 닫기 버튼에 `aria-label="닫기"`
+
+#### 2-2. `src/routes/+page.svelte` import 교체
+
+- [ ] 14행의 `MassInfoPage` import 문 찾기:
+  `import MassInfoPage from '$lib/components/MassInfoPage.svelte';`
+- [ ] `CommonInfoPage` import로 **교체** (MassInfoPage import은 삭제):
+  `import CommonInfoPage from '$lib/components/CommonInfoPage.svelte';`
+
+#### 2-3. `src/routes/+page.svelte` 컴포넌트 사용부 교체
+
+- [ ] 281~283행의 기존 코드 찾기:
+  `{#if showInfo}` → `<MassInfoPage onClose=...` → `{/if}`
+- [ ] `MassInfoPage` → `CommonInfoPage`로 변경
+- [ ] `massConfig` prop 전달하지 않음 (이미 안 하고 있었음, 그대로 유지)
+- [ ] `onClose={() => (showInfo = false)}` 핸들러는 그대로 유지
+
+---
+
+### WMG-SW-3: 배포 후 검증 (코드 수정 없음)
+
+#### 3-1. 빌드 확인
+
+- [ ] `npm run build` 실행하여 빌드 오류 없는지 확인
+- [ ] 빌드 출력에서 `service-worker.js` 파일이 생성되는지 확인
+
+#### 3-2. 배포 후 브라우저 검증
+
+- [ ] `https://wedding-mass-guide.woory.day/` 접속
+- [ ] DevTools → Application → Service Workers 에서 기존 SW 모두 Unregister
+- [ ] 새로고침 후 콘솔에서 SW 설치 성공 확인 (에러 없어야 함)
+- [ ] Info(ℹ) 버튼 클릭 → `CommonInfoPage` 표시, `church_name` 에러 없음 확인
+- [ ] 목차(☰) 버튼 클릭 → 목차 오버레이 열림 확인
+- [ ] 글자 축소(-) 버튼 클릭 → 글자 크기 줄어듦 확인
+- [ ] 글자 확대(+) 버튼 클릭 → 글자 크기 커짐 확인
+- [ ] 콘솔에 `TypeError` 또는 `Uncaught` 에러가 없는지 확인
