@@ -11,7 +11,7 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
 	}
 
 	try {
-		const registration = await navigator.serviceWorker.register('/sw.js');
+		const registration = await navigator.serviceWorker.register('/service-worker.js');
 		debugLog('SW', 'Service Worker registered:', registration);
 
 		// Handle updates

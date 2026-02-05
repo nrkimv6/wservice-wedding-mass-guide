@@ -66,4 +66,14 @@ self.addEventListener('message', (event) => {
 	if (event.data && event.data.type === 'SKIP_WAITING') {
 		self.skipWaiting();
 	}
+
+	if (event.data && event.data.type === 'CACHE_MASS_DATA') {
+		const { massId, massData } = event.data;
+		caches.open(CACHE).then((cache) => {
+			const response = new Response(JSON.stringify(massData), {
+				headers: { 'Content-Type': 'application/json' }
+			});
+			cache.put(`/api/mass/${massId}`, response);
+		});
+	}
 });
