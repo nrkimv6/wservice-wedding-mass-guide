@@ -1,5 +1,6 @@
 import { supabase } from '$lib/services/supabase';
 import type { RealtimeChannel } from '@supabase/supabase-js';
+import { debugLog } from '$lib/utils/debug';
 
 interface SyncState {
 	connected: boolean;
@@ -45,13 +46,13 @@ class RealtimeSyncStore {
 				}
 			})
 			.on('presence', { event: 'join' }, ({ key, newPresences }) => {
-				console.log('[Realtime] User joined:', key, newPresences);
+				debugLog('Realtime', 'User joined:', key, newPresences);
 			})
 			.on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-				console.log('[Realtime] User left:', key, leftPresences);
+				debugLog('Realtime', 'User left:', key, leftPresences);
 			})
 			.subscribe(async (status) => {
-				console.log('[Realtime] Subscription status:', status);
+				debugLog('Realtime', 'Subscription status:', status);
 
 				if (status === 'SUBSCRIBED') {
 					this.state.connected = true;
@@ -73,7 +74,7 @@ class RealtimeSyncStore {
 	// Disconnect from channel
 	disconnect() {
 		if (this.channel) {
-			console.log('[Realtime] Disconnecting...');
+			debugLog('Realtime', 'Disconnecting...');
 			supabase.removeChannel(this.channel);
 			this.channel = null;
 			this.state.connected = false;
@@ -104,7 +105,7 @@ class RealtimeSyncStore {
 		}
 
 		this.channel.on('broadcast', { event: 'step_change' }, ({ payload }) => {
-			console.log('[Realtime] Received step change:', payload.step);
+			debugLog('Realtime', 'Received step change:', payload.step);
 			callback(payload.step);
 		});
 

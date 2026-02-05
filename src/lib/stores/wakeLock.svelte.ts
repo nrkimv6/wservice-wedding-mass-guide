@@ -1,4 +1,5 @@
 import { browser } from '$app/environment';
+import { debugLog } from '$lib/utils/debug';
 
 /**
  * Wake Lock store to prevent screen from turning off during mass
@@ -29,7 +30,7 @@ class WakeLockStore {
 				this.isActive = false;
 			});
 
-			console.log('Wake Lock is active');
+			debugLog('WakeLock', 'Wake Lock is active');
 		} catch (err) {
 			console.error('Failed to acquire wake lock:', err);
 			this.isActive = false;
@@ -41,7 +42,7 @@ class WakeLockStore {
 			await this.wakeLock.release();
 			this.wakeLock = null;
 			this.isActive = false;
-			console.log('Wake Lock released');
+			debugLog('WakeLock', 'Wake Lock released');
 		}
 	}
 

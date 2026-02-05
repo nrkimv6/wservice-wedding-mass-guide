@@ -43,7 +43,7 @@ export interface MassConfiguration {
   alleluia_enabled: boolean;
 
   // 설정
-  theme: 'ivory-gold' | 'white-rose' | 'cathedral' | 'sage';
+  theme: 'ivory-gold' | 'white-rose' | 'cathedral' | 'sage' | 'dark';
   view_mode: 'detailed' | 'merged';
 
   // 실시간 동기화

@@ -2,15 +2,17 @@
  * Service Worker registration and management utilities
  */
 
+import { debugLog } from './debug';
+
 export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
 	if (!('serviceWorker' in navigator)) {
-		console.log('Service Worker not supported');
+		debugLog('SW', 'Service Worker not supported');
 		return null;
 	}
 
 	try {
 		const registration = await navigator.serviceWorker.register('/sw.js');
-		console.log('[SW] Service Worker registered:', registration);
+		debugLog('SW', 'Service Worker registered:', registration);
 
 		// Handle updates
 		registration.addEventListener('updatefound', () => {
@@ -20,7 +22,7 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
 			newWorker.addEventListener('statechange', () => {
 				if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
 					// New service worker available
-					console.log('[SW] New version available');
+					debugLog('SW', 'New version available');
 				}
 			});
 		});
@@ -41,7 +43,7 @@ export async function unregisterServiceWorker(): Promise<boolean> {
 		const registration = await navigator.serviceWorker.getRegistration();
 		if (registration) {
 			await registration.unregister();
-			console.log('[SW] Service Worker unregistered');
+			debugLog('SW', 'Service Worker unregistered');
 			return true;
 		}
 		return false;
@@ -64,7 +66,7 @@ export async function cacheMassData(massId: string, massData: any): Promise<void
 				massId,
 				massData
 			});
-			console.log('[SW] Mass data cache request sent:', massId);
+			debugLog('SW', 'Mass data cache request sent:', massId);
 		}
 	} catch (error) {
 		console.error('[SW] Failed to cache mass data:', error);
@@ -79,7 +81,7 @@ export async function clearAllCaches(): Promise<void> {
 	try {
 		const cacheNames = await caches.keys();
 		await Promise.all(cacheNames.map((name) => caches.delete(name)));
-		console.log('[SW] All caches cleared');
+		debugLog('SW', 'All caches cleared');
 	} catch (error) {
 		console.error('[SW] Failed to clear caches:', error);
 	}

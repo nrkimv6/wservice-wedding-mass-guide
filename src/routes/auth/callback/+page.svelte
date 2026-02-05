@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { supabase } from '$lib/services/supabase';
+  import { debugLog } from '$lib/utils/debug';
 
   let status = $state<'loading' | 'success' | 'error'>('loading');
   let errorMessage = $state('');
@@ -25,7 +26,7 @@
 
       // Kakao: setSession 사용 (Worker에서 세션 생성됨)
       if (supabaseAccessToken && supabaseRefreshToken) {
-        console.log('[Auth Callback] Using Supabase tokens (Kakao)');
+        debugLog('Auth Callback', 'Using Supabase tokens (Kakao)');
         const { error: sessionError } = await supabase.auth.setSession({
           access_token: supabaseAccessToken,
           refresh_token: supabaseRefreshToken
@@ -35,7 +36,7 @@
       }
       // Google: signInWithIdToken 사용
       else if (provider === 'google' && idToken && accessToken) {
-        console.log('[Auth Callback] Using signInWithIdToken (Google)');
+        debugLog('Auth Callback', 'Using signInWithIdToken (Google)');
         const { error: signInError } = await supabase.auth.signInWithIdToken({
           provider: 'google',
           token: idToken,

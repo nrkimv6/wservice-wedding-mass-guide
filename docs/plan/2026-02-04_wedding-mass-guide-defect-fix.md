@@ -717,20 +717,20 @@ debugLog('Admin', 'Broadcasting step:', stepId);
 | 4 | WMG-3 | ThemeSelector prop 이름 수정 | ✅ 완료 |
 | 5 | WMG-4 | TableOfContents prop 이름 수정 | ✅ 완료 |
 
-### Phase 2: MEDIUM (조기 수정)
+### Phase 2: MEDIUM (조기 수정) - ✅ 완료 (2026-02-05)
 
-| 순서 | ID | 작업 | 예상 소요 |
-|------|----|------|----------|
-| 6 | WMG-8 | mass.ts에 'dark' 테마 추가 | 5분 (DB 확인 포함) |
-| 7 | WMG-6 | MassInfoPage에 massConfig 연동 | 15분 |
-| 8 | WMG-7 | 편집 버튼 구현 또는 비활성화 | 5~30분 (방안에 따라) |
+| 순서 | ID | 작업 | 상태 |
+|------|----|------|------|
+| 6 | WMG-8 | mass.ts에 'dark' 테마 추가 | ✅ 완료 |
+| 7 | WMG-6 | MassInfoPage에 massConfig 연동 | ✅ 완료 |
+| 8 | WMG-7 | 편집 버튼 구현 (QuickEditModal 활용) | ✅ 완료 |
 
-### Phase 3: LOW (다음 릴리즈)
+### Phase 3: LOW (다음 릴리즈) - ✅ 완료 (2026-02-05)
 
-| 순서 | ID | 작업 | 예상 소요 |
-|------|----|------|----------|
-| 9 | WMG-9 | 관리자 이메일 환경 변수 이전 | 10분 |
-| 10 | WMG-10 | console.log 정리 | 15분 |
+| 순서 | ID | 작업 | 상태 |
+|------|----|------|------|
+| 9 | WMG-9 | 관리자 이메일 환경 변수 이전 | ✅ 완료 |
+| 10 | WMG-10 | console.log 정리 (debugLog 유틸리티) | ✅ 완료 |
 
 ---
 

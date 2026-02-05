@@ -11,6 +11,7 @@
 	import { realtimeSyncStore } from '$lib/stores/realtimeSync.svelte';
 	import { getMass, updateMass } from '$lib/services/massService';
 	import type { MassConfiguration } from '$lib/types/mass';
+	import { debugLog } from '$lib/utils/debug';
 	import Header from '$lib/components/Header.svelte';
 	import StepCard from '$lib/components/StepCard.svelte';
 	import TableOfContents from '$lib/components/TableOfContents.svelte';
@@ -122,7 +123,7 @@
 
 			// Broadcast to attendees if sync is enabled
 			if (syncEnabled) {
-				console.log('[Admin] Broadcasting step:', stepId);
+				debugLog('Admin', 'Broadcasting step:', stepId);
 				realtimeSyncStore.broadcastStep(stepId);
 			}
 		}
@@ -212,7 +213,7 @@
 		// Update realtime sync store
 		realtimeSyncStore.setSyncEnabled(newSyncEnabled);
 
-		console.log('[Admin View] Sync enabled changed to:', newSyncEnabled);
+		debugLog('Admin View', 'Sync enabled changed to:', newSyncEnabled);
 	}
 
 	function handleBack() {

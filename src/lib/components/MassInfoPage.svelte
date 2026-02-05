@@ -1,33 +1,29 @@
 <script lang="ts">
 	import { X } from 'lucide-svelte';
+	import type { MassConfiguration } from '$lib/types/mass';
 
 	interface Props {
+		massConfig: MassConfiguration;
 		onClose: () => void;
 	}
 
-	let { onClose }: Props = $props();
+	let { massConfig, onClose }: Props = $props();
 
-	// Mock data - 추후 실제 데이터로 교체 예정
-	const massInfo = {
-		churchName: '명동대성당',
-		date: '2026년 2월 14일 (토)',
-		time: '14:00',
-		groomName: '홍길동',
-		brideName: '김영희',
-		celebrantName: '김바오로 신부',
-		liturgicalSeason: 'lent', // 'ordinary' | 'advent' | 'lent' | 'easter'
-		hymns: {
-			entrance: { number: '152', title: '다함께 노래해', page: '87' },
-			responsorial: '주보 참조',
-			offertory: { number: '234', title: '주님께 드리는', page: '142' },
-			communion: [
-				{ number: '312', title: '생명의 빵', page: '189' },
-				{ number: '415', title: '주님의 사랑', page: '245' }
-			],
-			recessional: { number: '401', title: '기쁜 소식', page: '231' },
-			wedding: null // 축가 없음
-		}
-	};
+	const massInfo = $derived({
+		churchName: massConfig.church_name,
+		date: new Date(massConfig.date).toLocaleDateString('ko-KR', {
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric',
+			weekday: 'short'
+		}),
+		time: massConfig.time,
+		groomName: massConfig.groom_name,
+		brideName: massConfig.bride_name,
+		celebrantName: massConfig.celebrant_name || '',
+		liturgicalSeason: massConfig.liturgical_season,
+		hymns: massConfig.hymns
+	});
 
 	const liturgicalSeasonLabel = {
 		ordinary: '연중시기',

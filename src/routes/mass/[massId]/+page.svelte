@@ -392,8 +392,8 @@
 		{/if}
 
 		<!-- Mass info page overlay -->
-		{#if showInfo}
-			<MassInfoPage onClose={() => (showInfo = false)} />
+		{#if showInfo && massConfig}
+			<MassInfoPage {massConfig} onClose={() => (showInfo = false)} />
 		{/if}
 	</div>
 {/if}

@@ -7,8 +7,10 @@
 	import { getMass, updateMass } from '$lib/services/massService';
 	import { isSuperAdmin } from '$lib/services/analyticsService';
 	import type { MassConfiguration } from '$lib/types/mass';
+	import { debugLog } from '$lib/utils/debug';
 	import SyncControl from '$lib/components/SyncControl.svelte';
 	import MassAnalytics from '$lib/components/MassAnalytics.svelte';
+	import QuickEditModal from '$lib/components/QuickEditModal.svelte';
 	import { realtimeSyncStore } from '$lib/stores/realtimeSync.svelte';
 
 	const massId = $derived($page.params.massId);
@@ -26,6 +28,9 @@
 
 	// Admin permissions
 	let isAdmin = $state(false);
+
+	// Quick edit modal state
+	let showQuickEdit = $state(false);
 
 	onMount(async () => {
 		// Check admin permissions
@@ -91,8 +96,25 @@
 	}
 
 	function editMass() {
-		// TODO: Implement edit mode
-		alert('편집 기능은 곧 추가됩니다');
+		showQuickEdit = true;
+	}
+
+	async function handleQuickSave(updated: Partial<MassConfiguration>) {
+		if (!massData) return;
+
+		const { error: updateError } = await updateMass(massId, updated);
+		if (updateError) {
+			console.error('Failed to update mass:', updateError);
+			return;
+		}
+
+		// Refresh mass data
+		const { data } = await getMass(massId);
+		if (data) {
+			massData = data;
+		}
+
+		showQuickEdit = false;
 	}
 
 	function handleBack() {
@@ -120,7 +142,7 @@
 		// Update realtime sync store
 		realtimeSyncStore.setSyncEnabled(newSyncEnabled);
 
-		console.log('[Admin] Sync enabled changed to:', newSyncEnabled);
+		debugLog('Admin', 'Sync enabled changed to:', newSyncEnabled);
 	}
 
 	function startMass() {
@@ -322,5 +344,14 @@
 			</div>
 		</section>
 	</main>
+
+	<!-- Quick Edit Modal -->
+	{#if showQuickEdit && massData}
+		<QuickEditModal
+			massConfig={massData}
+			onClose={() => (showQuickEdit = false)}
+			onSave={handleQuickSave}
+		/>
+	{/if}
 	{/if}
 </div>

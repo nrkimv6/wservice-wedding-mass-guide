@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { env } from '$env/dynamic/public';
 
 /**
  * Generate or retrieve a visitor ID for analytics
@@ -122,11 +123,13 @@ export async function isSuperAdmin(): Promise<boolean> {
 			return false;
 		}
 
-		// Check if user email matches the fixed admin account
-		// TODO: Replace with actual admin email from environment variable
-		const ADMIN_EMAIL = 'orangepie2236@gmail.com'; // Replace with actual admin email
+		const adminEmail = env.PUBLIC_ADMIN_EMAIL;
+		if (!adminEmail) {
+			console.warn('[Analytics] ADMIN_EMAIL not configured');
+			return false;
+		}
 
-		return user.email === ADMIN_EMAIL;
+		return user.email === adminEmail;
 	} catch (error) {
 		console.error('[Analytics] Failed to check admin status:', error);
 		return false;
