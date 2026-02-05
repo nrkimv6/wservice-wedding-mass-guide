@@ -11,7 +11,7 @@
 	import TableOfContents from '$lib/components/TableOfContents.svelte';
 	import IntroScreen, { type ViewMode } from '$lib/components/IntroScreen.svelte';
 	import ThemeSelector, { type ThemeOption } from '$lib/components/ThemeSelector.svelte';
-	import MassInfoPage from '$lib/components/MassInfoPage.svelte';
+	import CommonInfoPage from '$lib/components/CommonInfoPage.svelte';
 	import AnnouncementBanner from '$lib/components/AnnouncementBanner.svelte';
 
 	// Persisted state
@@ -279,7 +279,7 @@
 
 		<!-- Mass info page overlay -->
 		{#if showInfo}
-			<MassInfoPage onClose={() => (showInfo = false)} />
+			<CommonInfoPage onClose={() => (showInfo = false)} />
 		{/if}
 	</div>
 {/if}
