@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install:*)",
+      "Bash(tasklist:*)",
+      "Bash(findstr:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git pull:*)",
+      "Bash(git fetch:*)",
+      "Bash(git merge:*)",
+      "Bash(git rebase:*)",
+      "Bash(git reset:*)",
+      "Bash(git revert:*)",
+      "Bash(git cherry-pick:*)",
+      "Bash(git branch:*)",
+      "Bash(pwsh -File:*)",
+      "Bash(ls:*)",
+      "Bash(Select-String -Pattern \"instagram|error|failed|exception\" -Context 0,2)",
+      "Skill(implement)",
+      "Skill(implement:*)",
+      "Bash(dir:*)",
+      "Bash(Get-ChildItem -Path \"D:\\\\work\\\\project\\\\service\\\\wtools\\\\common\\\\docs\" -Recurse)",
+      "Bash(Select-Object FullName, PSIsContainer)",
+      "Bash(commit *)"
+    ],
+    "deny": [
+      "Bash(git commit *)",
+      "Bash(git commit:*)"
+    ],
+    "ask": []
+  }
+}
