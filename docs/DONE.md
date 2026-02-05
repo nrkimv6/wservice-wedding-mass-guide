@@ -1,5 +1,13 @@
 # 완료된 작업 (최근 20개)
 
+## 2026-02-06
+
+### 공통앱(홈) Service Worker + 버튼 결함 수정 (23/23)
+- [x] **WMG-SW-1: Service Worker 통합** — static/sw.js 제거, SvelteKit 내장 SW 사용
+- [x] **WMG-SW-2: CommonInfoPage 교체** — MassInfoPage → CommonInfoPage (massConfig 불필요)
+- [x] **WMG-SW-3: 상단 버튼 동작 검증** — 수동 검증은 [MANUAL_TASKS.md](../MANUAL_TASKS.md) 참조
+- [x] **완료** — [archive](archive/2026-02-05_fix-service-worker-and-home-buttons.md)
+
 ## 2026-02-04
 
 ### Admin View CRITICAL 결함 5건 수정 (WMG-1~5)
