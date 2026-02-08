@@ -1,6 +1,8 @@
 import { supabase } from '$lib/services/supabase';
 import { AUTH_WORKER_URL, APP_ID } from '$lib/config';
 import type { User } from '@supabase/supabase-js';
+import { realtimeSyncStore } from './realtimeSync.svelte';
+import { wakeLockStore } from './wakeLock.svelte';
 
 class AuthStore {
   user = $state<User | null>(null);
@@ -13,8 +15,15 @@ class AuthStore {
       this.user = session?.user ?? null;
 
       // 세션 변경 감지
-      supabase.auth.onAuthStateChange((_event, session) => {
-        this.user = session?.user ?? null;
+      supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_OUT') {
+          // Realtime 연결 및 Wake Lock 해제
+          realtimeSyncStore.disconnect();
+          wakeLockStore.disable();
+          this.user = null;
+        } else {
+          this.user = session?.user ?? null;
+        }
       });
     } finally {
       this.loading = false;
