@@ -1,5 +1,8 @@
 # wedding-mass-guide 결함 수정 계획서
 
+> 상태: 완료
+> 세부계획: 검토됨
+
 ## 개요
 
 | 항목 | 내용 |
@@ -7,7 +10,8 @@
 | 프로젝트 | wedding-mass-guide |
 | 감사일 | 2026-02-04 |
 | 감사 범위 | Admin View 페이지, 컴포넌트 인터페이스 정합성, 타입 안전성 |
-| 결함 총계 | **CRITICAL: 5건**, **MEDIUM: 3건**, **LOW: 2건** |
+| 1차 결함 총계 | **CRITICAL: 5건**, **MEDIUM: 3건**, **LOW: 2건** (2026-02-04 감사, 전체 완료) |
+| 2차 결함 총계 | **HIGH: 1건**, **MEDIUM: 3건**, **LOW: 4건** (2026-02-09 재감사, 미수정) |
 
 ### 심각도 기준
 
@@ -739,3 +743,396 @@ debugLog('Admin', 'Broadcasting step:', stepId);
 - **WMG-1~4 공통 원인**: Admin View 페이지가 하객용 페이지(`mass/[massId]/+page.svelte`)를 참고하여 만들어졌으나, 컴포넌트 인터페이스를 확인하지 않고 임의의 prop 이름을 사용한 것으로 추정. 하객용 페이지에서는 모든 prop이 올바르게 전달되고 있으므로, 이를 참조하여 수정하면 됨.
 - **Svelte 5 `$props()` 특성**: 잘못된 prop 이름이 전달되면 무시되고 에러 없이 `undefined`가 됨. TypeScript strict 모드에서도 컴포넌트 호출 시 타입 체크가 완전하지 않을 수 있으므로, 빌드 타임에 감지되지 않았을 가능성 있음.
 - **테스트 방법**: `npm run build` 후 `npm run preview`로 프로덕션 빌드 확인, 또는 `npm run dev`로 개발 서버에서 직접 Admin View 기능 테스트.
+
+---
+
+## 추가 발견 결함 (2026-02-09 코드베이스 재감사)
+
+> 감사일: 2026-02-09
+> 감사 범위: 전체 코드베이스 (서비스, 스토어, 컴포넌트, 타입, 빌드 설정)
+> 추가 결함: **HIGH: 1건**, **MEDIUM: 3건**, **LOW: 4건**
+
+---
+
+## WMG-11: massService에서 announcements 필드 누락 (HIGH)
+
+### 현상
+
+`MassConfiguration` 타입에 `announcements: Announcement[]` 필드가 정의되어 있고, 하객용 페이지에서 `AnnouncementBanner`로 표시하고 있지만, `massService.ts`의 CRUD 함수들이 이 필드를 **완전히 무시**함. DB에서 읽기/쓰기/매핑 어디에서도 `announcements`를 처리하지 않아 **공지사항 데이터가 항상 누락됨**.
+
+### 파일 위치
+
+- **서비스**: `src\lib\services\massService.ts` (25~41행 createMass, 118~133행 updateMass, 179~200행 rowToMassConfig)
+- **타입**: `src\lib\types\mass.ts` (`announcements: Announcement[]`)
+- **DB 타입**: `src\lib\types\database.ts` (Row/Insert/Update에 `announcements` 컬럼 미정의)
+
+### 문제 분석
+
+| 함수 | 문제 |
+|------|------|
+| `createMass()` | `insertData`에 `announcements` 미포함 -- 생성 시 공지사항 저장 안됨 |
+| `updateMass()` | `data.announcements` 체크 없음 -- 공지사항 업데이트 불가 |
+| `rowToMassConfig()` | `row.announcements` 매핑 없음 -- DB에서 읽어도 누락 |
+
+### 수정 방안
+
+**1단계: DB 타입 확인 (선행 조건)**
+
+먼저 Supabase DB에 `announcements` 컬럼이 존재하는지 확인 필요:
+
+```powershell
+# Supabase CLI로 최신 DB 타입 생성
+npx supabase gen types typescript --project-id qxiuqztinabmdhclxsuz > src\lib\types\database.ts
+```
+
+**2단계-A: DB에 announcements 컬럼이 있는 경우**
+
+`database.ts` Row/Insert/Update에 `announcements` 추가 후:
+
+```typescript
+// massService.ts - createMass() insertData에 추가
+announcements: data.announcements ? JSON.stringify(data.announcements) : '[]',
+
+// massService.ts - updateMass() 조건 추가
+if (data.announcements !== undefined) updateData.announcements = data.announcements;
+
+// massService.ts - rowToMassConfig() 매핑 추가
+announcements: Array.isArray(row.announcements)
+    ? (row.announcements as unknown as Announcement[])
+    : JSON.parse((row.announcements as string) || '[]'),
+```
+
+**2단계-B: DB에 announcements 컬럼이 없는 경우**
+
+`hymns` 컬럼처럼 JSON 필드로 추가하는 마이그레이션 필요:
+
+```sql
+ALTER TABLE mass_configurations
+ADD COLUMN announcements jsonb DEFAULT '[]'::jsonb;
+```
+
+### 테스트 기준
+
+- [ ] 미사 생성 시 공지사항이 DB에 저장되는지 확인
+- [ ] 미사 조회 시 `massConfig.announcements`에 데이터가 있는지 확인
+- [ ] 하객용 페이지에서 `AnnouncementBanner`에 실제 공지사항 표시 확인
+- [ ] 공지사항 업데이트 후 변경사항 유지 확인
+
+---
+
+## WMG-12: IntroScreen 중복 onStart/onstart Prop (MEDIUM)
+
+### 현상
+
+`IntroScreen` 컴포넌트에 동일한 기능의 prop이 두 가지 이름으로 존재: `onStart`(camelCase)와 `onstart`(lowercase). 우선순위가 `onstart || onStart`로 되어 있어 lowercase가 우선됨. Svelte 5에서는 prop 이름이 대소문자 구분되므로 혼란을 야기함.
+
+### 파일 위치
+
+- **컴포넌트**: `src\lib\components\IntroScreen.svelte` (15~17행, 23행, 26행)
+
+### 현재 코드 (혼란)
+
+```typescript
+interface Props {
+    onStart?: () => void;
+    onstart?: () => void;  // lowercase variant for compatibility
+    viewMode?: ViewMode;
+    onViewModeChange?: (mode: ViewMode) => void;
+    massInfo?: MassInfo;
+}
+
+let { onStart, onstart, viewMode, onViewModeChange, massInfo }: Props = $props();
+
+const startHandler = onstart || onStart || (() => {});
+```
+
+### 수정 코드
+
+```typescript
+interface Props {
+    onStart?: () => void;
+    viewMode?: ViewMode;
+    onViewModeChange?: (mode: ViewMode) => void;
+    massInfo?: MassInfo;
+}
+
+let { onStart, viewMode, onViewModeChange, massInfo }: Props = $props();
+
+const startHandler = onStart || (() => {});
+```
+
+### 호출부 확인
+
+| 호출 위치 | 전달 prop | 상태 |
+|-----------|-----------|------|
+| `src\routes\+page.svelte` | `onStart={handleStart}` | OK (camelCase 사용) |
+| `src\routes\mass\[massId]\+page.svelte` | `onStart={handleStart}` | OK (camelCase 사용) |
+
+모든 호출부가 `onStart`(camelCase)를 사용하므로 `onstart` 삭제 시 영향 없음.
+
+### 테스트 기준
+
+- [ ] 하객용 페이지에서 "미사 시작하기" 버튼 정상 동작 확인
+- [ ] 루트 페이지에서 "미사 시작하기" 버튼 정상 동작 확인
+- [ ] TypeScript 빌드 에러 없음 확인
+
+---
+
+## WMG-13: SyncStatusBanner 이모지 혼동 (MEDIUM)
+
+### 현상
+
+`SyncStatusBanner`에서 동기화 연결 성공 상태(`connected=true`)일 때 빨간 원 이모지(`🔴`)를 사용함. 배경색은 녹색(`bg-green-100`)이고 아이콘도 녹색 `animate-pulse`인데, 텍스트에 빨간 원이 있어 시각적 혼동 발생. 사용자가 에러 상태로 오인할 수 있음.
+
+### 파일 위치
+
+- **컴포넌트**: `src\lib\components\SyncStatusBanner.svelte` (21행)
+
+### 현재 코드 (혼동)
+
+```svelte
+<span class="text-sm text-green-900 font-medium">
+    🔴 관리자와 동기화 중
+</span>
+```
+
+### 수정 코드
+
+```svelte
+<span class="text-sm text-green-900 font-medium">
+    🟢 관리자와 동기화 중
+</span>
+```
+
+### 테스트 기준
+
+- [ ] 동기화 연결 성공 시 녹색 원 이모지 표시 확인
+- [ ] 에러 상태와 시각적으로 명확히 구분되는지 확인
+
+---
+
+## WMG-14: database.ts 수동 타입 - announcements 컬럼 누락 (MEDIUM)
+
+### 현상
+
+`database.ts`가 수동으로 작성된 간소화 버전으로, Supabase CLI로 자동 생성되지 않음. `mass_configurations` 테이블의 Row/Insert/Update 타입에 `announcements` 컬럼이 누락되어 있어 `massService.ts`에서 해당 필드에 접근할 때 타입 에러 발생.
+
+### 파일 위치
+
+- **파일**: `src\lib\types\database.ts`
+
+### 현재 코드
+
+파일 상단 주석에 이미 자동 생성 명령어가 안내되어 있음:
+
+```typescript
+// This is a simplified version - you can generate full types using Supabase CLI:
+// npx supabase gen types typescript --project-id qxiuqztinabmdhclxsuz > src/lib/types/database.ts
+```
+
+### 수정 방안
+
+Supabase CLI를 사용하여 최신 DB 스키마를 반영한 타입을 자동 생성:
+
+```powershell
+npx supabase gen types typescript --project-id qxiuqztinabmdhclxsuz > src\lib\types\database.ts
+```
+
+또는 수동으로 `announcements` 컬럼 추가:
+
+```typescript
+// Row에 추가
+announcements: Json
+
+// Insert에 추가
+announcements?: Json
+
+// Update에 추가
+announcements?: Json
+```
+
+### 테스트 기준
+
+- [ ] TypeScript 빌드 시 `row.announcements` 접근에 타입 에러 없음
+- [ ] `MassConfigInsert`에 `announcements` 필드가 허용되는지 확인
+
+---
+
+## WMG-15: Admin View에서 SyncControl import 미사용 (LOW)
+
+### 현상
+
+Admin View 페이지(`view/+page.svelte`)에서 `SyncControl` 컴포넌트를 import하지만 템플릿에서 사용하지 않음. 동기화 토글 UI를 인라인으로 직접 구현하고 있어 dead import 상태.
+
+### 파일 위치
+
+- **파일**: `src\routes\admin\mass\[massId]\view\+page.svelte` (20행)
+
+### 현재 코드
+
+```typescript
+import SyncControl from '$lib/components/SyncControl.svelte';  // 미사용
+```
+
+### 수정 방안
+
+**방안 A: import 제거 (최소 수정)**
+
+```typescript
+// 20행의 import 삭제
+```
+
+**방안 B: 인라인 UI를 SyncControl 컴포넌트로 교체 (코드 통일)**
+
+Admin Detail 페이지(`[massId]/+page.svelte` 237~242행)에서는 `SyncControl`을 사용하고 있으므로, Admin View에서도 동일하게 사용하면 코드 일관성이 향상됨.
+
+### 테스트 기준
+
+- [ ] import 제거 후 빌드 에러 없음 확인
+- [ ] 또는 SyncControl로 교체 시 동기화 토글 기능 정상 동작 확인
+
+---
+
+## WMG-16: Admin View wakeLock cleanup 미구현 (LOW)
+
+### 현상
+
+Admin View에서 `wakeLockStore.enable()`을 `$effect`에서 호출하지만, 페이지 이탈 시 `wakeLockStore.disable()`을 호출하지 않음. 하객용 페이지에서는 `visibilitychange` 이벤트 리스너와 함께 cleanup 로직이 구현되어 있음.
+
+### 파일 위치
+
+- **Admin View**: `src\routes\admin\mass\[massId]\view\+page.svelte` (108~112행) - cleanup 없음
+- **하객용 참고**: `src\routes\mass\[massId]\+page.svelte` (141~157행) - cleanup 있음
+
+### 현재 코드 (Admin View)
+
+```typescript
+$effect(() => {
+    if (browser && hasStartedStore.value) {
+        wakeLockStore.enable();
+    }
+});
+```
+
+### 수정 코드
+
+```typescript
+$effect(() => {
+    if (browser && hasStartedStore.value) {
+        wakeLockStore.enable();
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                wakeLockStore.reacquire();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            wakeLockStore.disable();
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }
+});
+```
+
+### 테스트 기준
+
+- [ ] Admin View에서 다른 탭으로 전환 후 복귀 시 wake lock 재획득 확인
+- [ ] Admin View 페이지 이탈 시 wake lock 해제 확인
+
+---
+
+## WMG-17: massService.ts rowToMassConfig `as any` 캐스팅 (LOW)
+
+### 현상
+
+`rowToMassConfig` 함수에서 `hymns`, `liturgical_season`, `theme`, `view_mode` 필드에 `as any` 타입 캐스팅을 사용. 타입 안전성을 우회하여 런타임 타입 불일치를 감지하지 못함.
+
+### 파일 위치
+
+- **파일**: `src\lib\services\massService.ts` (189~194행)
+
+### 현재 코드
+
+```typescript
+hymns: (row.hymns as any) || {},
+liturgical_season: (row.liturgical_season as any) || 'ordinary',
+theme: (row.theme as any) || 'ivory-gold',
+view_mode: (row.view_mode as any) || 'detailed',
+```
+
+### 수정 코드
+
+```typescript
+hymns: (row.hymns as unknown as MassConfiguration['hymns']) || {},
+liturgical_season: (row.liturgical_season as MassConfiguration['liturgical_season']) || 'ordinary',
+theme: (row.theme as MassConfiguration['theme']) || 'ivory-gold',
+view_mode: (row.view_mode as MassConfiguration['view_mode']) || 'detailed',
+```
+
+### 테스트 기준
+
+- [ ] TypeScript 빌드 에러 없음 확인
+- [ ] 미사 조회 시 각 필드의 타입이 올바른지 확인
+
+---
+
+## WMG-18: .env.example 파일 미생성 (LOW)
+
+### 현상
+
+`.gitignore`에서 `!.env.example`로 `.env.example` 파일을 추적 허용하고 있지만, 실제 파일이 존재하지 않음. 새 개발자나 fresh clone 시 어떤 환경 변수가 필요한지 참조할 수 없음.
+
+### 파일 위치
+
+- **필요 위치**: 프로젝트 루트 `.env.example`
+
+### 수정 코드
+
+```env
+# Supabase Configuration
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+
+# Auth Worker
+VITE_AUTH_WORKER_URL=https://your-auth-worker.example.com
+
+# App ID
+VITE_APP_ID=wedding-mass
+
+# Admin Configuration
+PUBLIC_ADMIN_EMAIL=admin@example.com
+```
+
+### 테스트 기준
+
+- [ ] `.env.example` 파일이 git에 추적되는지 확인
+- [ ] 모든 필수 환경 변수가 포함되어 있는지 확인
+
+---
+
+## 추가 결함 수정 우선순위
+
+### Phase 4: 추가 결함 (2026-02-09 발견)
+
+| 순서 | ID | 심각도 | 작업 | 상태 |
+|------|----|--------|------|------|
+| 11 | WMG-11 | HIGH | massService announcements 필드 누락 수정 | - [ ] |
+| 12 | WMG-14 | MEDIUM | database.ts 타입 최신화 (WMG-11 선행 조건) | - [ ] |
+| 13 | WMG-12 | MEDIUM | IntroScreen 중복 onstart prop 제거 | - [ ] |
+| 14 | WMG-13 | MEDIUM | SyncStatusBanner 이모지 수정 (🔴→🟢) | - [ ] |
+| 15 | WMG-15 | LOW | Admin View SyncControl 미사용 import 정리 | - [ ] |
+| 16 | WMG-16 | LOW | Admin View wakeLock cleanup 추가 | - [ ] |
+| 17 | WMG-17 | LOW | rowToMassConfig as any 캐스팅 개선 | - [ ] |
+| 18 | WMG-18 | LOW | .env.example 파일 생성 | - [ ] |
+
+### 추가 관찰 사항 (결함은 아니나 참고)
+
+| 항목 | 설명 | 분류 |
+|------|------|------|
+| 테스트 프레임워크 미설정 | `vitest`/`playwright` 미설치, `test` 스크립트 없음. 자동화 회귀 테스트 불가 | 개선 권고 |
+| `@sveltejs/adapter-auto` 미사용 | devDependencies에 존재하나 `adapter-cloudflare` 사용 중. 패키지 정리 권고 | 개선 권고 |
+| `Section` 타입 미export | `massSteps.ts`에서 `sections` 배열을 export하지만 타입은 미export. `TableOfContents`에서 중복 정의 | 개선 권고 |
+| `Admin Detail` toggleSync 변수 섀도잉 | `const { error }` 로컬 변수가 컴포넌트 레벨 `error` state를 섀도잉 (128행). 현재 동작에는 영향 없음 | 코드 품질 |
+| `Admin View` $effect 초기 로드 시 DB 업데이트 | `currentStepIdStore.value` 변경 감지 $effect가 초기 로드에도 실행되어 불필요한 DB write 발생 (115~130행) | 성능 |
