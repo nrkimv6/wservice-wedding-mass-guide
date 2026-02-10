@@ -14,12 +14,14 @@ wtools 하위 폴더들의 git 상태를 확인하고, 완료된 구현은 TODO 
 
 ## 실행 단계
 
-### 1단계: 하위 폴더 git 상태 확인
+### 1단계: 하위 폴더 git 상태 확인 (병렬)
 
-wtools 하위의 모든 git repo 상태를 확인합니다.
+wtools 하위의 모든 git repo 상태를 **병렬로** 확인합니다.
+
+**병렬 실행**: 각 하위 폴더에 대해 **Task 도구(subagent_type=Bash)**를 사용하여 동시에 `git status --short` 실행. 15개 폴더를 동시에 확인하면 순차 대비 ~5배 빠름.
 
 ```powershell
-# 각 하위 폴더에서 git status --short 실행
+# 각 하위 폴더에서 git status --short 실행 (Task 도구로 병렬 호출)
 cd "D:\work\project\service\wtools\{project}"
 git status --short
 ```
@@ -122,6 +124,15 @@ git add .
 - wedding-mass-guide: `fix: ...`
 ```
 
+### 6단계: wtools/TODO.md 동기화
+
+모든 프로젝트 점검 완료 후:
+
+1. wtools/TODO.md 열기
+2. 각 프로젝트의 최신 TODO.md 상태 반영 (In Progress, Pending, 진행률)
+3. 완료된 프로젝트는 "완료 ✅" 섹션으로 이동
+4. "마지막 업데이트" 날짜를 오늘로 갱신
+
 ## 체크리스트
 
 실행 전 확인:
@@ -132,6 +143,7 @@ git add .
 - [ ] TODO.md 업데이트됨
 - [ ] 계획서 진행률 업데이트됨 (해당 시)
 - [ ] 각 repo에서 커밋 완료
+- [ ] **wtools/TODO.md 동기화됨**
 - [ ] git status가 clean 상태
 
 ## 환경

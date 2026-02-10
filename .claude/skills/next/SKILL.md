@@ -18,6 +18,45 @@ TODO, plan, 개선 아이디어에서 다음 작업을 찾아 즉시 구현을 �
    - 고려 요소: 기능 중요도, 사용자 경험 개선, 기술 부채 해결, 의존성
 3. **개선 아이디어** - `common/docs/*improvement*.md` (P0 → P1 순)
 
+## 충돌 방지 메커니즘
+
+### WORKER-ID 생성
+
+각 세션은 고유 WORKER-ID를 생성합니다:
+
+```powershell
+$workerId = "$env:COMPUTERNAME/$((Split-Path -Leaf $PWD))@$(Get-Date -Format 'MMdd-HHmm')"
+# 예: DESKTOP-A/wtools@0208-1430
+```
+
+- PC명 + 프로젝트명 + 시작시간으로 고유 식별
+- 같은 PC, 같은 프로젝트를 여러 경로에 클론해도 시작시간으로 구분
+
+### 진행 중 마킹 형식
+
+```markdown
+- [ ] 미완료 항목                           ← 선택 가능
+- [→DESKTOP-A/wtools@0208-1430] 진행중 항목  ← 다른 세션이 작업 중, 스킵
+- [x] 완료 항목                             ← 스킵
+```
+
+### 스캔 시 처리
+
+**정규식**: `\[→([^\]]+)\]`로 진행 중 항목 매칭
+
+**Stale 판단**: `@MMdd-HHmm` 시작시간이 6시간 이상 경과하면 stale로 판단
+- Stale 항목은 `[→...]` → `[ ]`로 자동 해제
+- 해제된 항목은 선택 가능 (비정상 종료된 세션 자동 정리)
+
+**스캔 로직**:
+1. plan/TODO 파일에서 체크박스 스캔
+2. `[→...]` 패턴 발견 시:
+   - 시작시간 파싱 (`@(\d{4}-\d{4})`)
+   - 현재 시간과 비교하여 6시간 이상이면 stale 판단
+   - stale이면 `[ ]`로 되돌리고 선택 가능
+   - stale 아니면 해당 항목 스킵
+3. `[ ]` 항목만 선택 후보에 포함
+
 ## 실행 단계
 
 ### 1단계: 작업 소스 스캔
@@ -37,6 +76,10 @@ $projects = @("activity-hub", "tool-view", "gentle-words", "screenshot-generator
 - `common/docs/plan/*.md` 파일들 스캔 (공통 계획)
 - `{project}/docs/plan/*.md` 파일들 스캔 (프로젝트별 계획)
 - `[ ]` 또는 `[→TODO]` 상태인 항목 찾기
+- `[→WORKER-ID]` 패턴은 다른 세션이 작업 중이므로 **스킵** (6시간 이상 경과 시 stale로 자동 해제)
+- **상태 필터**: `구현완료`, `보류` 상태의 plan은 스킵. `초안`, `검토대기`, `검토완료`, `구현중`, `수정필요` 상태만 스캔
+- **"상태:" 태그가 없는 plan**도 체크박스(`[ ]`) 존재 여부로 미완료 판단
+- `_todo.md`, `_todo-N.md` 파일도 함께 스캔
 - 우선순위(P0 > P1 > P2) 높은 것 선택
 
 **개선 아이디어 확인:**
@@ -59,6 +102,28 @@ $projects = @("activity-hub", "tool-view", "gentle-words", "screenshot-generator
 → 구현 시작합니다...
 ```
 
+### 2.5단계: 충돌 방지 마킹 (plan/TODO 파일만 해당)
+
+선택한 작업이 plan 또는 TODO 파일의 체크박스 항목이면 마킹:
+
+1. **WORKER-ID 생성**:
+   ```powershell
+   $workerId = "$env:COMPUTERNAME/$((Split-Path -Leaf $PWD))@$(Get-Date -Format 'MMdd-HHmm')"
+   ```
+
+2. **파일 수정**: 선택한 항목의 `[ ]` → `[→$workerId]`로 변경
+   - plan 파일: `common/docs/plan/*.md` 또는 `{project}/docs/plan/*.md`
+   - TODO 파일: `{project}/TODO.md` 또는 `wtools/TODO.md`
+
+3. **Git 동기화 (선택적)**:
+   ```bash
+   git add {변경된 파일}
+   git commit -m "chore: mark task in progress by $workerId"
+   git push
+   ```
+   - push 실패 시: 경고 출력하되 작업은 계속 진행
+   - 로컬 마킹은 유지되므로 해당 세션에서 중복 선택 방지됨
+
 ### 3단계: implement 워크플로우 실행
 
 선택된 작업으로 implement 스킬 로직 실행:
@@ -71,10 +136,9 @@ $projects = @("activity-hub", "tool-view", "gentle-words", "screenshot-generator
    - 코드 작성
    - 테스트 (빌드 확인)
 
-3. **완료 처리**
-   - TODO.md에서 제거
-   - docs/DONE.md에 추가
-   - plan 문서 `[x]` 체크
+3. **완료 처리 → `/done` 스킬 호출**
+   - 구현 완료 후 반드시 `/done` 스킬을 호출
+   - done 스킬이 처리: plan 체크, TODO→DONE, 아카이브, wtools/TODO.md 동기화, 검증, 커밋
 
 ## 선택 우선순위 로직
 
@@ -110,6 +174,27 @@ else:
 2. 프로젝트 TODO.md에 작업 추가
 3. common/docs/*improvement*.md 검토
 ```
+
+## 0단계: wtools/TODO.md 최신 여부 확인
+
+**스캔 시작 전** wtools/TODO.md의 "마지막 업데이트" 날짜를 확인합니다:
+
+1. wtools/TODO.md의 "마지막 업데이트" 날짜 읽기
+2. 오늘 날짜와 비교
+3. **당일이면** → 그대로 wtools/TODO.md에서 스캔 (빠름)
+4. **이전 날짜면** → 각 프로젝트 TODO.md의 In Progress 항목만 빠르게 수집하여 wtools/TODO.md 갱신 후 스캔
+
+> wtools/TODO.md가 최신이면 이 파일 하나만 읽으면 되므로 빠름.
+> `/implement`, `/done`, `/plan` 실행 시 자동 갱신되므로 대부분 최신 상태.
+
+## 스캔 범위 옵션
+
+- `/next` → **wtools/TODO.md**에서 In Progress → Pending 순서로 확인 (빠름, 기본)
+- `/next --all` → TODO + plan 문서 + 개선 아이디어까지 전체 스캔 (아래 "작업 소스 스캔 순서" 전체 실행)
+- **Agent 자동 모드** → `--all`이 기본 (wtools/TODO.md에 없어도 프로젝트 plan에서 작업 발견 가능)
+
+> **기본 동작을 경량화하는 이유**: 인사이트 분석에서 "파일 스캔 중 세션 종료" 문제가 지적됨.
+> wtools/TODO.md가 최신이면 파일 1개만 읽어서 즉시 실행하여 세션 완료율 향상.
 
 ## 환경
 
