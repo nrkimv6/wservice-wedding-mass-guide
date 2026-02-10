@@ -18,7 +18,7 @@
 				{#if connected}
 					<Signal class="w-4 h-4 text-green-700 animate-pulse" />
 					<span class="text-sm text-green-900 font-medium">
-						🔴 관리자와 동기화 중
+						🟢 관리자와 동기화 중
 					</span>
 				{:else if error}
 					<WifiOff class="w-4 h-4 text-red-700" />

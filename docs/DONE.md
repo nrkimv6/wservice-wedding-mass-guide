@@ -1,5 +1,18 @@
 # 완료된 작업 (최근 20개)
 
+## 2026-02-10
+
+### Phase 4 추가 결함 수정 (WMG-11~18)
+- [x] **WMG-11: massService announcements 필드 누락 수정** — createMass/updateMass/rowToMassConfig에 announcements 필드 추가
+- [x] **WMG-14: database.ts 타입 최신화** — mass_configurations 테이블에 announcements 컬럼 추가
+- [x] **WMG-12: IntroScreen 중복 onstart prop 제거** — onstart 제거, onStart만 사용
+- [x] **WMG-13: SyncStatusBanner 이모지 수정** — 🔴→🟢 변경
+- [x] **WMG-15: Admin View SyncControl 미사용 import 정리** — 사용하지 않는 import 제거
+- [x] **WMG-16: Admin View wakeLock cleanup 추가** — visibilitychange 이벤트 리스너 및 cleanup 추가
+- [x] **WMG-17: rowToMassConfig as any 캐스팅 개선** — 명시적 타입 캐스팅으로 변경
+- [x] **WMG-18: .env.example 파일 생성** — 환경 변수 예시 파일 생성
+- 빌드 확인 완료
+
 ## 2026-02-06
 
 ### 공통앱(홈) Service Worker + 버튼 결함 수정 (23/23)

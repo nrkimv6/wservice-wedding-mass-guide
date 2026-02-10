@@ -30,7 +30,8 @@ export async function createMass(data: Partial<MassConfiguration>): Promise<{ da
       groom_name: data.groom_name || '',
       bride_name: data.bride_name || '',
       celebrant_name: data.celebrant_name || null,
-      hymns: data.hymns || {},
+      hymns: (data.hymns || {}) as any,
+      announcements: (data.announcements || []) as any,
       liturgical_season: data.liturgical_season || 'ordinary',
       gloria_enabled: data.gloria_enabled ?? true,
       alleluia_enabled: data.alleluia_enabled ?? true,
@@ -123,7 +124,8 @@ export async function updateMass(id: string, data: Partial<MassConfiguration>): 
     if (data.groom_name !== undefined) updateData.groom_name = data.groom_name;
     if (data.bride_name !== undefined) updateData.bride_name = data.bride_name;
     if (data.celebrant_name !== undefined) updateData.celebrant_name = data.celebrant_name;
-    if (data.hymns !== undefined) updateData.hymns = data.hymns;
+    if (data.hymns !== undefined) updateData.hymns = data.hymns as any;
+    if (data.announcements !== undefined) updateData.announcements = data.announcements as any;
     if (data.liturgical_season !== undefined) updateData.liturgical_season = data.liturgical_season;
     if (data.gloria_enabled !== undefined) updateData.gloria_enabled = data.gloria_enabled;
     if (data.alleluia_enabled !== undefined) updateData.alleluia_enabled = data.alleluia_enabled;
@@ -186,12 +188,15 @@ function rowToMassConfig(row: MassConfigRow): MassConfiguration {
     groom_name: row.groom_name,
     bride_name: row.bride_name,
     celebrant_name: row.celebrant_name || undefined,
-    hymns: (row.hymns as any) || {},
-    liturgical_season: (row.liturgical_season as any) || 'ordinary',
+    hymns: (row.hymns as unknown as MassConfiguration['hymns']) || {},
+    announcements: Array.isArray(row.announcements)
+      ? (row.announcements as unknown as MassConfiguration['announcements'])
+      : JSON.parse((row.announcements as string) || '[]'),
+    liturgical_season: (row.liturgical_season as MassConfiguration['liturgical_season']) || 'ordinary',
     gloria_enabled: row.gloria_enabled,
     alleluia_enabled: row.alleluia_enabled,
-    theme: (row.theme as any) || 'ivory-gold',
-    view_mode: (row.view_mode as any) || 'detailed',
+    theme: (row.theme as MassConfiguration['theme']) || 'ivory-gold',
+    view_mode: (row.view_mode as MassConfiguration['view_mode']) || 'detailed',
     sync_enabled: row.sync_enabled,
     current_step: row.current_step,
     created_at: row.created_at,

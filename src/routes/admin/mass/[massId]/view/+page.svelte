@@ -17,7 +17,6 @@
 	import TableOfContents from '$lib/components/TableOfContents.svelte';
 	import ThemeSelector, { type ThemeOption } from '$lib/components/ThemeSelector.svelte';
 	import MassInfoPage from '$lib/components/MassInfoPage.svelte';
-	import SyncControl from '$lib/components/SyncControl.svelte';
 	import QuickEditModal from '$lib/components/QuickEditModal.svelte';
 
 	// Mass configuration from database
@@ -108,6 +107,18 @@
 	$effect(() => {
 		if (browser && hasStartedStore.value) {
 			wakeLockStore.enable();
+
+			const handleVisibilityChange = () => {
+				if (document.visibilityState === 'visible') {
+					wakeLockStore.reacquire();
+				}
+			};
+			document.addEventListener('visibilitychange', handleVisibilityChange);
+
+			return () => {
+				wakeLockStore.disable();
+				document.removeEventListener('visibilitychange', handleVisibilityChange);
+			};
 		}
 	});
 

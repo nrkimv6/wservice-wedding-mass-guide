@@ -1,7 +1,8 @@
 # wedding-mass-guide 결함 수정 계획서
 
+> 완료일: 2026-02-10
+> 아카이브됨
 > 상태: 완료
-> 세부계획: 검토됨
 
 ## 개요
 
@@ -11,7 +12,7 @@
 | 감사일 | 2026-02-04 |
 | 감사 범위 | Admin View 페이지, 컴포넌트 인터페이스 정합성, 타입 안전성 |
 | 1차 결함 총계 | **CRITICAL: 5건**, **MEDIUM: 3건**, **LOW: 2건** (2026-02-04 감사, 전체 완료) |
-| 2차 결함 총계 | **HIGH: 1건**, **MEDIUM: 3건**, **LOW: 4건** (2026-02-09 재감사, 미수정) |
+| 2차 결함 총계 | **HIGH: 1건**, **MEDIUM: 3건**, **LOW: 4건** (2026-02-09 재감사, 2026-02-10 전체 완료) |
 
 ### 심각도 기준
 
@@ -1114,18 +1115,18 @@ PUBLIC_ADMIN_EMAIL=admin@example.com
 
 ## 추가 결함 수정 우선순위
 
-### Phase 4: 추가 결함 (2026-02-09 발견)
+### Phase 4: 추가 결함 (2026-02-09 발견) - ✅ 완료 (2026-02-10)
 
 | 순서 | ID | 심각도 | 작업 | 상태 |
 |------|----|--------|------|------|
-| 11 | WMG-11 | HIGH | massService announcements 필드 누락 수정 | - [ ] |
-| 12 | WMG-14 | MEDIUM | database.ts 타입 최신화 (WMG-11 선행 조건) | - [ ] |
-| 13 | WMG-12 | MEDIUM | IntroScreen 중복 onstart prop 제거 | - [ ] |
-| 14 | WMG-13 | MEDIUM | SyncStatusBanner 이모지 수정 (🔴→🟢) | - [ ] |
-| 15 | WMG-15 | LOW | Admin View SyncControl 미사용 import 정리 | - [ ] |
-| 16 | WMG-16 | LOW | Admin View wakeLock cleanup 추가 | - [ ] |
-| 17 | WMG-17 | LOW | rowToMassConfig as any 캐스팅 개선 | - [ ] |
-| 18 | WMG-18 | LOW | .env.example 파일 생성 | - [ ] |
+| 11 | WMG-11 | HIGH | massService announcements 필드 누락 수정 | ✅ 완료 |
+| 12 | WMG-14 | MEDIUM | database.ts 타입 최신화 (WMG-11 선행 조건) | ✅ 완료 |
+| 13 | WMG-12 | MEDIUM | IntroScreen 중복 onstart prop 제거 | ✅ 완료 |
+| 14 | WMG-13 | MEDIUM | SyncStatusBanner 이모지 수정 (🔴→🟢) | ✅ 완료 |
+| 15 | WMG-15 | LOW | Admin View SyncControl 미사용 import 정리 | ✅ 완료 |
+| 16 | WMG-16 | LOW | Admin View wakeLock cleanup 추가 | ✅ 완료 |
+| 17 | WMG-17 | LOW | rowToMassConfig as any 캐스팅 개선 | ✅ 완료 |
+| 18 | WMG-18 | LOW | .env.example 파일 생성 | ✅ 완료 |
 
 ### 추가 관찰 사항 (결함은 아니나 참고)
 

@@ -14,16 +14,14 @@
 
 	interface Props {
 		onStart?: () => void;
-		onstart?: () => void;  // lowercase variant for compatibility
 		viewMode?: ViewMode;
 		onViewModeChange?: (mode: ViewMode) => void;
 		massInfo?: MassInfo;
 	}
 
-	let { onStart, onstart, viewMode, onViewModeChange, massInfo }: Props = $props();
+	let { onStart, viewMode, onViewModeChange, massInfo }: Props = $props();
 
-	// Use lowercase or uppercase variant
-	const startHandler = onstart || onStart || (() => {});
+	const startHandler = onStart || (() => {});
 </script>
 
 <div class="bg-background flex min-h-screen flex-col">

@@ -31,6 +31,7 @@ export interface Database {
           view_mode: string
           sync_enabled: boolean
           current_step: number
+          announcements: Json
           created_at: string
           updated_at: string
         }
@@ -51,6 +52,7 @@ export interface Database {
           view_mode?: string
           sync_enabled?: boolean
           current_step?: number
+          announcements?: Json
           created_at?: string
           updated_at?: string
         }
@@ -71,6 +73,7 @@ export interface Database {
           view_mode?: string
           sync_enabled?: boolean
           current_step?: number
+          announcements?: Json
           created_at?: string
           updated_at?: string
         }
