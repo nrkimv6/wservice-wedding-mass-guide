@@ -1,5 +1,13 @@
 # 완료된 작업 (최근 20개)
 
+## 2026-02-13
+
+### 단계 이동 제스처 힌트
+- [x] **SwipeHint 컴포넌트 생성** — `src/lib/components/SwipeHint.svelte` 신규 생성
+- [x] **페이지 통합** — `src/routes/mass/[massId]/+page.svelte` 수정
+- [x] **빌드 검증** — `npm run build` 실행 성공
+- [x] **완료** — [archive](archive/2026-02-12_swipe-hint.md)
+
 ## 2026-02-10
 
 ### Phase 4 추가 결함 수정 (WMG-11~18)

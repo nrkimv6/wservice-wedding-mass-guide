@@ -20,6 +20,7 @@
 	import MassInfoPage from '$lib/components/MassInfoPage.svelte';
 	import AnnouncementBanner from '$lib/components/AnnouncementBanner.svelte';
 	import SyncStatusBanner from '$lib/components/SyncStatusBanner.svelte';
+	import SwipeHint from '$lib/components/SwipeHint.svelte';
 
 	// Mass configuration from database
 	let massConfig = $state<MassConfiguration | null>(null);
@@ -77,12 +78,21 @@
 	const themeStore = localStorageStore<ThemeOption>(`mass-${massId}-theme`, 'ivory-gold');
 	const viewModeStore = localStorageStore<ViewMode>(`mass-${massId}-view-mode`, 'detailed');
 	const announcementDismissedStore = localStorageStore(`mass-${massId}-announcement-dismissed`, false);
+	const swipeHintShownStore = localStorageStore(`mass-${massId}-swipe-hint-shown`, false);
 
 	// UI state
 	let showToc = $state(false);
 	let showTheme = $state(false);
 	let showInfo = $state(false);
 	let swipeStart = $state<number | null>(null);
+
+	// Show swipe hint when mass has started but hint not yet shown
+	const showSwipeHint = $derived(hasStartedStore.value && !swipeHintShownStore.value);
+
+	// Dismiss swipe hint
+	function dismissSwipeHint() {
+		swipeHintShownStore.value = true;
+	}
 
 	// Get data based on view mode
 	const currentMassSteps = $derived(viewModeStore.value === 'merged' ? massStepsMerged : massSteps);
@@ -371,6 +381,9 @@
 				</button>
 			</div>
 		</main>
+
+		<!-- Swipe Hint overlay -->
+		<SwipeHint show={showSwipeHint} onDismiss={dismissSwipeHint} />
 
 		<!-- Table of Contents overlay -->
 		{#if showToc}
