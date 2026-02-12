@@ -59,9 +59,9 @@ ENHANCED-PLAN:
 PROJECT: {프로젝트명}
 TASK: 검토 완료 — 보완 불필요
 SOURCE: {plan 파일 경로}
-PRIORITY: SKIP
+PRIORITY: SKIP-PLAN
 ENHANCED-PLAN:
-(검토됨 마커 확인, 보완 생략)
+(검토됨 — plan 보완 불필요, 구현은 필요)
 ===END===
 ```
 
@@ -74,9 +74,9 @@ plan이 아닌 문서(수정 보고서, 완료 기록 등)를 받았을 때도 *
 PROJECT: {프로젝트명 또는 unknown}
 TASK: 비-plan 문서 — 구현 불필요
 SOURCE: {파일 경로}
-PRIORITY: SKIP
+PRIORITY: SKIP-ALL
 ENHANCED-PLAN:
-(보고서/기록 문서이므로 구현 대상 아님)
+(보고서/기록 문서 — plan 보완도 구현도 불필요)
 ===END===
 ```
 

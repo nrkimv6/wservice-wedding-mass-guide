@@ -18,6 +18,11 @@ TODO, plan, 개선 아이디어에서 다음 작업을 찾아 즉시 구현을 �
    - 고려 요소: 기능 중요도, 사용자 경험 개선, 기술 부채 해결, 의존성
 3. **개선 아이디어** - `common/docs/*improvement*.md` (P0 → P1 순)
 
+**스캔 제외 대상**:
+- 파일명에 `MANUAL_TASKS`가 포함된 파일은 스캔 대상에서 완전 제외
+- `{project}/MANUAL_TASKS.md` — 수동 작업 목록 (사용자 전용)
+- plan 문서 내 `(→ MANUAL_TASKS)` 태그가 붙은 항목도 작업 후보에서 제외
+
 ## 충돌 방지 메커니즘
 
 ### WORKER-ID 생성
@@ -148,6 +153,10 @@ $config = Get-Content $configPath | ConvertFrom-Json
 ## 선택 우선순위 로직
 
 ```
+# 사전 필터: MANUAL_TASKS 파일 제외
+# 스캔 대상에서 MANUAL_TASKS.md 파일은 완전 제외
+# plan 문서 내 "(→ MANUAL_TASKS)" 태그가 붙은 항목도 제외
+
 if (TODO In Progress 있음):
     return In Progress 첫 번째 항목
 elif (TODO Pending 또는 Plan 문서에 미완료 있음):
