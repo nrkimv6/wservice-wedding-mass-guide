@@ -16,14 +16,33 @@ description: "계획 문서 목록 조회 및 진행 현황. Use when: 계획 �
 
 ### 1단계: plan 문서 스캔
 
-```
-common/docs/plan/*.md
+**스캔 대상:**
+1. **wtools 감지**: 현재 디렉토리에 `common/` 폴더 존재 여부 확인
+   - **있으면**: `common/docs/plan/*.md` 파일들도 스캔 (공통 계획)
+   - **없으면**: 현재 프로젝트의 `docs/plan/*.md`만 스캔
+
+2. **프로젝트별 계획**: `.claude/projects.json`의 각 `{proj.path}/docs/plan/*.md` 파일들 스캔 (모든 15개 프로젝트)
+
+```powershell
+# 프로젝트 목록 읽기
+$configPath = "D:\work\project\service\wtools\.claude\projects.json"
+$config = Get-Content $configPath | ConvertFrom-Json
+
+# wtools 감지
+if (Test-Path "common\") {
+    # common/docs/plan/*.md 스캔
+}
+
+# 각 프로젝트의 docs/plan/*.md 스캔
+foreach ($proj in $config.projects) {
+    # $proj.path\docs\plan\*.md 스캔
+}
 ```
 
 모든 plan 문서에서 다음 헤더 정보를 추출:
 - 제목
 - 대상 프로젝트
-- 상태 (검토 대기 / 진행 중 / 완료)
+- 상태 (초안 / 검토대기 / 검토완료 / 구현중 / 구현완료 / 수정필요 / 보류)
 - 진행률 (N/M)
 
 ### 2단계: 요약 테이블 출력
@@ -33,11 +52,11 @@ common/docs/plan/*.md
 
 | 문서 | 프로젝트 | 상태 | 진행률 |
 |------|----------|------|--------|
-| dark-mode | 공통 | 진행 중 | 2/5 (40%) |
-| calendar-export | activity-hub | 검토 대기 | 0/3 (0%) |
+| dark-mode | 공통 | 구현중 | 2/5 (40%) |
+| calendar-export | activity-hub | 초안 | 0/3 (0%) |
 | ... | ... | ... | ... |
 
-총 N개 계획 (검토 대기: X, 진행 중: Y, 완료: Z)
+총 N개 계획 (초안: A, 검토대기: B, 검토완료: C, 구현중: D, 구현완료: E, 수정필요: F, 보류: G)
 ```
 
 ### 3단계: 프로젝트별 필터 (선택)

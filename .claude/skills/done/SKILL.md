@@ -16,10 +16,22 @@ description: "구현 완료 후처리 (plan 체크, archive, TODO→DONE, commit
 
 ### 1단계: 관련 plan 문서 찾기
 
-`common/docs/plan/`에서 현재 작업과 관련된 계획 문서를 찾습니다.
+**프로젝트 경로 해석:**
+```powershell
+$configPath = "D:\work\project\service\wtools\.claude\projects.json"
+$config = Get-Content $configPath | ConvertFrom-Json
+# 각 프로젝트의 절대경로: $config.projects[].path
+```
+
+**wtools 감지**: 현재 디렉토리에 `common/` 폴더 존재 여부로 판단
+- **있으면**: wtools 내부 → `common/docs/plan/` 및 `{proj.path}/docs/plan/` 확인
+- **없으면**: 외부 프로젝트 → 현재 프로젝트의 `docs/plan/`만 확인
+
+아래 **모든 경로**에서 현재 작업과 관련된 계획 문서를 찾습니다:
 
 ```
-common/docs/plan/*.md
+common/docs/plan/*.md (wtools 내부일 때만)
+{proj.path}/docs/plan/*.md
 ```
 
 ### 2단계: plan 문서 완료 체크 & 진행률 업데이트
@@ -28,33 +40,40 @@ common/docs/plan/*.md
 ```markdown
 ## 구현 순서
 
-1. [x] P0: 완료된 항목   ← [ ] → [x] 변경
+1. [x] P0: 완료된 항목   ← [ ] 또는 [→WORKER-ID] → [x] 변경
 2. [ ] P1: 미완료 항목
 ```
 
+**충돌 방지 마킹 해제**:
+- `[→WORKER-ID]` 패턴을 `[x]`로 변환 (정규식: `\[→[^\]]+\]` → `[x]`)
+- `[ ]`도 여전히 `[x]`로 변환 (기존 동작 유지)
+
 **진행률 계산 후 헤더·푸터 업데이트:**
 ```markdown
-> 상태: 진행 중
+> 상태: 구현중
 > 진행률: 1/2 (50%)       ← [x] 개수 / 전체 개수
 ...
-*상태: 진행 중 | 진행률: 1/2 (50%)*
+*상태: 구현중 | 진행률: 1/2 (50%)*
 ```
+
+**완료 판단 시 MANUAL_TASKS 항목은 제외합니다.** (수동 검증은 사용자 몫)
 
 **모든 항목 완료 시 상태 변경:**
 ```markdown
-> 상태: 완료
+> 상태: 구현완료
 > 진행률: 2/2 (100%)
 ...
-*상태: 완료 | 진행률: 2/2 (100%)*
+*상태: 구현완료 | 진행률: 2/2 (100%)*
 ```
 
 ### 3단계: plan 문서 아카이브 (모든 항목 완료 시)
 
 plan 문서의 모든 체크박스가 `[x]`이면:
 
-1. **프로젝트 특정 plan**: `common/docs/plan/{파일}.md` → `{project}/docs/archive/{파일}.md`
-2. **공통/복수 프로젝트 plan**: `common/docs/plan/{파일}.md` → `common/docs/archive/{파일}.md`
-3. 아카이브 헤더 추가:
+1. **프로젝트 특정 plan**: `common/docs/plan/{파일}.md` (wtools만) → `{proj.path}/docs/archive/{파일}.md`
+2. **공통/복수 프로젝트 plan**: `common/docs/plan/{파일}.md` (wtools만) → `common/docs/archive/{파일}.md`
+3. **외부 프로젝트 plan**: `{proj.path}/docs/plan/{파일}.md` → `{proj.path}/docs/archive/{파일}.md`
+4. 아카이브 헤더 추가:
 
 ```markdown
 # {제목}
@@ -64,12 +83,29 @@ plan 문서의 모든 체크박스가 `[x]`이면:
 > 진행률: N/N (100%)
 ```
 
-### 4단계: TODO → DONE 이동
+### 4단계: TODO → DONE 이동 (수동 검증 항목 분리)
 
 **대상 프로젝트의 TODO.md 확인:**
 ```
 {project}/TODO.md
 ```
+
+**수동 검증 항목 분리:**
+
+완료된 항목 중 CLI로 검증 불가능한 항목(눈으로 보고 판단해야 하는 것)은 `{project}/MANUAL_TASKS.md`로 분리:
+
+```markdown
+# MANUAL_TASKS
+
+- 2026-02-08: 캘린더 UI 레이아웃이 디자인과 일치하는지 확인
+- 2026-02-08: 다크모드에서 텍스트 가독성 확인
+```
+
+**판단 기준:**
+- **MANUAL_TASKS**: UI 시각 확인, 디자인 일치 여부, UX 느낌, 실기기 테스트 등
+- **DONE**: 기능 구현, 버그 수정, 리팩토링 등 CLI/코드로 완료 확인 가능한 것
+
+**완료 상태는 MANUAL_TASKS 제외 후 판단합니다.** 수동 검증 항목이 남아있어도 나머지가 모두 완료되면 "완료"로 처리합니다.
 
 **완료된 항목을 docs/DONE.md로 이동:**
 
@@ -86,9 +122,53 @@ docs/DONE.md 상단에 추가:
 - [x] 2026-01-08: 캘린더 내보내기
 ```
 
-### 5단계: 커밋
+### 5단계: DONE.md 아카이브 (5개 초과 시)
+
+docs/DONE.md 항목이 5개를 초과하면:
+1. 오래된 항목 → `{project}/docs/archive/DONE-YYYY-MM.md`로 이동
+2. docs/DONE.md는 최근 5개만 유지
+
+### 6단계: wtools/TODO.md 동기화 (wtools만 해당)
+
+**wtools 감지 조건**: 현재 디렉토리에 `common/` 폴더가 있는지 확인
+- **있으면**: wtools 내부 → 아래 동기화 실행
+- **없으면**: 외부 프로젝트 → 이 단계 **스킵**
+
+wtools/TODO.md를 열어 해당 프로젝트 섹션을 갱신합니다:
+
+1. 완료된 항목 반영 (제거 또는 ~~취소선~~)
+2. 진행률 수치 업데이트
+3. 해당 프로젝트의 모든 TODO 완료 시 "완료 ✅" 섹션으로 이동
+4. "마지막 업데이트" 날짜를 오늘로 갱신
+
+### 7단계: 완료 검증
+
+커밋 전 실제로 정리가 되었는지 확인합니다:
+
+1. **plan 문서 확인**: `common/docs/plan/`, `{project}/docs/plan/`에 완료된 작업의 plan이 남아있지 않은지 확인
+2. **프로젝트 TODO 확인**: `{project}/TODO.md`에서 완료 항목이 제거되었는지 확인
+3. **wtools/TODO.md 확인**: 해당 프로젝트 섹션 진행률이 갱신되었는지 확인
+4. **DONE.md 확인**: 완료 항목이 추가되었는지 확인
+
+누락된 항목이 있으면 돌아가서 처리합니다.
+
+### 대안: auto-done.ps1 스크립트 (auto-next 전용)
+
+**auto-next 워크플로우**에서는 `common/tools/auto-done.ps1 -PlanFile <경로>`로 1~8단계를 자동 처리합니다.
+
+- **사용 시점**: auto-next가 plan 완료를 감지했을 때 (Phase 3.5)
+- **처리 범위**: plan 상태 갱신, 아카이브 이동, TODO→DONE, wtools/TODO.md 동기화, 커밋
+- **수동 실행**: `powershell -File "common\tools\auto-done.ps1" -PlanFile "path/to/plan.md"`
+
+done 스킬은 **수동 작업 시** 또는 **auto-done.ps1 실패 시** fallback으로 사용합니다.
+
+### 8단계: 커밋
+
+**🔴 이 단계를 건너뛰면 문서 변경이 uncommitted 상태로 남습니다. 반드시 실행하세요.**
 
 **🚨 CRITICAL: 반드시 PowerShell commit 함수 사용**
+
+**💡 코드 변경과 문서 변경이 모두 unstaged 상태이면 한번에 커밋하세요.**
 
 변경된 파일들을 커밋:
 ```powershell
@@ -114,17 +194,20 @@ git commit -m "..."
 
 실행 후 확인사항:
 
-- [ ] plan 문서 항목 체크됨
+- [ ] **커밋 완료** 🔴
+- [ ] plan 문서 항목 체크됨 (common/docs/plan + {project}/docs/plan 모두)
 - [ ] 완료된 plan은 archive로 이동됨
-- [ ] TODO.md에서 항목 제거됨
-- [ ] DONE.md에 항목 추가됨
-- [ ] 커밋 완료
+- [ ] {project}/TODO.md에서 항목 제거됨
+- [ ] {project}/docs/DONE.md에 항목 추가됨
+- [ ] **wtools/TODO.md 동기화됨**
+- [ ] **7단계 검증 통과** (누락 없이 모두 정리됨)
 
 ## 파일 경로 규칙
 
 | 문서 | 경로 |
 |------|------|
-| 계획 문서 | `common/docs/plan/*.md` |
+| 계획 문서 (공통) | `common/docs/plan/*.md` |
+| 계획 문서 (프로젝트) | `{project}/docs/plan/*.md` |
 | 아카이브 (프로젝트별) | `{project}/docs/archive/*.md` |
 | 아카이브 (공통) | `common/docs/archive/*.md` |
 | 프로젝트 TODO | `{project}/TODO.md` |

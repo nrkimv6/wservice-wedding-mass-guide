@@ -1,0 +1,19 @@
+{
+  "projects": [
+    { "name": "activity-hub", "path": "D:\\work\\project\\service\\wtools\\activity-hub" },
+    { "name": "admin-tools", "path": "D:\\work\\project\\service\\wtools\\admin-tools" },
+    { "name": "auth-worker", "path": "D:\\work\\project\\service\\wtools\\auth-worker" },
+    { "name": "gentle-words", "path": "D:\\work\\project\\service\\wtools\\gentle-words" },
+    { "name": "line-minder", "path": "D:\\work\\project\\service\\wtools\\line-minder" },
+    { "name": "memo-alarm", "path": "D:\\work\\project\\service\\wtools\\memo-alarm" },
+    { "name": "mini-toolbox", "path": "D:\\work\\project\\service\\wtools\\mini-toolbox" },
+    { "name": "sacred-hours", "path": "D:\\work\\project\\service\\wtools\\sacred-hours" },
+    { "name": "screenshot-generator", "path": "D:\\work\\project\\service\\wtools\\screenshot-generator" },
+    { "name": "story-weaver", "path": "D:\\work\\project\\service\\wtools\\story-weaver" },
+    { "name": "tb-wish", "path": "D:\\work\\project\\service\\wtools\\tb-wish" },
+    { "name": "tool-view", "path": "D:\\work\\project\\service\\wtools\\tool-view" },
+    { "name": "wedding-mass-guide", "path": "D:\\work\\project\\service\\wtools\\wedding-mass-guide" },
+    { "name": "popitgo", "path": "D:\\work\\project\\service\\popitgo" },
+    { "name": "bumptube", "path": "D:\\work\\project\\service\\bumptube" }
+  ]
+}
