@@ -219,7 +219,7 @@ Get-ChildItem "D:\work\project\service\wtools\{project}\src\lib\stores" -Recurse
 
 분석 결과를 파일로 저장:
 ```
-common/docs/ideation/{날짜}_ideation-report.md
+common/docs/idea/{날짜}_ideation-report.md
 ```
 
 ## 후속 조치
@@ -255,7 +255,7 @@ common/docs/ideation/{날짜}_ideation-report.md
 - [ ] 최근 완료된 기능 확인 (중복 제안 방지)
 
 실행 후:
-- [ ] 보고서 `common/docs/ideation/`에 저장됨
+- [ ] 보고서 `common/docs/idea/`에 저장됨
 - [ ] 우선순위 높은 항목 사용자에게 설명됨
 - [ ] 다음 단계 결정됨 (구현/계획/보류)
 
