@@ -58,6 +58,10 @@ common/docs/plan/*.md (wtools 내부일 때만)
 
 **완료 판단 시 MANUAL_TASKS 항목은 제외합니다.** (수동 검증은 사용자 몫)
 
+**코드블럭/인라인 코드 내 `[ ]`는 체크박스 카운트에서 제외됩니다.** (파싱 시 자동 필터링)
+- 단, plan 작성 시에는 예시 체크박스를 `☐`(U+2610)로 표기 권장
+- 참고: `/plan` 스킬의 "## 코드블럭 내 체크박스 규칙"
+
 **모든 항목 완료 시 상태 변경:**
 ```markdown
 > 상태: 구현완료
@@ -270,13 +274,11 @@ git commit -am "..."
 git commit --amend
 
 # ✅ REQUIRED — 아래 순서로 시도
-# 1순위: PowerShell 스크립트 (Windows 환경에서 가장 안정적)
-..\..\tools\common\commit.ps1 "message"
-# 또는 절대경로:
-& "D:\work\project\tools\common\commit.ps1" "message"
+# 1순위: bash에서 powershell.exe 경유 (bash 환경에서 가장 안정적)
+powershell.exe -Command "Set-Location '{레포경로}'; & 'D:\work\project\tools\common\commit.ps1' 'message'"
 
-# 2순위: bash 스크립트 (bash shell에서만 동작)
-bash "D:\work\project\tools\common\commit.sh" "message"
+# 2순위: bash에서 commit.sh (반드시 cd 먼저 — commit.sh 내부 git이 현재 디렉토리 기준)
+cd "/d/work/project/service/wtools/{project}" && bash "/d/work/project/tools/common/commit.sh" "message"
 ```
 
-**중요**: bash가 exit code 1로 실패하면 즉시 `commit.ps1`로 전환할 것. 재시도 금지.
+**중요**: commit.sh 실패 시 `git commit` 직접 사용 절대 금지. powershell.exe 방식으로 전환.

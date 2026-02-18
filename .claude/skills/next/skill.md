@@ -128,7 +128,7 @@ $config = Get-Content $configPath | ConvertFrom-Json
 3. **Git 동기화 (선택적)**:
    ```bash
    git add {변경된 파일}
-   git commit -m "chore: mark task in progress by $workerId"
+   powershell.exe -Command "Set-Location '{레포경로}'; & 'D:\work\project\tools\common\commit.ps1' 'chore: mark task in progress by $workerId'"
    git push
    ```
    - push 실패 시: 경고 출력하되 작업은 계속 진행

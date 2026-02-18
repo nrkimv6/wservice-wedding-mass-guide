@@ -180,7 +180,11 @@ git diff ${BEFORE_HASH} --name-only
 # ❌ FORBIDDEN
 git commit
 git commit -m "..."
+"D:\work\project\tools\common\commit.sh" "message"  # cd 없이 실행 금지
 
-# ✅ REQUIRED
-"D:\work\project\tools\common\commit.sh" "message"
+# ✅ REQUIRED — 1순위
+powershell.exe -Command "Set-Location '{레포경로}'; & 'D:\work\project\tools\common\commit.ps1' 'message'"
+
+# ✅ REQUIRED — 2순위 (반드시 cd 먼저)
+cd "/d/work/project/service/wtools/{project}" && bash "/d/work/project/tools/common/commit.sh" "message"
 ```
