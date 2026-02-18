@@ -269,6 +269,14 @@ git commit -m "..."
 git commit -am "..."
 git commit --amend
 
-# ✅ REQUIRED
-commit "message"
+# ✅ REQUIRED — 아래 순서로 시도
+# 1순위: PowerShell 스크립트 (Windows 환경에서 가장 안정적)
+..\..\tools\common\commit.ps1 "message"
+# 또는 절대경로:
+& "D:\work\project\tools\common\commit.ps1" "message"
+
+# 2순위: bash 스크립트 (bash shell에서만 동작)
+bash "D:\work\project\tools\common\commit.sh" "message"
 ```
+
+**중요**: bash가 exit code 1로 실패하면 즉시 `commit.ps1`로 전환할 것. 재시도 금지.

@@ -23,7 +23,6 @@ skills:
    - 수정이 발생하지 않았지만 이미 완료된 항목도 `[x]`로 체크 (코드가 이미 존재하는 경우)
    - TODO.md 업데이트 (Pending → In Progress)
    - 코드 작성
-   - 빌드 확인 (`/webapp-testing` 스킬)
 3. **완료 처리 (스크립트 우선)**
    - **1차 시도**: `common/tools/auto-done.ps1 -PlanFile <경로>` 스크립트 호출
      - plan 문서 [x] 체크 + 진행률 업데이트
@@ -34,6 +33,25 @@ skills:
      - 완료 검증
      - 커밋 (commit 스크립트 사용)
    - **2차 시도 (fallback)**: 스크립트 실패 시 `/done` 스킬 로직 수동 실행
+
+## 테스트 실행 규칙
+
+> **중요**: 테스트는 `===AUTO-IMPL-RESULT===` 출력 완료 **이후**에만 실행한다.
+> 구현/완료 처리를 블로킹하지 않는다.
+
+- **실행 조건**: 프롬프트에 `"테스트 실행 불필요"` 문자열이 있으면 테스트 완전 스킵
+- **실행 타이밍**: 커밋 후, `===AUTO-IMPL-RESULT===` 블록 출력 후에 실행
+- **실패 영향**: 테스트 결과는 STATUS(SUCCESS/FAILED/SKIPPED)에 영향을 주지 않음
+- **결과 출력**: 테스트 실행 후 아래 형식으로 별도 블록 출력
+
+```
+===AUTO-TEST-RESULT===
+PROJECT: {프로젝트명}
+TYPE: pytest | npm-build | npm-check
+STATUS: PASS | FAIL | SKIPPED
+DETAIL: {에러 요약 또는 "all passed"}
+===END===
+```
 
 ## 출력 형식 (반드시 이 형식으로)
 

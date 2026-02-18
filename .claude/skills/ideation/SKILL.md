@@ -142,8 +142,9 @@ Get-ChildItem "D:\work\project\service\wtools\{project}\src\lib\stores" -Recurse
 ### Phase 5: 프로젝트 간 시너지 (Cross-Project Synergy)
 
 **5-1. 공유 가능 코드**
-- 여러 프로젝트에서 비슷하게 구현된 기능 → 공통 모듈로
-- 공통 UI 컴포넌트 추출 기회
+- 여러 프로젝트에서 비슷하게 구현된 기능 발견 시:
+  - ❌ 공통 패키지(common-ui, common-utils 등) 분리 제안 금지 — 별도 레포 간 file: 의존성은 배포 환경에서 작동 안 함
+  - ✅ `_sample` 프로젝트에 해당 코드를 추가하도록 제안 — 각 프로젝트는 _sample을 참고해 인라인화
 
 **5-2. 통합 대시보드 기회**
 - 여러 프로젝트 데이터를 한눈에 볼 수 있는 통합 뷰

@@ -121,6 +121,14 @@ Claude가 구현 요청 받으면:
    - `common/docs/plan/`에서 관련 계획 확인
    - 없으면 사용자 요청을 바로 TODO에 추가
 
+1.5. **수동 작업 필터링 (TODO/plan 스캔 시 공통)**
+   - 다음 항목은 작업 후보에서 **완전 제외**하고, 사용자에게 **언급하지 않는다**:
+     - `MANUAL_TASKS.md` 파일 내 항목
+     - `(→ MANUAL_TASKS)` 태그가 붙은 항목
+     - 수동 작업 키워드가 포함된 항목 (`수동 검증`, `수동`, `브라우저 테스트 필요` 등)
+     - 키워드 전체 목록: [manual-tasks-format.md](../../common/docs/guide/project-management/manual-tasks-format.md) 참조
+   - 후보 목록 출력 시에도 수동 항목은 표시하지 않는다
+
 2. **TODO.md 업데이트**
    - plan에서 선택 시: `[→TODO]` 표시, plan 상태 "구현중"
    - TODO.md의 Pending에 추가 (출처 표시)
