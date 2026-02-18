@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { X } from 'lucide-svelte';
+	import { APP_VERSION } from '$lib/config';
 
 	interface Props {
 		onClose: () => void;
@@ -46,6 +47,9 @@
 					<li>우측 하단 ⚙ 버튼으로 테마 변경</li>
 				</ul>
 			</div>
+		</div>
+		<div class="px-6 pb-4 text-right">
+			<span class="text-xs text-foreground/40">v{APP_VERSION}</span>
 		</div>
 	</div>
 </div>
