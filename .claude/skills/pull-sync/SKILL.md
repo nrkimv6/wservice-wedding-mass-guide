@@ -16,16 +16,19 @@ description: "git pull 후 plan/TODO 자동 동기화. Use when: 풀 동기화, 
 
 ### 1단계: 전체 하위 프로젝트 git pull (병렬)
 
-**대상 프로젝트 (15개):**
-- _sample, activity-hub, admin-tools, auth-worker, common
-- gentle-words, line-minder, memo-alarm, mini-toolbox
-- sacred-hours, screenshot-generator, story-weaver, tb-wish
-- tool-view, wedding-mass-guide
+**대상 프로젝트:** `.claude/projects.json`의 모든 프로젝트 (15개, 절대경로 사용)
+
+**프로젝트 목록 읽기:**
+```powershell
+$configPath = "D:\work\project\service\wtools\.claude\projects.json"
+$config = Get-Content $configPath | ConvertFrom-Json
+# 각 프로젝트의 절대경로: $config.projects[].path
+```
 
 **안전한 pull 절차 (각 프로젝트마다):**
 
 ```bash
-cd "D:/work/project/service/wtools/{project}"
+cd "{proj.path}"
 
 # 1. 상태 확인
 git status --short
@@ -58,7 +61,7 @@ git pull origin main
 
 **변경 파일 확인:**
 ```bash
-cd "D:/work/project/service/wtools/{project}"
+cd "{proj.path}"
 git diff ${BEFORE_HASH} --name-only
 ```
 
@@ -177,7 +180,11 @@ git diff ${BEFORE_HASH} --name-only
 # ❌ FORBIDDEN
 git commit
 git commit -m "..."
+"D:\work\project\tools\common\commit.sh" "message"  # cd 없이 실행 금지
 
-# ✅ REQUIRED
-"D:\work\project\tools\common\commit.sh" "message"
+# ✅ REQUIRED — 1순위
+powershell.exe -Command "Set-Location '{레포경로}'; & 'D:\work\project\tools\common\commit.ps1' 'message'"
+
+# ✅ REQUIRED — 2순위 (반드시 cd 먼저)
+cd "/d/work/project/service/wtools/{project}" && bash "/d/work/project/tools/common/commit.sh" "message"
 ```

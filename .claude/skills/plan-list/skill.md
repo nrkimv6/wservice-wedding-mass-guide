@@ -16,8 +16,27 @@ description: "계획 문서 목록 조회 및 진행 현황. Use when: 계획 �
 
 ### 1단계: plan 문서 스캔
 
-```
-common/docs/plan/*.md
+**스캔 대상:**
+1. **wtools 감지**: 현재 디렉토리에 `common/` 폴더 존재 여부 확인
+   - **있으면**: `common/docs/plan/*.md` 파일들도 스캔 (공통 계획)
+   - **없으면**: 현재 프로젝트의 `docs/plan/*.md`만 스캔
+
+2. **프로젝트별 계획**: `.claude/projects.json`의 각 `{proj.path}/docs/plan/*.md` 파일들 스캔 (모든 15개 프로젝트)
+
+```powershell
+# 프로젝트 목록 읽기
+$configPath = "D:\work\project\service\wtools\.claude\projects.json"
+$config = Get-Content $configPath | ConvertFrom-Json
+
+# wtools 감지
+if (Test-Path "common\") {
+    # common/docs/plan/*.md 스캔
+}
+
+# 각 프로젝트의 docs/plan/*.md 스캔
+foreach ($proj in $config.projects) {
+    # $proj.path\docs\plan\*.md 스캔
+}
 ```
 
 모든 plan 문서에서 다음 헤더 정보를 추출:

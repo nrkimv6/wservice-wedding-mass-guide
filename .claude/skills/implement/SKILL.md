@@ -9,16 +9,31 @@ plan → TODO → DONE 흐름으로 작업을 관리합니다.
 
 ## 파일 위치
 
+**프로젝트 경로 해석:**
+```powershell
+$configPath = "D:\work\project\service\wtools\.claude\projects.json"
+$config = Get-Content $configPath | ConvertFrom-Json
+# 각 프로젝트의 절대경로: $config.projects[].path
 ```
-wtools/
-├── common/docs/plan/           # 아이디어/계획 (전체 공유)
+
+**wtools 감지**: 현재 디렉토리에 `common/` 폴더 존재 여부로 판단
+
+```
+wtools 내부:
+├── common/docs/plan/           # 아이디어/계획 (전체 공유, wtools만)
 │   └── YYYY-MM-DD_*.md
-└── {project}/                  # 각 프로젝트
+└── {proj.path}/                # 각 프로젝트 (절대경로)
     ├── TODO.md                 # 진행할 작업
     └── docs/
         ├── DONE.md             # 완료 (최근 20개)
         └── history/
             └── DONE-YYYY-Wnn.md # 주별 아카이브
+
+외부 프로젝트:
+{proj.path}/
+├── docs/plan/                  # 프로젝트별 계획
+├── TODO.md
+└── docs/DONE.md
 ```
 
 ## 워크플로우
@@ -106,16 +121,33 @@ Claude가 구현 요청 받으면:
    - `common/docs/plan/`에서 관련 계획 확인
    - 없으면 사용자 요청을 바로 TODO에 추가
 
+1.5. **수동 작업 필터링 (TODO/plan 스캔 시 공통)**
+   - 다음 항목은 작업 후보에서 **완전 제외**하고, 사용자에게 **언급하지 않는다**:
+     - `MANUAL_TASKS.md` 파일 내 항목
+     - `(→ MANUAL_TASKS)` 태그가 붙은 항목
+     - 수동 작업 키워드가 포함된 항목 (`수동 검증`, `수동`, `브라우저 테스트 필요` 등)
+     - 키워드 전체 목록: [manual-tasks-format.md](../../common/docs/guide/project-management/manual-tasks-format.md) 참조
+   - 후보 목록 출력 시에도 수동 항목은 표시하지 않는다
+
 2. **TODO.md 업데이트**
    - plan에서 선택 시: `[→TODO]` 표시, plan 상태 "구현중"
    - TODO.md의 Pending에 추가 (출처 표시)
    - 작업 시작 시 In Progress로 이동
 
-3. **wtools/TODO.md 동기화**
+3. **wtools/TODO.md 동기화 (wtools만 해당)**
+   - **wtools 감지 조건**: 현재 디렉토리에 `common/` 폴더가 있는지 확인
+     - **있으면**: wtools 내부 → 아래 동기화 실행
+     - **없으면**: 외부 프로젝트 → 이 단계 **스킵**
    - wtools/TODO.md 열기
    - 해당 프로젝트 섹션 찾기
    - 변경된 항목 반영 (Pending → In Progress 이동, 진행률 갱신)
    - "마지막 업데이트" 날짜를 오늘로 갱신
+
+   ### 🔴 항목 완료 후 반드시 실행 (다음 항목 진행 전 게이트)
+   1. plan 파일 Edit → `[ ]` → `[x]` 변환
+   2. Read로 plan 파일 다시 읽어 `[x]`가 반영됐는지 확인
+   3. 확인 완료 후에만 다음 항목으로 넘어감
+   > **이 게이트를 건너뛰면 안 된다.** 체크박스 누락은 전체 워크플로우를 망가뜨린다.
 
 4. **구현** (@implementing-features 스킬 사용)
    - 테스트 작성 (RIGHT-BICEP)

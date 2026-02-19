@@ -142,8 +142,9 @@ Get-ChildItem "D:\work\project\service\wtools\{project}\src\lib\stores" -Recurse
 ### Phase 5: 프로젝트 간 시너지 (Cross-Project Synergy)
 
 **5-1. 공유 가능 코드**
-- 여러 프로젝트에서 비슷하게 구현된 기능 → 공통 모듈로
-- 공통 UI 컴포넌트 추출 기회
+- 여러 프로젝트에서 비슷하게 구현된 기능 발견 시:
+  - ❌ 공통 패키지(common-ui, common-utils 등) 분리 제안 금지 — 별도 레포 간 file: 의존성은 배포 환경에서 작동 안 함
+  - ✅ `_sample` 프로젝트에 해당 코드를 추가하도록 제안 — 각 프로젝트는 _sample을 참고해 인라인화
 
 **5-2. 통합 대시보드 기회**
 - 여러 프로젝트 데이터를 한눈에 볼 수 있는 통합 뷰
@@ -262,7 +263,7 @@ common/docs/idea/{날짜}_ideation-report.md
 ## 환경
 
 - **Windows**: 백슬래시(`\`), 절대경로, PowerShell 전용
-- **커밋**: 결과로 코드 수정 시 `"D:\work\project\tools\common\commit.sh"` 필수
+- **커밋**: 결과로 코드 수정 시 `powershell.exe -Command "Set-Location '...'; & 'D:\work\project\tools\common\commit.ps1' '...'"` 필수
 
 ## 절대 금지
 
@@ -271,7 +272,11 @@ common/docs/idea/{날짜}_ideation-report.md
 git commit
 git reset --hard
 Remove-Item -Recurse -Force
+"D:\work\project\tools\common\commit.sh" "message"  # cd 없이 실행 금지
 
-# ✅ REQUIRED
-"D:\work\project\tools\common\commit.sh" "message"
+# ✅ REQUIRED — 1순위
+powershell.exe -Command "Set-Location '{레포경로}'; & 'D:\work\project\tools\common\commit.ps1' 'message'"
+
+# ✅ REQUIRED — 2순위 (반드시 cd 먼저)
+cd "/d/work/project/service/wtools/{project}" && bash "/d/work/project/tools/common/commit.sh" "message"
 ```

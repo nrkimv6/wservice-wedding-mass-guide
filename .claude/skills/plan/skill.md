@@ -14,15 +14,26 @@ description: "계획 문서 작성. Use when: 계획해, plan, 아이디어, 기
 
 ## 파일 위치
 
-**계획 문서(plan)**: 대상 프로젝트가 없으면 `common/docs/plan/`에 공통 계획으로 저장.
+### 프로젝트 경로 해석
+
+**`.claude/projects.json`에서 프로젝트 경로 읽기:**
+```powershell
+$configPath = "D:\work\project\service\wtools\.claude\projects.json"
+$config = Get-Content $configPath | ConvertFrom-Json
+# 각 프로젝트의 절대경로: $config.projects[].path
+```
+
+**wtools 감지**: 현재 디렉토리에 `common/` 폴더 존재 여부로 판단
+- **있으면**: wtools 내부 → `common/docs/plan/`에 공통 계획 저장 + wtools/TODO.md 동기화 **실행**
+- **없으면**: 외부 프로젝트 → `{proj.path}/docs/plan/`에 저장 + wtools/TODO.md 동기화 **스킵**
 
 **TODO는 반드시 프로젝트 단위로 생성한다:**
 
 | 대상 | plan 위치 | TODO 위치 |
 |------|----------|----------|
-| 단일 프로젝트 | `{project}/docs/plan/` | `{project}/docs/plan/` |
-| 복수 프로젝트 | `common/docs/plan/` | **각 프로젝트별** `{project}/docs/plan/` |
-| 공통 (스킬, 설정 등) | `common/docs/plan/` | `common/docs/plan/` |
+| 단일 프로젝트 | `{proj.path}/docs/plan/` | `{proj.path}/docs/plan/` |
+| 복수 프로젝트 | `common/docs/plan/` (wtools만) | **각 프로젝트별** `{proj.path}/docs/plan/` |
+| 공통 (스킬, 설정 등) | `common/docs/plan/` (wtools만) | `common/docs/plan/` |
 
 ```
 # 단일 프로젝트
@@ -67,7 +78,11 @@ common/docs/plan/YYYY-MM-DD_{주제}_todo.md        # TODO
 
 **실행:** 모드 판단 후, 같은 폴더의 해당 헬퍼 파일을 **Read 도구로 읽고** 지시에 따른다.
 
-### 4단계: wtools/TODO.md 동기화
+### 4단계: wtools/TODO.md 동기화 (wtools만 해당)
+
+**wtools 감지 조건**: 현재 디렉토리에 `common/` 폴더가 있는지 확인
+- **있으면**: wtools 내부 → 아래 동기화 실행
+- **없으면**: 외부 프로젝트 → 이 단계 **스킵**
 
 1. **wtools/TODO.md를 Read로 연다**
 2. **대상 프로젝트 섹션을 찾는다** (없으면 생성)
@@ -127,6 +142,27 @@ todo: common/docs/plan/YYYY-MM-DD_{주제}_todo.md (N phases, M tasks)
 ```
 
 ---
+
+## 검증 섹션 작성 규칙 (Python/백엔드 한정)
+
+**대상**: Python 코드를 수정하는 plan에는 반드시 `## 검증` 섹션을 포함한다.
+
+**비대상**: 프론트엔드(SvelteKit/Astro), PS1 스크립트 등은 검증 섹션 생략 가능.
+- 프론트엔드는 `/webapp-testing` 스킬로 별도 검증
+- PS1 스크립트는 운영 환경 의존으로 CLI 단위 검증 불가
+
+**검증 섹션 필수 항목**:
+
+| 항목 | 내용 | 예시 |
+|------|------|------|
+| **테스트 실행 명령** | 수정 대상에 대한 pytest 명령어 (절대경로) | `python -m pytest D:\...\tests\auto_next\ -v` |
+| **기대 결과** | passed 수, 실행시간 상한 등 구체적 수치 | `24 passed, < 30초` |
+| **회귀 확인** | 기존 테스트가 깨지지 않는지 확인하는 명령어 | `python -m pytest D:\...\tests\ --ignore=...` |
+| **검증 기준 체크리스트** | 통과/실패를 판단할 수 있는 체크박스 | `- [ ] 새 테스트 전부 passed` |
+
+**작성 위치**: TODO 체크리스트 바로 위 (모드 A), 또는 _todo.md 하단 (모드 B)
+
+**테스트가 없는 경우**: "수동 검증" 항목으로 대체 (API 호출 curl/httpie 명령, DB 상태 확인 쿼리 등)
 
 ## 원자 작업 기준 (모드 A, B 공통)
 
@@ -189,6 +225,24 @@ todo: common/docs/plan/YYYY-MM-DD_{주제}_todo.md (N phases, M tasks)
 | **높음** | 여러 함수 연동, 흐름 변경 | 함수별 각각 + 연결 순서 | 함수 A, 함수 B 각각 작성 후 호출부 수정 — 별도 TODO |
 
 **승격 규칙**: 하나의 상위 작업에 하위가 5개 이상이면 별도 Phase로 승격 검토
+
+## 코드블럭 내 체크박스 규칙
+
+**문제**: `/done` 스킬의 체크박스 파싱이 코드블럭/인라인 코드 내 `[ ]`도 미완료로 카운트하여 아카이브 실패
+
+**규칙**: 코드블럭이나 인라인 코드 안에 체크박스 **예시**를 넣을 때는 반드시 유니코드로 치환
+
+| 용도 | 사용 금지 | 사용 필수 |
+|------|----------|----------|
+| 미완료 예시 | `- [ ]` | `- ☐` (U+2610) |
+| 완료 예시 | `- [x]` | `- ☑` (U+2611) 또는 `- [x]` |
+
+**적용 대상**:
+- 코드블럭(` ``` `) 안의 TODO/체크박스 예시
+- 인라인 코드(`` ` ``) 안의 체크박스 패턴
+- 마크다운 테이블 내 예시 코드
+
+**참고**: [2026-02-18_fix-checkbox-in-codeblock.md](../../../common/docs/archive/2026-02-18_fix-checkbox-in-codeblock.md)
 
 ## 문서 상태 & 진행률
 

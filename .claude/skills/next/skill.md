@@ -18,6 +18,11 @@ TODO, plan, 개선 아이디어에서 다음 작업을 찾아 즉시 구현을 �
    - 고려 요소: 기능 중요도, 사용자 경험 개선, 기술 부채 해결, 의존성
 3. **개선 아이디어** - `common/docs/*improvement*.md` (P0 → P1 순)
 
+**스캔 제외 대상**:
+- 파일명에 `MANUAL_TASKS`가 포함된 파일은 스캔 대상에서 완전 제외
+- `{project}/MANUAL_TASKS.md` — 수동 작업 목록 (사용자 전용)
+- plan 문서 내 `(→ MANUAL_TASKS)` 태그가 붙은 항목도 작업 후보에서 제외
+
 ## 충돌 방지 메커니즘
 
 ### WORKER-ID 생성
@@ -62,19 +67,24 @@ $workerId = "$env:COMPUTERNAME/$((Split-Path -Leaf $PWD))@$(Get-Date -Format 'MM
 ### 1단계: 작업 소스 스캔
 
 ```powershell
-# 스캔 대상
-$baseDir = "D:\work\project\service\wtools"
-$projects = @("activity-hub", "tool-view", "gentle-words", "screenshot-generator", "sacred-hours")
+# 프로젝트 목록 읽기 (projects.json에서)
+$configPath = Join-Path $PSScriptRoot "..\..\projects.json"
+$config = Get-Content $configPath | ConvertFrom-Json
+
+# 각 프로젝트의 절대경로는 $config.projects[].path 사용
+# 모든 15개 프로젝트를 순회하며 각 프로젝트의 docs/plan/ 스캔
 ```
 
 **TODO.md 확인:**
-- 각 프로젝트의 `TODO.md` 파일 확인
+- projects.json의 각 프로젝트 경로에서 `TODO.md` 파일 확인
 - `## In Progress` 섹션에 항목 있으면 → 해당 작업 선택
 - 없으면 `## Pending` 섹션 첫 번째 항목 선택
 
 **Plan 문서 확인:**
-- `common/docs/plan/*.md` 파일들 스캔 (공통 계획)
-- `{project}/docs/plan/*.md` 파일들 스캔 (프로젝트별 계획)
+- wtools 감지 (현재 디렉토리에 `common/` 폴더 존재 여부):
+  - **있으면**: `common/docs/plan/*.md` 파일들도 스캔 (공통 계획)
+  - **없으면**: 현재 프로젝트의 `docs/plan/*.md`만 스캔
+- projects.json의 각 `{proj.path}/docs/plan/*.md` 파일들 스캔 (모든 15개 프로젝트)
 - `[ ]` 또는 `[→TODO]` 상태인 항목 찾기
 - `[→WORKER-ID]` 패턴은 다른 세션이 작업 중이므로 **스킵** (6시간 이상 경과 시 stale로 자동 해제)
 - **상태 필터**: `구현완료`, `보류` 상태의 plan은 스킵. `초안`, `검토대기`, `검토완료`, `구현중`, `수정필요` 상태만 스캔
@@ -118,7 +128,7 @@ $projects = @("activity-hub", "tool-view", "gentle-words", "screenshot-generator
 3. **Git 동기화 (선택적)**:
    ```bash
    git add {변경된 파일}
-   git commit -m "chore: mark task in progress by $workerId"
+   powershell.exe -Command "Set-Location '{레포경로}'; & 'D:\work\project\tools\common\commit.ps1' 'chore: mark task in progress by $workerId'"
    git push
    ```
    - push 실패 시: 경고 출력하되 작업은 계속 진행
@@ -143,6 +153,10 @@ $projects = @("activity-hub", "tool-view", "gentle-words", "screenshot-generator
 ## 선택 우선순위 로직
 
 ```
+# 사전 필터: MANUAL_TASKS 파일 제외
+# 스캔 대상에서 MANUAL_TASKS.md 파일은 완전 제외
+# plan 문서 내 "(→ MANUAL_TASKS)" 태그가 붙은 항목도 제외
+
 if (TODO In Progress 있음):
     return In Progress 첫 번째 항목
 elif (TODO Pending 또는 Plan 문서에 미완료 있음):

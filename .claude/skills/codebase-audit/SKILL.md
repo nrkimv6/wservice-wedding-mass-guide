@@ -114,7 +114,7 @@ git log --all -p -S "함수명" -- "*.ts" "*.svelte"
 **3-2. 코드 품질**
 - 500줄 초과 파일
 - 깊은 중첩 (4레벨 이상 if/for)
-- 중복 코드 (프로젝트 간 copy-paste 패턴)
+- 중복 코드 (프로젝트 간 copy-paste 패턴) → 발견 시 `_sample` 프로젝트에 해당 코드 추가 제안. 공통 패키지 분리 제안 금지 (별도 레포 간 file: 의존성은 배포 불가)
 
 **3-3. 프로젝트 간 일관성**
 - 인증 처리 방식 불일치 (auth-worker 연동)
@@ -261,7 +261,7 @@ common/docs/audit/{날짜}_codebase-audit.md
 ## 환경
 
 - **Windows**: 백슬래시(`\`), 절대경로, PowerShell 전용
-- **커밋**: 점검 결과로 코드 수정 시 `"D:\work\project\tools\common\commit.sh"` 필수
+- **커밋**: 점검 결과로 코드 수정 시 `powershell.exe -Command "Set-Location '...'; & 'D:\work\project\tools\common\commit.ps1' '...'"` 필수
 
 ## 절대 금지
 
@@ -270,7 +270,11 @@ common/docs/audit/{날짜}_codebase-audit.md
 git commit
 git reset --hard
 Remove-Item -Recurse -Force
+"D:\work\project\tools\common\commit.sh" "message"  # cd 없이 실행 금지
 
-# ✅ REQUIRED
-"D:\work\project\tools\common\commit.sh" "message"
+# ✅ REQUIRED — 1순위
+powershell.exe -Command "Set-Location '{레포경로}'; & 'D:\work\project\tools\common\commit.ps1' 'message'"
+
+# ✅ REQUIRED — 2순위 (반드시 cd 먼저)
+cd "/d/work/project/service/wtools/{project}" && bash "/d/work/project/tools/common/commit.sh" "message"
 ```
