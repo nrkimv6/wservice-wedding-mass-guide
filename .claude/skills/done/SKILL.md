@@ -208,6 +208,41 @@ wtools/TODO.md를 열어 해당 프로젝트 섹션을 갱신합니다:
 
 done 스킬은 **수동 작업 시** 또는 **auto-done.ps1 실패 시** fallback으로 사용합니다.
 
+### 7.5단계: version-bump 판단
+
+커밋 메시지의 prefix를 확인하여 버전 bump 여부를 결정합니다:
+
+| prefix | 액션 |
+|--------|------|
+| `feat:` | minor bump |
+| `fix:` | patch bump |
+| `feat!:` / BREAKING CHANGE | major bump |
+| `refactor:` / `style:` / `perf:` / `test:` / `docs:` / `chore:` | skip (bump 없음) |
+
+**bump 필요 시 실행:**
+```powershell
+# 1순위: PowerShell
+& "D:\work\project\tools\common\version-bump.ps1" -BumpType <patch|minor|major> -ProjectDir (Get-Location).Path
+# 2순위: bash
+bash "/d/work/project/tools/common/version-bump.sh" "<patch|minor|major>" "."
+```
+
+**CHANGELOG.md 항목 추가** (Keep a Changelog 형식):
+```markdown
+## [새버전] - YYYY-MM-DD
+### Added      ← feat:
+### Fixed       ← fix:
+### Breaking    ← feat!:
+- 변경 내용 설명
+```
+CHANGELOG.md가 없으면 파일 자동 생성 후 추가.
+
+**변경 파일 추가 스테이징**: `git add package.json CHANGELOG.md`
+
+**커밋 후 태그 생성**: `git tag v{새버전}`
+
+---
+
 ### 8단계: 커밋
 
 **🔴 이 단계를 건너뛰면 문서 변경이 uncommitted 상태로 남습니다. 반드시 실행하세요.**
