@@ -195,7 +195,7 @@ ENHANCED-PLAN:
 
 이 agent는 다음 두 실행 방법 모두와 호환됩니다:
 
-1. **Python 버전 (권장)**: `python -m auto_next run --plan-file <파일>`
-2. **PowerShell 버전 (deprecated)**: `.\auto-next-sequential.ps1 -PlanFile <파일>`
+1. **Python 버전 (권장)**: `python -m plan_runner run --plan-file <파일>`
+2. **PowerShell 버전 (deprecated)**: `.\plan-runner-sequential.ps1 -PlanFile <파일>`
 
 출력 형식 (`===AUTO-PLAN-RESULT===`)은 두 버전 모두에서 동일하게 파싱됩니다.

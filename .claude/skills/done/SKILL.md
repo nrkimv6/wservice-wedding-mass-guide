@@ -198,11 +198,11 @@ wtools/TODO.md를 열어 해당 프로젝트 섹션을 갱신합니다:
 
 누락된 항목이 있으면 돌아가서 처리합니다.
 
-### 대안: auto-done.ps1 스크립트 (auto-next 전용)
+### 대안: auto-done.ps1 스크립트 (plan-runner 전용)
 
-**auto-next 워크플로우**에서는 `common/tools/auto-done.ps1 -PlanFile <경로>`로 1~8단계를 자동 처리합니다.
+**plan-runner 워크플로우**에서는 `common/tools/auto-done.ps1 -PlanFile <경로>`로 1~8단계를 자동 처리합니다.
 
-- **사용 시점**: auto-next가 plan 완료를 감지했을 때 (Phase 3.5)
+- **사용 시점**: plan-runner가 plan 완료를 감지했을 때 (Phase 3.5)
 - **처리 범위**: plan 상태 갱신, 아카이브 이동, TODO→DONE, wtools/TODO.md 동기화, 커밋
 - **수동 실행**: `powershell -File "common\tools\auto-done.ps1" -PlanFile "path/to/plan.md"`
 
