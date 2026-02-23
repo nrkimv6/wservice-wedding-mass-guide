@@ -164,6 +164,24 @@ todo: common/docs/plan/YYYY-MM-DD_{주제}_todo.md (N phases, M tasks)
 
 **테스트가 없는 경우**: "수동 검증" 항목으로 대체 (API 호출 curl/httpie 명령, DB 상태 확인 쿼리 등)
 
+### 테스트 수행 task 필수 포함 (Python/백엔드 한정)
+
+Python 코드를 수정하는 plan의 TODO에는 **테스트 수행 task를 체크박스로 반드시 포함**한다.
+검증 섹션은 "참고 정보"이므로 auto-impl이 건너뛸 수 있지만, TODO 체크박스는 반드시 실행된다.
+
+**필수 task** (마지막 Phase 또는 각 Phase 끝에 배치):
+
+```markdown
+- [ ] 유닛테스트 수행 및 수정 — `python -m pytest {테스트경로} -v`
+- [ ] e2e 테스트 수행 — `python -m pytest {e2e경로} -v` (해당 시)
+```
+
+**규칙**:
+- 유닛테스트: Python 코드 수정이 있으면 **항상** 포함
+- e2e 테스트: e2e 테스트가 존재하는 프로젝트에서만 포함
+- 테스트 실패 시 수정까지 포함 ("수행 **및 수정**")
+- TC 작성 task가 아님 — 기존 테스트를 **실행**하고 깨지면 **고치는** task
+
 ## 원자 작업 기준 (모드 A, B 공통)
 
 | 조건 | 설명 |

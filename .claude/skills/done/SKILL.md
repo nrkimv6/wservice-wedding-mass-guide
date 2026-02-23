@@ -168,9 +168,9 @@ docs/DONE.md 상단에 추가:
 - [x] 2026-01-08: 캘린더 내보내기
 ```
 
-### 5단계: DONE.md 아카이브 (5개 초과 시)
+### 5단계: DONE.md 아카이브 (10개 초과 시)
 
-docs/DONE.md 항목이 5개를 초과하면:
+docs/DONE.md 항목이 10개를 초과하면:
 1. 오래된 항목 → `{project}/docs/archive/DONE-YYYY-MM.md`로 이동
 2. docs/DONE.md는 최근 5개만 유지
 
