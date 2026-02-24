@@ -1,0 +1,39 @@
+---
+description: 커밋 스크립트를 통한 안전한 git commit 실행. 커밋, commit, 저장 요청 시 자동 호출 (project)
+---
+
+# Git Commit
+
+커밋 스크립트를 통해 안전하게 git commit을 실행합니다.
+
+## 커밋 방법 (우선순위)
+
+1. **PowerShell Profile 함수**: `commit "메시지"` (Windows)
+2. **전역 commit.ps1**: `& "D:\work\project\tools\common\commit.ps1" "메시지"`
+3. **전역 commit.sh**: `bash "/d/work/project/tools/common/commit.sh" "메시지"`
+4. **내장 commit.sh** (범용 fallback): `bash .claude/skills/commit/commit.sh "메시지"`
+
+> 1~3이 실패하거나 접근 불가 시 4번 사용. git config 자동 설정 포함.
+
+## Workflow
+
+1. **변경사항 확인**: `git status`로 수정된 파일 확인
+2. **스테이징**: `git add <files>` 또는 `git add .`
+3. **커밋 실행**: 위 우선순위에 따라 커밋 스크립트 호출
+
+## 커밋 메시지 규칙
+
+| Prefix | 용도 |
+|--------|------|
+| `feat:` | 새 기능 |
+| `fix:` | 버그 수정 |
+| `docs:` | 문서 수정 |
+| `refactor:` | 리팩토링 |
+| `chore:` | 기타 작업 |
+| `test:` | 테스트 추가/수정 |
+
+## 주의사항
+
+- **git commit 직접 사용 금지**: 반드시 커밋 스크립트 사용
+- **커밋 단위**: 작게, phase별 여러 개 가능
+- **스테이징 필수**: 스크립트 실행 전 `git add` 필요
