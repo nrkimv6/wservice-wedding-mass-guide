@@ -104,6 +104,25 @@ git log --all -p -S "함수명" -- "*.ts" "*.svelte"
 
 ---
 
+### Phase 2.5: 반복 패턴 위반 탐지 (Pattern Compliance)
+
+> 상세: @recurring-patterns 스킬 참조
+
+확립된 코드 패턴을 위반하는 코드를 탐지합니다.
+
+**2.5-1. 프론트엔드 패턴 위반** (Grep 사용)
+- `alert(` 또는 `confirm(` 호출 — toast/ConfirmDialog로 교체 필요
+- `window.location.reload()` — 401 처리에서 사용 금지
+- `await load` + 전체 목록 재호출 패턴 (POST/DELETE 직후) — 로컬 상태 갱신 권장
+- Array 기반 선택 코드 (`selectedXxx.includes(`, `selectedXxx.filter(`) — `createSelection()` 유틸 사용 권장
+
+**2.5-2. 백엔드 패턴 위반** (monitor-page만 해당)
+- 라우터에서 `subprocess.Popen` 직접 호출 — Redis 큐 위임 필요
+- `time.sleep()` 또는 동기 블로킹 호출 — async 전환 필요
+- 워커 `_main_loop_iteration` 내 `_safe_execute` 미사용 — 예외 격리 필요
+
+---
+
 ### Phase 3: 개선점 탐지 (Improvement Opportunities)
 
 **3-1. 성능**

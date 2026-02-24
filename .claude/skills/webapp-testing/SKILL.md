@@ -110,6 +110,26 @@ export default defineConfig({
 - [ ] FK ID가 숫자로 표시되는 곳이 없는가?
 - [ ] 동일 모듈의 다른 탭과 기능 수준이 동등한가?
 
+## 반복 패턴 준수 확인
+
+> 상세: @recurring-patterns 스킬 참조
+
+빌드 성공 후, 이번에 수정/생성한 코드에서 패턴 위반 여부를 확인:
+
+### 프론트엔드 필수 점검
+
+- [ ] `alert()` 또는 `confirm()` 호출이 없는가? → `toast` 또는 `ConfirmDialog` 사용
+- [ ] 체크박스 선택이 있으면 `createSelection()` 유틸을 사용하는가? (Array 기반 금지)
+- [ ] POST/DELETE 성공 후 `await loadXxx()` 전체 재요청 대신 로컬 상태를 갱신하는가?
+- [ ] 벌크 액션 성공 시 `toast.success()` 피드백이 있는가?
+- [ ] `window.location.reload()` 호출이 없는가?
+
+### 백엔드 필수 점검 (monitor-page)
+
+- [ ] 5초+ 소요 가능한 API가 동기 응답을 반환하지 않는가? → 202 + 폴링 패턴
+- [ ] API 라우터에서 `subprocess.Popen` 직접 호출이 없는가? → Redis 큐 위임
+- [ ] 워커의 개별 작업이 `_safe_execute()`로 감싸져 있는가?
+
 ## 환경
 
 - **Windows**: 백슬래시(`\`), 절대경로, PowerShell 전용

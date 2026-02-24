@@ -1,0 +1,211 @@
+---
+name: recurring-patterns
+description: "코드베이스 반복 패턴 가이드 (구현 시 참조용). 다른 스킬에서 @recurring-patterns로 참조. 직접 호출 불필요."
+---
+
+# 반복 패턴 가이드
+
+> 코드베이스에서 확립된 패턴. 구현 시 이 패턴을 따를 것.
+> 프론트엔드 패턴(1~4)은 전체 프로젝트 공통, 백엔드 패턴(5~7)은 monitor-page 전용.
+
+---
+
+## 프론트엔드 패턴 (전체 프로젝트)
+
+### 1. 선택/벌크 액션 — createSelection()
+
+체크박스로 항목을 선택하고 벌크 액션을 수행할 때.
+
+```ts
+// ❌ Array 기반 — O(n) 탐색, 탭마다 ~50줄 반복
+let selected = $state<number[]>([]);
+function toggle(id: number) {
+  if (selected.includes(id)) selected = selected.filter(x => x !== id);
+  else selected = [...selected, id];
+}
+
+// ✅ Set 기반 유틸 — O(1), 3줄
+import { createSelection } from '$lib/utils/selection.svelte';
+const selection = createSelection();
+```
+
+**API**: `toggle(id)`, `has(id)`, `count`, `toArray()`, `selectAll(ids)`, `isAllSelected(ids)`, `clear()`
+
+**템플릿**:
+```svelte
+<!-- 전체 선택 -->
+<input type="checkbox"
+  checked={selection.isAllSelected(items.map(i => i.id))}
+  onchange={() => selection.selectAll(items.map(i => i.id))} />
+
+<!-- 개별 선택 (이벤트 버블링 차단 필수) -->
+<input type="checkbox"
+  checked={selection.has(item.id)}
+  onclick={(e) => { e.stopPropagation(); selection.toggle(item.id); }} />
+
+<!-- 벌크 액션 바 -->
+{#if selection.count > 0}
+  <span>{selection.count}개 선택</span>
+  <button onclick={() => bulkAction(selection.toArray())}>일괄 처리</button>
+{/if}
+```
+
+### 2. 알림 — toast
+
+```ts
+// ❌ 금지
+alert('실패');
+confirm('삭제?');
+
+// ✅ 필수
+import { toast } from '$lib/stores/toast';
+toast.error(`삭제 실패: ${err.message}`);       // 5초
+toast.success(`${count}개 항목 삭제 완료`);      // 3초
+toast.warning('인증이 만료되었습니다.');          // 4초
+toast.info('클립보드에 복사했습니다.');           // 3초
+```
+
+**규칙**:
+- `window.alert()`, `window.confirm()` 사용 금지
+- `window.confirm()` 대신 `ConfirmDialog` 컴포넌트 사용
+- 액션 성공 시에도 반드시 `toast.success()` 호출 (사용자 피드백)
+
+### 3. 로컬 상태 업데이트
+
+POST/PUT/DELETE 성공 후 전체 목록을 재요청하지 않고, 로컬 상태를 직접 갱신.
+
+```ts
+// ❌ 전체 재요청 — 네트워크 낭비, 깜빡임
+await fetchWithTimeout(`/api/items/${id}`, { method: 'DELETE' });
+await loadItems();
+
+// ✅ 로컬 상태 직접 갱신
+const res = await fetchWithTimeout(`/api/items/${id}`, { method: 'DELETE' });
+if (!res.ok) { toast.error('삭제 실패'); return; }
+items = items.filter(item => item.id !== id);
+totalCount = Math.max(0, totalCount - 1);
+selection.clear();
+toast.success('삭제 완료');
+```
+
+**패턴별**:
+```ts
+// 단일 삭제
+items = items.filter(i => i.id !== id);
+// 벌크 삭제
+items = items.filter(i => !deletedIds.has(i.id));
+totalCount = Math.max(0, totalCount - deletedIds.size);
+// 상태 변경
+items = items.map(i => ids.includes(i.id) ? { ...i, status: 'approved' } : i);
+```
+
+**전체 재요청 허용**: 서버 정렬/필터가 달라지는 경우, 관계 데이터가 복잡한 경우, 페이지네이션 경계를 넘는 삭제.
+
+### 4. 401 처리 — reload 금지
+
+인증 만료 시 페이지 새로고침은 폼 데이터를 유실시킨다.
+
+```ts
+// ❌ 절대 금지
+if (response.status === 401) window.location.reload();
+
+// ✅ 토스트 + 쿨다운 가드
+let isHandling401 = false;
+if (response.status === 401 && !isHandling401) {
+  isHandling401 = true;
+  setTimeout(() => { isHandling401 = false; }, 3000);  // 3초 쿨다운
+  toast.warning('인증이 만료되었습니다.');
+  onUnauthorized?.();  // 인증 스토어 리셋만
+}
+```
+
+---
+
+## 백엔드 패턴 (monitor-page 전용)
+
+### 5. 비동기 API — 202 + 폴링
+
+5초 이상 걸릴 수 있는 작업은 동기 응답 대신 비동기 패턴 적용.
+
+```
+POST /search → 202 { search_id, status: "pending" }
+  ↓ Redis LPUSH
+Worker: RPOP → 처리 → DB result_json 저장
+  ↓
+GET /search/{id} → { status, result }  (클라이언트 1초 간격 폴링)
+```
+
+```python
+# 요청 접수 (즉시 반환)
+@router.post("/search", status_code=202)
+async def search(request: SearchRequest, db: Session = Depends(get_db)):
+    search_id = str(uuid.uuid4())
+    db.add(FileSearchRequest(search_id=search_id, status="pending"))
+    db.commit()
+    await redis_queue.push({"search_id": search_id})
+    return {"search_id": search_id, "status": "pending"}
+
+# 결과 폴링
+@router.get("/search/{search_id}")
+async def get_result(search_id: str, db: Session = Depends(get_db)):
+    req = db.query(FileSearchRequest).filter_by(search_id=search_id).first()
+    return {"status": req.status, "result": req.result_json}
+```
+
+### 6. Session 0 제약 — Redis 큐 위임
+
+API 서버(NSSM, Session 0)에서 subprocess/GUI/GPU 직접 호출 금지. Redis 큐로 유저 세션 워커에 위임.
+
+| Session 0에서 금지 | 이유 |
+|-------------------|------|
+| `subprocess.Popen(["code", ...])` | GUI 실행 불가 |
+| `Invoke-WebRequest` (PowerShell) | 네트워크 hang |
+| GPU 모델 로딩 | CUDA 초기화 실패 |
+| Desktop 알림 | 세션 없음 |
+
+```python
+# ✅ Redis 큐 위임 + fallback
+@router.post("/open")
+async def open_file(request: OpenFileRequest):
+    try:
+        await open_queue.push({"file_path": request.file_path})
+        return {"ok": True, "via": "redis"}
+    except Exception as e:
+        logger.warning(f"Redis 실패: {e}")
+    service.open_file(request.file_path)  # fallback
+    return {"ok": True, "via": "direct"}
+```
+
+### 7. 워커 에러 격리 — _safe_execute
+
+워커의 개별 작업 실패가 전체 워커를 중단시키면 안 된다.
+
+```python
+# ❌ 예외 전파 → 워커 사망
+async def _main_loop_iteration(self):
+    await self._process_queue()
+    await self._check_status()
+
+# ✅ 예외 격리 → 다음 작업 계속
+async def _main_loop_iteration(self):
+    await self._safe_execute("process_queue", self._process_queue)
+    await self._safe_execute("check_status", self._check_status)
+```
+
+- `_safe_execute`: try/except 예외 격리, 로깅 후 계속
+- 연속 에러 10회 초과 시에만 `WorkerCriticalError`
+- 에러 후 점진적 백오프 (1초→최대 30초)
+
+---
+
+## 빠른 참조 테이블
+
+| # | 패턴 | 위치 | 핵심 규칙 |
+|---|------|------|----------|
+| 1 | `createSelection()` | 프론트 | 체크박스 목록 = Set 기반 유틸 필수 |
+| 2 | `toast` | 프론트 | `alert()` 금지, toast만 사용 |
+| 3 | 로컬 상태 업데이트 | 프론트 | 액션 후 전체 reload 대신 로컬 갱신 |
+| 4 | 401 콜백 | 프론트 | `location.reload()` 금지, 쿨다운 가드 |
+| 5 | 202 + 폴링 | 백엔드 | 5초+ 작업은 비동기 큐 패턴 |
+| 6 | Redis 큐 위임 | 백엔드 | Session 0에서 subprocess 금지 |
+| 7 | `_safe_execute` | 백엔드 | 워커 작업별 예외 격리 필수 |

@@ -151,6 +151,7 @@ Claude가 구현 요청 받으면:
 
 4. **구현** (@implementing-features 스킬 사용)
    - 유사 컴포넌트 참조 (같은 디렉토리/모듈 내 유사 파일의 기능 목록 확인)
+   - **반복 패턴 가이드 준수** (아래 "반복 패턴 체크" 참조)
    - 테스트 작성 (RIGHT-BICEP)
    - 코드 작성
    - **DB 마이그레이션 SQL 파일을 생성한 경우 → 즉시 실행** (커밋 전 필수, 실행 안 하면 API 장애)
@@ -181,6 +182,29 @@ plan, TODO.md, DONE.md 변경도 함께 커밋:
 ```powershell
 commit "feat: 기능 구현"
 ```
+
+## 반복 패턴 체크
+
+> 상세: @recurring-patterns 스킬 참조
+
+구현 중 아래 상황이 발생하면 해당 패턴을 반드시 따른다:
+
+### 프론트엔드
+
+| 상황 | 패턴 | 금지 |
+|------|------|------|
+| 체크박스 선택 + 벌크 액션 | `createSelection()` 유틸 사용 | Array 기반 선택 코드 |
+| 사용자 알림/피드백 | `toast.success/error/warning()` | `alert()`, `confirm()` |
+| POST/DELETE 성공 후 목록 갱신 | 로컬 상태 직접 갱신 | `await loadItems()` 전체 재요청 |
+| 인증 에러 (401) 처리 | 토스트 + 쿨다운 가드 | `window.location.reload()` |
+
+### 백엔드 (monitor-page)
+
+| 상황 | 패턴 | 금지 |
+|------|------|------|
+| 5초+ 소요 작업 API | 202 반환 + Redis 큐 + 폴링 엔드포인트 | 동기 응답으로 블로킹 |
+| Session 0에서 subprocess 필요 | Redis 큐로 유저 세션 워커에 위임 | API에서 직접 subprocess |
+| 워커 내 개별 작업 | `_safe_execute()` 예외 격리 | 예외 전파로 워커 사망 |
 
 ## 환경
 
