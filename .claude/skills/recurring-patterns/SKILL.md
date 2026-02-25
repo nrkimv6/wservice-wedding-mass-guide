@@ -75,23 +75,28 @@ const selection = createSelection();
 
 ### 2. 알림 — toast
 
+> 상세 가이드: [user-feedback.md](user-feedback.md)
+
 ```ts
 // ❌ 금지
 alert('실패');
 confirm('삭제?');
+let toastMessage = $state<string | null>(null);   // 자체 구현 금지
 
 // ✅ 필수
 import { toast } from '$lib/stores/toast';
-toast.error(`삭제 실패: ${err.message}`);       // 5초
-toast.success(`${count}개 항목 삭제 완료`);      // 3초
-toast.warning('인증이 만료되었습니다.');          // 4초
-toast.info('클립보드에 복사했습니다.');           // 3초
+toast.success(`${count}개 항목 삭제 완료`);       // 성공, 3초
+toast.error(`삭제 실패: ${err.message}`);         // 에러(catch), 5초
+toast.warning('입력값을 확인하세요.');             // 입력 검증, 4초
+toast.info('클립보드에 복사했습니다.');            // 정보, 3초
 ```
 
 **규칙**:
-- `window.alert()`, `window.confirm()` 사용 금지
-- `window.confirm()` 대신 `ConfirmDialog` 컴포넌트 사용
+- `alert()`, `window.alert()`, `window.confirm()` 사용 금지
+- `confirm()` 대신 `ConfirmDialog` 컴포넌트 사용
+- 자체 toast 구현(`toastMessage` state + `showToast()`) 금지 — 글로벌 store 사용
 - 액션 성공 시에도 반드시 `toast.success()` 호출 (사용자 피드백)
+- 성공 → `success`, catch 블록 에러 → `error`, 입력 검증 실패 → `warning`
 
 ### 3. 로컬 상태 업데이트
 
@@ -168,7 +173,7 @@ NSSM 서비스(Session 0)에서 subprocess/GUI/GPU 직접 호출 금지. Redis �
 |---|------|------|----------|
 | 0 | Svelte 5 문법 강제 | 프론트 | `on:click` 금지, `onclick` 필수. Svelte 4 문법 전면 금지 |
 | 1 | `createSelection()` | 프론트 | 체크박스 목록 = Set 기반 유틸 필수 |
-| 2 | `toast` | 프론트 | `alert()` 금지, toast만 사용 |
+| 2 | `toast` | 프론트 | `alert()` / 자체 구현 금지, toast만 사용 → [user-feedback.md](user-feedback.md) |
 | 3 | 로컬 상태 업데이트 | 프론트 | 액션 후 전체 reload 대신 로컬 갱신 |
 | 4 | 페이지네이션 유틸 | 프론트 | offset/page 상태 직접 선언 금지 → [pagination.md](pagination.md) |
 | 5 | 401 콜백 | 프론트 | `location.reload()` 금지, 쿨다운 가드 |
