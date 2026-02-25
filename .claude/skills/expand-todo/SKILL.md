@@ -92,6 +92,11 @@ description: "계획 문서의 TODO 체크리스트를 2단계 원자 작업으�
 
 하나의 상위 작업에 하위가 5개 이상이면 별도 Phase로 승격 검토
 
+#### 백엔드/Python 항목 확장 시
+
+- 각 함수에 구현 + TC(Right/Boundary/Error/Cross) 서브항목 생성
+- Phase 끝에 e2e HTTP 테스트 항목 추가 (정상 응답 + 에러 응답)
+
 ### 4단계: plan 문서 업데이트
 
 1. 기존 체크리스트 섹션을 확장된 2레벨 구조로 **Edit**으로 교체
