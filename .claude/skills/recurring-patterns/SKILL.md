@@ -124,7 +124,7 @@ items = items.map(i => ids.includes(i.id) ? { ...i, status: 'approved' } : i);
 
 **전체 재요청 허용**: 서버 정렬/필터가 달라지는 경우, 관계 데이터가 복잡한 경우, 페이지네이션 경계를 넘는 삭제.
 
-### 4. 401 처리 — reload 금지
+### 5. 401 처리 — reload 금지
 
 인증 만료 시 페이지 새로고침은 폼 데이터를 유실시킨다.
 
@@ -146,78 +146,19 @@ if (response.status === 401 && !isHandling401) {
 
 ## 백엔드 패턴 (monitor-page 전용)
 
-### 5. 비동기 API — 202 + 폴링
+> 상세 내용: [backend-patterns.md](backend-patterns.md)
 
-5초 이상 걸릴 수 있는 작업은 동기 응답 대신 비동기 패턴 적용.
+### 6. 비동기 API — 202 + 폴링
 
-```
-POST /search → 202 { search_id, status: "pending" }
-  ↓ Redis LPUSH
-Worker: RPOP → 처리 → DB result_json 저장
-  ↓
-GET /search/{id} → { status, result }  (클라이언트 1초 간격 폴링)
-```
+5초+ 작업은 `POST → 202 + search_id` 즉시 반환 후, 클라이언트가 `GET /{id}` 폴링으로 결과 수신.
 
-```python
-# 요청 접수 (즉시 반환)
-@router.post("/search", status_code=202)
-async def search(request: SearchRequest, db: Session = Depends(get_db)):
-    search_id = str(uuid.uuid4())
-    db.add(FileSearchRequest(search_id=search_id, status="pending"))
-    db.commit()
-    await redis_queue.push({"search_id": search_id})
-    return {"search_id": search_id, "status": "pending"}
+### 7. Session 0 제약 — Redis 큐 위임
 
-# 결과 폴링
-@router.get("/search/{search_id}")
-async def get_result(search_id: str, db: Session = Depends(get_db)):
-    req = db.query(FileSearchRequest).filter_by(search_id=search_id).first()
-    return {"status": req.status, "result": req.result_json}
-```
+NSSM 서비스(Session 0)에서 subprocess/GUI/GPU 직접 호출 금지. Redis 큐로 유저 세션 워커에 위임 + fallback.
 
-### 6. Session 0 제약 — Redis 큐 위임
+### 8. 워커 에러 격리 — _safe_execute
 
-API 서버(NSSM, Session 0)에서 subprocess/GUI/GPU 직접 호출 금지. Redis 큐로 유저 세션 워커에 위임.
-
-| Session 0에서 금지 | 이유 |
-|-------------------|------|
-| `subprocess.Popen(["code", ...])` | GUI 실행 불가 |
-| `Invoke-WebRequest` (PowerShell) | 네트워크 hang |
-| GPU 모델 로딩 | CUDA 초기화 실패 |
-| Desktop 알림 | 세션 없음 |
-
-```python
-# ✅ Redis 큐 위임 + fallback
-@router.post("/open")
-async def open_file(request: OpenFileRequest):
-    try:
-        await open_queue.push({"file_path": request.file_path})
-        return {"ok": True, "via": "redis"}
-    except Exception as e:
-        logger.warning(f"Redis 실패: {e}")
-    service.open_file(request.file_path)  # fallback
-    return {"ok": True, "via": "direct"}
-```
-
-### 7. 워커 에러 격리 — _safe_execute
-
-워커의 개별 작업 실패가 전체 워커를 중단시키면 안 된다.
-
-```python
-# ❌ 예외 전파 → 워커 사망
-async def _main_loop_iteration(self):
-    await self._process_queue()
-    await self._check_status()
-
-# ✅ 예외 격리 → 다음 작업 계속
-async def _main_loop_iteration(self):
-    await self._safe_execute("process_queue", self._process_queue)
-    await self._safe_execute("check_status", self._check_status)
-```
-
-- `_safe_execute`: try/except 예외 격리, 로깅 후 계속
-- 연속 에러 10회 초과 시에만 `WorkerCriticalError`
-- 에러 후 점진적 백오프 (1초→최대 30초)
+워커 작업별 `_safe_execute` 래핑 필수. 개별 실패가 전체 워커를 중단시키면 안 됨. 연속 10회 초과 시 `WorkerCriticalError`.
 
 ---
 
@@ -229,7 +170,8 @@ async def _main_loop_iteration(self):
 | 1 | `createSelection()` | 프론트 | 체크박스 목록 = Set 기반 유틸 필수 |
 | 2 | `toast` | 프론트 | `alert()` 금지, toast만 사용 |
 | 3 | 로컬 상태 업데이트 | 프론트 | 액션 후 전체 reload 대신 로컬 갱신 |
-| 4 | 401 콜백 | 프론트 | `location.reload()` 금지, 쿨다운 가드 |
-| 5 | 202 + 폴링 | 백엔드 | 5초+ 작업은 비동기 큐 패턴 |
-| 6 | Redis 큐 위임 | 백엔드 | Session 0에서 subprocess 금지 |
-| 7 | `_safe_execute` | 백엔드 | 워커 작업별 예외 격리 필수 |
+| 4 | 페이지네이션 유틸 | 프론트 | offset/page 상태 직접 선언 금지 → [pagination.md](pagination.md) |
+| 5 | 401 콜백 | 프론트 | `location.reload()` 금지, 쿨다운 가드 |
+| 6 | 202 + 폴링 | 백엔드 | 5초+ 작업은 비동기 큐 패턴 |
+| 7 | Redis 큐 위임 | 백엔드 | Session 0에서 subprocess 금지 |
+| 8 | `_safe_execute` | 백엔드 | 워커 작업별 예외 격리 필수 |
