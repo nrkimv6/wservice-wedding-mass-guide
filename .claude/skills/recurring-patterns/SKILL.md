@@ -12,6 +12,29 @@ description: "코드베이스 반복 패턴 가이드 (구현 시 참조용). �
 
 ## 프론트엔드 패턴 (전체 프로젝트)
 
+### 0. Svelte 5 문법 강제
+
+Svelte 5 프로젝트에서 Svelte 4 문법 사용 금지. 코드 생성/수정 시 반드시 확인.
+
+| ❌ Svelte 4 (금지) | ✅ Svelte 5 (필수) |
+|---|---|
+| `on:click={handler}` | `onclick={handler}` |
+| `on:change={handler}` | `onchange={handler}` |
+| `on:input={handler}` | `oninput={handler}` |
+| `on:submit\|preventDefault={handler}` | `onsubmit={(e) => { e.preventDefault(); handler(e); }}` |
+| `on:keydown\|stopPropagation` | `onkeydown={(e) => { e.stopPropagation(); ... }}` |
+| `$: derived = expr` | `const derived = $derived(expr)` |
+| `$: { sideEffect() }` | `$effect(() => { sideEffect() })` |
+| `export let prop` | `let { prop } = $props()` |
+| `<slot />` | `{@render children()}` |
+| `<slot name="header" />` | `{@render header()}` (snippet prop) |
+| `createEventDispatcher()` | 콜백 prop (`onchange`, `onselect` 등) |
+
+**규칙**:
+- `on:` 디렉티브 전면 금지 — 네이티브 이벤트 속성만 사용
+- 이벤트 수식어(`|preventDefault`, `|stopPropagation`)는 핸들러 내부에서 직접 호출
+- `$$props`, `$$restProps` → `$props()`의 스프레드 패턴 사용
+
 ### 1. 선택/벌크 액션 — createSelection()
 
 체크박스로 항목을 선택하고 벌크 액션을 수행할 때.
@@ -202,6 +225,7 @@ async def _main_loop_iteration(self):
 
 | # | 패턴 | 위치 | 핵심 규칙 |
 |---|------|------|----------|
+| 0 | Svelte 5 문법 강제 | 프론트 | `on:click` 금지, `onclick` 필수. Svelte 4 문법 전면 금지 |
 | 1 | `createSelection()` | 프론트 | 체크박스 목록 = Set 기반 유틸 필수 |
 | 2 | `toast` | 프론트 | `alert()` 금지, toast만 사용 |
 | 3 | 로컬 상태 업데이트 | 프론트 | 액션 후 전체 reload 대신 로컬 갱신 |
