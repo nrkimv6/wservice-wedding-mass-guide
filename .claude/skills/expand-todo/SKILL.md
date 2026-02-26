@@ -92,10 +92,34 @@ description: "계획 문서의 TODO 체크리스트를 2단계 원자 작업으�
 
 하나의 상위 작업에 하위가 5개 이상이면 별도 Phase로 승격 검토
 
-#### 백엔드/Python 항목 확장 시
+#### 🔴 백엔드/Python 항목 확장 시 — 필수 4-Phase 테스트 구조
 
-- 각 함수에 구현 + TC(Right/Boundary/Error/Cross) 서브항목 생성
-- Phase 끝에 e2e HTTP 테스트 항목 추가 (정상 응답 + 에러 응답)
+Python/백엔드를 수정하는 plan 확장 시, 구현 Phase 뒤에 반드시 **4개 테스트 Phase**를 체크박스로 생성한다.
+각 TC는 **개별 체크박스**로 나열 — 묶어서 하나로 쓰기 금지.
+
+**Phase T1: TC 작성 (RIGHT-BICEP + CORRECT)**
+
+수정/신규 함수마다 아래 카테고리로 TC를 개별 체크박스로 나열:
+- **R(Right)**: 정상 입력 → 기대 출력 — **항상 필수**
+- **B(Boundary)**: 빈값, 0, 최대값, off-by-one — **항상 필수**
+- **E(Error)**: 예외, 잘못된 입력 — **항상 필수**
+- I(Inverse), C(Cross-check), P(Performance): 해당 시만
+- CORRECT — Co(Conformance), O(Ordering), R(Range), Re(Reference), E(Existence), Ca(Cardinality), T(Time): 해당 시만
+
+형식: `- [ ] \`test_{함수명}_{카테고리}_{설명}()\` — {카테고리}: {검증 내용}`
+
+**Phase T2: TC 검증 및 수정**
+- 테스트 파일별 실행 + passed 확인 체크박스
+- 실패 TC 수정 체크박스
+- 기존 테스트 회귀 확인 체크박스
+
+**Phase T3: E2E 테스트 수행 및 수정** (프로젝트에 E2E 존재 시)
+- 시나리오별 개별 체크박스
+
+**Phase T4: HTTP 통합 테스트** (API 엔드포인트 변경 시)
+- `{METHOD} {endpoint}` 정상/에러 응답별 개별 체크박스
+
+**참고 모범 사례**: `quota-stop_todo.md` Phase 4-6
 
 ### 4단계: plan 문서 업데이트
 

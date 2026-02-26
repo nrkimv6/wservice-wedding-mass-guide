@@ -64,11 +64,27 @@ common/docs/plan/YYYY-MM-DD_{주제}.md
 
 ---
 
-## 검증 계획 (Python/백엔드 한정 필수)
+## 🔴 필수 테스트 Phase (Python/백엔드 한정)
+
+Python/백엔드 수정 시 구현 Phase 뒤에 아래 4개 Phase를 **체크박스로** 반드시 포함:
+
+### Phase T1: TC 작성 (RIGHT-BICEP + CORRECT)
+- 함수별 개별 체크박스: R(Right), B(Boundary), E(Error) 필수
+- I, C, P, Co, O, R, Re, E, Ca, T: 해당 시만
+- 형식: `- ☐ \`test_{함수명}_{카테고리}()\` — {검증 내용}`
+
+### Phase T2: TC 검증 및 수정
+- 테스트 실행 + passed 확인 + 회귀 확인 체크박스
+
+### Phase T3: E2E 테스트 (해당 시)
+### Phase T4: HTTP 통합 테스트 (API 변경 시)
+
+---
+
+## 검증 (참고 정보)
 - 테스트 실행 명령: `pytest ...`
 - 기대 결과: ...
-- 회귀(Regression) 위험 요소: ...
-- [ ] 테스트 통과 여부 검증 수행 완료
+- 회귀 위험 요소: ...
 
 ---
 ## 구현 순서

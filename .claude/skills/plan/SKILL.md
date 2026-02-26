@@ -35,21 +35,7 @@ $config = Get-Content $configPath | ConvertFrom-Json
 | 복수 프로젝트 | `common/docs/plan/` (wtools만) | **각 프로젝트별** `{proj.path}/docs/plan/` |
 | 공통 (스킬, 설정 등) | `common/docs/plan/` (wtools만) | `common/docs/plan/` |
 
-```
-# 단일 프로젝트
-{project}/docs/plan/YYYY-MM-DD_{주제}.md          # 계획 문서
-{project}/docs/plan/YYYY-MM-DD_{주제}_todo.md     # 별도 TODO (모드 B)
-{project}/docs/archive/YYYY-MM-DD_{주제}.md       # 아카이브 (모드 B)
-
-# 복수 프로젝트
-common/docs/plan/YYYY-MM-DD_{주제}.md             # 공통 계획 문서
-{project-a}/docs/plan/YYYY-MM-DD_{주제}_todo.md   # 프로젝트A TODO
-{project-b}/docs/plan/YYYY-MM-DD_{주제}_todo.md   # 프로젝트B TODO
-
-# 공통 (특정 프로젝트 없음: 스킬, 설정, 인프라 등)
-common/docs/plan/YYYY-MM-DD_{주제}.md             # 계획 문서
-common/docs/plan/YYYY-MM-DD_{주제}_todo.md        # TODO
-```
+파일명: `YYYY-MM-DD_{주제}.md`, 별도 TODO(모드B): `_todo.md` 접미사, 아카이브(모드B): `docs/archive/`로 이동
 
 ## 실행 단계
 
@@ -94,35 +80,13 @@ common/docs/plan/YYYY-MM-DD_{주제}_todo.md        # TODO
 
 ### 5단계: 최종 검증 (필수)
 
-모드에 관계없이, 안내 출력 **전에** 아래를 순차적으로 확인한다:
+안내 출력 **전에** 아래 5항목을 Read로 확인. 하나라도 실패 시 해당 단계로 돌아가 수정.
 
-1. **plan 문서가 올바른 위치에 존재하는지 Read로 확인**
-   - 모드 A: `{project}/docs/plan/` 또는 `common/docs/plan/`
-   - 모드 B: `{project}/docs/archive/` 또는 `common/docs/archive/`
-   - 실패 시: 3단계로 돌아가 파일 생성
-
-2. **TODO 항목이 plan 내부(모드A) 또는 _todo.md(모드B)에 존재하는지 확인**
-   - 모드 A: plan 문서 내 "## 구현 순서" 섹션에 체크박스 존재
-   - 모드 B: `{project}/docs/plan/YYYY-MM-DD_{주제}_todo.md` 파일 존재
-   - 실패 시: 3단계로 돌아가 TODO 생성
-
-3. **모드B일 경우 _todo.md 내 archive 역참조 경로가 유효한지 확인**
-   - _todo.md의 첫 줄에 `> 계획: [링크](archive 경로)` 존재
-   - Read로 해당 archive 경로가 실제로 열리는지 확인
-   - 실패 시: 3단계로 돌아가 역참조 수정
-
-4. **대상 프로젝트 TODO.md의 Pending에 항목이 존재하는지 확인**
-   - `{project}/TODO.md` 또는 `common/TODO.md` Read
-   - Pending 섹션에 해당 plan 링크가 포함된 항목 존재
-   - 실패 시: 4단계로 돌아가 TODO.md에 추가
-
-5. **wtools/TODO.md에 해당 plan 링크가 존재하는지 확인**
-   - `wtools/TODO.md` Read
-   - 해당 프로젝트 섹션에 plan 링크가 포함된 항목 존재
-   - "마지막 업데이트" 날짜가 오늘인지 확인
-   - 실패 시: 4단계로 돌아가 wtools/TODO.md 동기화
-
-**⚠️ 중요: 하나라도 실패 시 → 해당 단계로 돌아가 수정. 모든 검증 통과 전 6단계 진행 금지.**
+1. **plan 파일 존재** — 모드A: `docs/plan/`, 모드B: `docs/archive/`
+2. **TODO 체크박스 존재** — 모드A: plan 내부, 모드B: `_todo.md` 파일
+3. **모드B 역참조** — `_todo.md`의 `> 계획:` 링크가 archive를 가리킴
+4. **프로젝트 TODO.md** — Pending에 plan 링크 항목 존재
+5. **wtools/TODO.md** — 해당 프로젝트 섹션에 항목 + 날짜 오늘
 
 ### 6단계: 안내
 
@@ -143,44 +107,33 @@ todo: common/docs/plan/YYYY-MM-DD_{주제}_todo.md (N phases, M tasks)
 
 ---
 
-## 검증 섹션 작성 규칙 (Python/백엔드 한정)
+## 🔴 pytest 강제 Phase 규칙 (Python/백엔드 한정)
 
-**대상**: Python 코드를 수정하는 plan에는 반드시 `## 검증` 섹션을 포함한다.
+> **auto-impl은 체크박스만 실행한다. 문서 하단 검증 섹션은 무시될 수 있다.**
+> 따라서 모든 TC는 반드시 **TODO Phase 체크박스**로 존재해야 한다.
 
-**비대상**: 프론트엔드(SvelteKit/Astro), PS1 스크립트 등은 검증 섹션 생략 가능.
-- 프론트엔드는 `/webapp-testing` 스킬로 별도 검증
-- PS1 스크립트는 운영 환경 의존으로 CLI 단위 검증 불가
+**대상**: Python 코드를 수정하는 모든 plan. 프론트엔드/PS1은 제외.
 
-**검증 섹션 필수 항목**:
+### 필수 4-Phase 테스트 구조
 
-| 항목 | 내용 | 예시 |
-|------|------|------|
-| **테스트 실행 명령** | 수정 대상에 대한 pytest 명령어 (절대경로) | `python -m pytest D:\...\tests\auto_next\ -v` |
-| **기대 결과** | passed 수, 실행시간 상한 등 구체적 수치 | `24 passed, < 30초` |
-| **회귀 확인** | 기존 테스트가 깨지지 않는지 확인하는 명령어 | `python -m pytest D:\...\tests\ --ignore=...` |
-| **검증 기준 체크리스트** | 통과/실패를 판단할 수 있는 체크박스 | `- [ ] 새 테스트 전부 passed` |
+구현 Phase 뒤에 반드시 아래 4개 Phase를 **체크박스로** 포함한다.
+각 TC는 **개별 체크박스** — 묶어서 하나로 쓰기 금지.
 
-**작성 위치**: TODO 체크리스트 바로 위 (모드 A), 또는 _todo.md 하단 (모드 B)
+| Phase | 내용 | 포함 조건 |
+|-------|------|----------|
+| **T1: TC 작성** | RIGHT-BICEP + CORRECT 기반, 함수별 개별 체크박스 | Python 수정 시 항상 |
+| **T2: TC 검증 및 수정** | 실행 → passed 확인 → 실패 수정 → 회귀 확인 | Python 수정 시 항상 |
+| **T3: E2E 테스트** | mock 기반 end-to-end 흐름 검증 | E2E 존재 시 |
+| **T4: HTTP 통합** | `METHOD endpoint` 정상/에러 응답 검증 | API 변경 시 |
 
-**테스트가 없는 경우**: "수동 검증" 항목으로 대체 (API 호출 curl/httpie 명령, DB 상태 확인 쿼리 등)
+**T1 TC 카테고리** (R·B·E 필수, 나머지 해당 시):
+- **RIGHT-BICEP**: R(정상), B(경계), I(역), C(교차), E(에러), P(성능)
+- **CORRECT**: Co(준수), O(순서), R(범위), Re(참조), E(존재), Ca(기수), T(시간)
 
-### 테스트 수행 task 필수 포함 (Python/백엔드 한정)
+**TC 형식**: `- [ ] \`test_{함수명}_{카테고리}_{설명}()\` — {검증 내용}`
 
-Python 코드를 수정하는 plan의 TODO에는 **테스트 수행 task를 체크박스로 반드시 포함**한다.
-검증 섹션은 "참고 정보"이므로 auto-impl이 건너뛸 수 있지만, TODO 체크박스는 반드시 실행된다.
-
-**필수 task** (마지막 Phase 또는 각 Phase 끝에 배치):
-
-```markdown
-- [ ] 유닛테스트 수행 및 수정 — `python -m pytest {테스트경로} -v`
-- [ ] e2e 테스트 수행 — `python -m pytest {e2e경로} -v` (해당 시)
-```
-
-**규칙**:
-- 유닛테스트: Python 코드 수정이 있으면 **항상** 포함
-- e2e 테스트: e2e 테스트가 존재하는 프로젝트에서만 포함
-- 테스트 실패 시 수정까지 포함 ("수행 **및 수정**")
-- TC 작성 task가 아님 — 기존 테스트를 **실행**하고 깨지면 **고치는** task
+**상세 카테고리 설명 및 예시**: `_pytest-reference.md` 참조
+**모범 사례**: `quota-stop_todo.md` Phase 4-6
 
 ## 원자 작업 기준 (모드 A, B 공통)
 
@@ -210,39 +163,11 @@ Python 코드를 수정하는 plan의 TODO에는 **테스트 수행 task를 체�
 
 ### 분해 규칙
 
-| 레벨 | 용도 | 예시 |
-|------|------|------|
-| **상위** (번호) | 기능/개념 단위, 검토 체크포인트 | "로그인 폼 구현", "API 엔드포인트 추가" |
-| **하위** (대시) | 초보 할당 가능한 원자 작업 | "`LoginForm.svelte`: email input 추가" |
-
-### 분해 판단 기준
-
-상위 작업을 하위로 분해해야 하는 경우:
-- 파일을 2개 이상 수정해야 할 때
-- "~하고 ~한다"처럼 AND로 연결된 작업
-- 예상 소요 시간이 30분 이상일 때
-- 중간 검증이 필요한 경우
-
-### 하위 작업 작성 원칙
-
-1. **한 줄에 한 동작**: "추가", "수정", "삭제" 중 하나만
-2. **파일 경로 필수**: 어느 파일인지 명확히
-3. **구체적 내용**: "버튼 추가" (X) → "Submit 버튼에 disabled 속성 추가" (O)
-4. **독립 테스트 가능**: 이것만 해도 뭔가 확인할 수 있어야 함
-5. **함수 수준 명세** (중간+ 복잡도):
-   - 새 함수: `함수명(파라미터) → 반환값` + 핵심 로직 1줄
-   - 기존 함수 수정: 함수명 + 변경할 부분 + before/after 요약
-6. **검증 방법 명시**: "이걸 하면 어떻게 확인하나"를 한 줄로
-
-### 복잡도별 분해 깊이
-
-| 복잡도 | 기준 | 분해 수준 | 예시 |
-|--------|------|----------|------|
-| **낮음** | 설정 변경, 값 추가, 1곳 수정 | 파일 + 위치 | "`config.ts`: timeout 값 30→60으로 변경" |
-| **중간** | 새 함수 작성, 로직 추가 | 함수 시그니처 + 동작 | "`Parse-Result($output) → hashtable`: 정규식으로 블록 파싱" |
-| **높음** | 여러 함수 연동, 흐름 변경 | 함수별 각각 + 연결 순서 | 함수 A, 함수 B 각각 작성 후 호출부 수정 — 별도 TODO |
-
-**승격 규칙**: 하나의 상위 작업에 하위가 5개 이상이면 별도 Phase로 승격 검토
+- **상위**(번호): 기능/개념 단위 → **하위**(대시): 초보 할당 가능한 원자 작업
+- **분해 기준**: 파일 2개+, AND 연결, 30분+, 중간 검증 필요 → 하위로 분해
+- **하위 원칙**: 한 줄 한 동작 + 파일 경로 필수 + 구체적 내용 + 독립 검증 가능
+- **함수 명세** (중간+ 복잡도): 새 함수는 `함수명(파라미터) → 반환값`, 수정은 before/after 요약
+- **승격**: 하위 5개 이상이면 별도 Phase로 승격 검토
 
 ## 코드블럭 내 체크박스 규칙
 

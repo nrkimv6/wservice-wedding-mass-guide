@@ -80,27 +80,14 @@ plan 문서는 **분석 + 근거**만 남기고, **별도 TODO 파일을 생성*
 
 ---
 
-## 백엔드/Python 변경 시 테스트 필수 규칙
+## 🔴 백엔드/Python 변경 시 — SKILL.md `pytest 강제 Phase 규칙` 적용
 
-백엔드 API 또는 Python 스크립트 수정이 포함된 Phase가 있으면:
-
-1. **함수별 2레벨 TC TODO** 필수 추가:
-   - [ ] `function_name()` 구현
-     - [ ] 구현: {핵심 로직 설명}
-     - [ ] TC-Right: 정상 케이스
-     - [ ] TC-Boundary: 경계값/빈값
-     - [ ] TC-Error: 에러/예외 케이스
-     - [ ] TC-Cross: 교차 검증 (해당 시)
-
-2. **e2e HTTP 테스트** 항목 필수:
-   - [ ] e2e: `{METHOD} {endpoint}` 정상 응답 검증
-   - [ ] e2e: `{METHOD} {endpoint}` 에러 응답 검증
-
-기존 프로젝트 테스트 패턴(pytest, fixtures 등)을 따를 것.
+Python 수정 포함 시 구현 Phase 뒤에 **T1~T4 테스트 Phase 체크박스 필수**.
+규칙 상세·카테고리 테이블 → SKILL.md "🔴 pytest 강제 Phase 규칙" 참조.
 
 ---
 
-## 검증 (Python 코드 수정 시 필수)
+## 검증 (Python 코드 수정 시 참고 정보)
 
 ### 테스트 실행
 
