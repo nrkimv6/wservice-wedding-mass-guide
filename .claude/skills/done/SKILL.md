@@ -115,8 +115,9 @@ B. 각 항목 텍스트에 수동 작업 판단 키워드가 포함되어 있는
 C. 매칭된 항목을 추출하여 리스트로 수집
 
 **수동 작업 판단 키워드**: `common/docs/guide/project-management/manual-tasks-format.md` 참조
-- 한국어: `브라우저`, `UI`, `디자인`, `육안`, `시각`, `레이아웃`, `가독성`, `실기기`, `모바일`, `대시보드`, `로그인 테스트`, `배포 확인`, `스크린샷`, `스타일`, `색상`, `폰트`
-- 영어: `Android`, `iOS`, `Firebase Console`, `Supabase Dashboard`, `Google.*인증`, `Kakao.*인증`, `Play Store`
+- 한국어: `브라우저`, `UI`, `디자인`, `육안`, `시각`, `레이아웃`, `가독성`, `실기기`, `모바일`, `스크린샷`, `스타일`, `색상`, `폰트`
+- 영어: `Android`, `iOS`
+- CLI/curl로 검증 가능한 것은 수동 아님: `배포 확인`, `Firebase Console`, `Supabase Dashboard`, `로그인 테스트` 등
 
 **MANUAL_TASKS.md 생성/갱신:**
 
