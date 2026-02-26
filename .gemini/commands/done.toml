@@ -25,7 +25,12 @@ prompt = """
 
 plan 문서의 모든 체크박스가 `[x]`이면:
 1. `common/docs/plan/{파일}.md` → `common/docs/archive/{파일}.md` 이동
-2. 아카이브 헤더 추가: `> 완료일: YYYY-MM-DD`
+2. 이동 시 반드시 `git mv` 사용 (git 히스토리 보존):
+   - `run_shell_command`로 `git mv "{원본}" "{대상}"` 실행
+   - 이동 후 Edit 도구로 archive 헤더(`> 완료일: YYYY-MM-DD`) 추가
+   - `run_shell_command`로 `git add "{대상}"` 실행
+   - # ❌ Move-Item/Remove-Item 금지 — git history 유실
+3. 아카이브 헤더 추가: `> 완료일: YYYY-MM-DD`
 
 ### 4단계: MANUAL_TASKS 분리
 

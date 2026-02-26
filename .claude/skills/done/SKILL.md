@@ -77,7 +77,20 @@ plan 문서의 모든 체크박스가 `[x]`이면:
 1. **프로젝트 특정 plan**: `common/docs/plan/{파일}.md` (wtools만) → `{proj.path}/docs/archive/{파일}.md`
 2. **공통/복수 프로젝트 plan**: `common/docs/plan/{파일}.md` (wtools만) → `common/docs/archive/{파일}.md`
 3. **외부 프로젝트 plan**: `{proj.path}/docs/plan/{파일}.md` → `{proj.path}/docs/archive/{파일}.md`
-4. 아카이브 헤더 추가:
+4. **아카이브 이동 시 반드시 `git mv` 사용** (git 히스토리 보존):
+
+```powershell
+# ✅ 올바른 방법 — git mv로 이동 (히스토리 추적 가능)
+git mv -f "{plan경로}" "{archive경로}"
+# 이동 후 archive 헤더 추가 (Set-Content 또는 Edit 도구)
+git add "{archive경로}"
+
+# ❌ FORBIDDEN: Move-Item / Remove-Item — 히스토리 유실
+# Move-Item -Path "{plan경로}" -Destination "{archive경로}"
+# Remove-Item -Path "{plan경로}" -Force
+```
+
+5. 아카이브 헤더 추가 (`git mv` 이동 후 Edit 도구 또는 Set-Content로 파일 상단에 삽입):
 
 ```markdown
 # {제목}

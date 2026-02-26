@@ -16,6 +16,9 @@ skills:
 
 1. 전달받은 계획(PROJECT, TASK, SOURCE, PLAN)을 파악한다
    - planResult가 비어있거나 `PRIORITY: SKIP-PLAN`인 경우, SOURCE에 지정된 plan 파일 원본을 읽어서 미완료 항목(`- [ ]`)을 구현 대상으로 사용한다
+   - **[예외] SOURCE 파일이 없거나 존재하지 않는 경우**: 구현 내용을 기반으로 임시 plan 파일을 자동 생성 (Write 도구 활용)
+     - 생성 위치: `common/docs/plan/YYYY-MM-DD_{작업명}_auto.md` (`_auto` 접미사 필수)
+     - 생성된 파일을 SOURCE로 삼아 체크박스 관리를 진행한다
    - **plan의 미완료 `[ ]` 항목을 TodoWrite에 등록한다** (각 항목 = 하나의 task)
      - 이렇게 하면 TodoWrite의 in_progress 항목이 곧 plan 체크박스 업데이트 의무가 된다
 2. `/implement` 스킬 로직으로 미완료 항목을 구현한다
@@ -55,6 +58,41 @@ skills:
      - 완료 검증
      - 커밋 (commit 스크립트 사용)
    - **2차 시도 (fallback)**: 스크립트 실패 시 `/done` 스킬 로직 수동 실행
+
+## 수정 이력 기록 (plan 없는 경우)
+
+plan 문서 없이 진행된 소규모 수정이나 버그 픽스의 경우, 나중에 원인을 추적하기 어렵습니다. 따라서 **커밋 완료 후**, 다음 조건에 해당하면 수정 이력을 명시적으로 기록합니다.
+
+### 기록 조건 (아래 조건 모두 충족 시)
+1. `PRIORITY: SKIP-ALL` (비-plan 문서) 상태가 아닐 것
+2. plan 파일(SOURCE)이 처음부터 없었거나, 이 에이전트가 `_auto` 접미사로 자동 생성한 임시 plan 파일일 것
+3. 기존 스크립트에 의한 plan 문서의 archive 이동이 발생하지 않았을 것
+
+### 기록 위치
+- **단일 프로젝트**: 해당 `{project}/docs/DONE.md`에 추가 기입 (필요 시 파일 생성)
+- **공통/다중 프로젝트**: `common/docs/history/YYYY-MM-DD_{작업명}-changes.md` 파일 신규 생성
+
+### 수정 이력 템플릿
+
+```markdown
+# 수정 보고서: {작업명}
+
+> 일시: YYYY-MM-DD
+> 프로젝트: {project}
+> 커밋: {commit-hash}
+
+## 수정 내용
+
+{작업 요약 1-3줄}
+
+## 수정 파일
+
+- `{파일경로}`: {변경 요약}
+
+## 비고
+
+{plan 파일 없이 진행된 이유 또는 기타}
+```
 
 ## 추가 테스트 실행 규칙 (선택)
 
