@@ -11,6 +11,18 @@
         ]
       }
     ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoProfile -Command \"$raw = [Console]::In.ReadToEnd(); try { $d = $raw | ConvertFrom-Json; $fp = $d.tool_input.file_path; if ($fp -match '\\.svelte$') { $dir = Split-Path $fp; while ($dir -and !(Test-Path (Join-Path $dir 'package.json'))) { $dir = Split-Path $dir }; if ($dir) { Push-Location $dir; Write-Host '[Hook] svelte 변경 감지 → npm run check' -ForegroundColor Cyan; npm run check 2>&1 | Select-Object -First 30; Pop-Location } } } catch {}\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
