@@ -1,0 +1,71 @@
+description = "구현 워크플로우 (plan→TODO→DONE). Use when: 구현해, 진행해, 시작해, implement"
+
+prompt = """
+# 구현 워크플로우
+
+plan → TODO → DONE 흐름으로 작업을 관리합니다.
+
+## 파일 위치
+
+```
+wtools/
+├── common/docs/plan/           # 아이디어/계획 (전체 공유)
+│   └── YYYY-MM-DD_*.md
+└── {project}/                  # 각 프로젝트
+    ├── TODO.md                 # 진행할 작업
+    └── docs/
+        ├── DONE.md             # 완료 (최근 20개)
+        └── archive/
+```
+
+## Workflow
+
+### 1단계: plan → TODO 선택
+
+plan 문서에서 구현할 항목 선택:
+- plan에 `[→TODO]` 표시, 상태를 "구현중"으로 변경
+- TODO.md Pending에 추가 (출처 표시)
+
+### 1.5단계: 수동 작업 필터링
+
+다음 조건의 작업은 자동 구현 스텝에서 제외합니다:
+- `MANUAL_TASKS.md`: 완전 배제
+- 항목 옆에 `(→ MANUAL_TASKS)` 태그가 있는 경우 배제
+- 테스트, 브라우저, UI, 폰트, 디자인 등의 수동 작업 키워드 포함 시
+
+### 2단계: TODO 작업 진행
+
+1. 테스트 작성 (RIGHT-BICEP)
+2. 코드 작성
+3. 기존 테스트 통과 확인
+4. 빌드 확인 (`npm run build`)
+5. 런타임 및 문법 셀프 검증 (export 누락 등 기초적 실수 방지)
+
+### 2.5단계: 반복 패턴 체크
+
+| 종류 | 패턴 | 설명 |
+|---|---|---|
+| 프론트 | selection Set | 다중 선택에 `Set` 사용하여 불변성 유지 |
+| 프론트 | toast store | 알림 처리에 통일된 `toast store` 활용 |
+| 프론트 | local state update | 즉각적이고 낙관적인 로컬 리스트 업데이트 |
+| 프론트 | 401 cooldown | 401 인증 실패 시 재시도 간 쿨다운 적용 |
+| 백엔드 | transaction wrapper | DB 저장 실패에 대비하는 `transaction wrapper` |
+| 백엔드 | query optimization | N+1 문제 해소를 위한 최적 조인 설계 |
+| 백엔드 | error handling | 표준화된 JSON 에러 응답 활용 |
+
+### 3단계: TODO → DONE 완료
+
+**체크박스 게이트**: plan 문서로 돌아가서 해당 작업 항목의 `[ ]`를 `[x]`로 변경 후 다음 진행.
+
+### 4단계: 아카이브 (20개 초과 시)
+
+docs/DONE.md가 20개 초과하면:
+- 오래된 항목 → `docs/history/DONE-YYYY-MM.md`
+- docs/DONE.md는 최근 20개만 유지
+
+## 커밋 규칙
+
+커밋 스크립트를 반드시 사용합니다 (git commit 직접 사용 금지).
+
+{{args}}
+"""

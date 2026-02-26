@@ -1,0 +1,6 @@
+{
+  "toolPermissions": {
+    "alwaysAllow": ["ReadFileTool", "ShellTool(ls)", "ShellTool(cat)", "ShellTool(git *)"],
+    "alwaysDeny": ["ShellTool(rm -rf *)"]
+  }
+}
