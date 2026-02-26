@@ -30,7 +30,7 @@ plan 문서의 모든 체크박스가 `[x]`이면:
    - 이동 후 Edit 도구로 archive 헤더(`> 완료일: YYYY-MM-DD`) 추가
    - `run_shell_command`로 `git add "{대상}"` 실행
    - # ❌ Move-Item/Remove-Item 금지 — git history 유실
-3. 아카이브 헤더 추가: `> 완료일: YYYY-MM-DD`
+3. 아카이브 헤더 추가: `> 완료일: YYYY-MM-DD`, `> 요약: {원본에서 복사}`
 
 ### 4단계: MANUAL_TASKS 분리
 
