@@ -65,4 +65,15 @@ FAILED-ENDPOINTS:
 ## 허용/금지
 
 - **허용**: 서버 시작/종료, pytest 실행, HTTP 요청, 테스트 결과 보고
-- **금지**: 코드 수정 (fix는 runner의 fix 루프에서 별도 에이전트로 처리)
+- **금지**: 코드 수정 (fix는 runner의 fix 루프에서 별도 에이전트로 처리), **커밋 금지** (커밋은 plan-runner가 관리)
+
+---
+
+## 호환성
+
+이 agent는 **v2 파이프라인 전용**입니다:
+
+- **Python plan-runner** (`python -m plan_runner run --pipeline v2`): 지원
+- **PowerShell 버전 (deprecated)**: v2 미지원 — 이 에이전트 사용 불가
+
+출력 형식 (`===AUTO-TEST-E2E-RESULT===`)은 Python plan-runner에서 파싱됩니다.

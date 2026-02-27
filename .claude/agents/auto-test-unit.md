@@ -69,4 +69,15 @@ DETAIL:
 ## 허용/금지
 
 - **허용**: pytest 실행, 테스트 코드 수정, 구현 코드 수정 (테스트 통과 목적), 체크박스 업데이트
-- **금지**: 서버 기동, HTTP 테스트, 새 기능 추가
+- **금지**: 서버 기동, HTTP 테스트, 새 기능 추가, **커밋 금지** (커밋은 plan-runner가 merge 시점에 관리)
+
+---
+
+## 호환성
+
+이 agent는 **v2 파이프라인 전용**입니다:
+
+- **Python plan-runner** (`python -m plan_runner run --pipeline v2`): 지원
+- **PowerShell 버전 (deprecated)**: v2 미지원 — 이 에이전트 사용 불가
+
+출력 형식 (`===AUTO-TEST-UNIT-RESULT===`)은 Python plan-runner에서 파싱됩니다.

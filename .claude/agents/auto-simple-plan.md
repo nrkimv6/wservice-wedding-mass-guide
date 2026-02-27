@@ -63,3 +63,14 @@ STAGE: simple-plan
 
 - **허용**: plan 문서 Edit (what/why 보완, 상태 변경), 요약 생성
 - **금지**: 코드 수정, 원자 분해, TC 명세, 커밋, 구현 시작
+
+---
+
+## 호환성
+
+이 agent는 **v2 파이프라인 전용**입니다:
+
+- **Python plan-runner** (`python -m plan_runner run --pipeline v2`): 지원
+- **PowerShell 버전 (deprecated)**: v2 미지원 — 이 에이전트 사용 불가
+
+출력 형식 (`===AUTO-SIMPLE-PLAN-RESULT===`)은 Python plan-runner에서 파싱됩니다.

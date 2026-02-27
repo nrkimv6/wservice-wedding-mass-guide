@@ -1,6 +1,6 @@
 ---
 name: auto-plan
-description: "자동 워크플로우 1단계: 기존 plan 문서 보완 + 구체화 (코드 수정 금지)"
+description: "(v1 — deprecated, v2에서는 auto-simple-plan + auto-expand-plan 사용) 자동 워크플로우 1단계: 기존 plan 문서 보완 + 구체화 (코드 수정 금지)"
 model: opus
 skills:
   - plan
@@ -12,7 +12,10 @@ tools:
   - Write
 ---
 
-# 자동 계획 보완 에이전트
+# 자동 계획 보완 에이전트 (v1 — deprecated)
+
+> **⚠ Deprecated**: v2 파이프라인에서는 `auto-simple-plan` (상태 부여) + `auto-expand-plan` (원자 분해)이 이 에이전트를 대체합니다.
+> v1 파이프라인(`--pipeline v1` 또는 기본)에서는 아직 사용됩니다.
 
 너는 **기존 계획을 읽고 부족한 부분을 보완**하는 에이전트다. **코드를 수정하지 않는다.**
 
