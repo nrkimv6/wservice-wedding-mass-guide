@@ -10,31 +10,39 @@ allowed-tools: Bash,Read
 
 ## 사용법
 
-### PowerShell 환경
-```powershell
-# 1. 변경사항 스테이징
-git add <files>
+커밋 스크립트는 3개가 존재하며, 위에서부터 순서대로 시도하고 **실패하거나 없으면** 다음 순위로 fallback합니다.
 
-# 2. 커밋 스크립트 실행
-D:\work\project\tools\common\commit.ps1 "커밋 메시지"
+| 순위 | 스크립트 | 환경 | 경로 |
+|------|---------|------|------|
+| 1순위 | `commit.ps1` (공용) | PowerShell / powershell.exe 경유 | `D:\work\project\tools\common\commit.ps1` |
+| 2순위 | `commit.sh` (공용) | Bash | `D:\work\project\tools\common\commit.sh` |
+| 3순위 | `commit.sh` (로컬) | Bash | 스킬 폴더 내 `commit.sh` (이 파일과 같은 디렉토리) |
+
+### 1순위: commit.ps1 (PowerShell)
+```powershell
+git add <files>
+& "D:\work\project\tools\common\commit.ps1" "커밋 메시지"
 ```
 
-### Bash 환경 — 1순위: powershell.exe로 commit.ps1 실행
+Bash에서 powershell.exe 경유:
 ```bash
-# bash에서도 commit.ps1을 powershell.exe 경유로 실행 가능
+git add <files>
 powershell.exe -Command "Set-Location 'D:\work\project\service\wtools'; & 'D:\work\project\tools\common\commit.ps1' '커밋 메시지'"
 ```
 
-### Bash 환경 — 2순위: commit.sh 직접 실행 (fallback)
+### 2순위: commit.sh (공용, fallback)
 ```bash
 # ⚠️ 반드시 cd로 레포 디렉토리 이동 후 실행!
-# commit.sh 내부에서 git diff --cached를 현재 디렉토리 기준으로 실행하므로
-# cd 없이 실행하면 git 명령 실패 → set -e로 조용히 exit 1 종료됨
-
 cd "/d/work/project/service/wtools" && git add <files> && bash "/d/work/project/tools/common/commit.sh" "커밋 메시지"
 ```
 
-**참고**: commit.sh는 commit.ps1과 동일한 기능을 수행하며, `Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>`을 자동으로 추가합니다.
+### 3순위: commit.sh (로컬, 최후 fallback)
+```bash
+# 공용 스크립트가 모두 없을 때 스킬 폴더 내 commit.sh 사용
+cd "/d/work/project/service/wtools" && git add <files> && bash "/d/work/project/service/wtools/.claude/skills/commit/commit.sh" "커밋 메시지"
+```
+
+**참고**: 모든 commit.sh는 commit.ps1과 동일한 기능을 수행합니다.
 
 ## Workflow
 
@@ -85,19 +93,24 @@ cd "/d/work/project/service/wtools" && git add <files> && bash "/d/work/project/
 ## 예시
 
 ```powershell
-# PowerShell: 1순위
+# 1순위: commit.ps1
 cd "D:\work\project\service\wtools"
 git add app/routes/monitor.py
 & "D:\work\project\tools\common\commit.ps1" "feat: 모니터링 API 추가"
 ```
 
 ```bash
-# Bash: 2순위 — powershell.exe 경유 (권장)
+# 1순위 (bash에서): powershell.exe 경유
 git add app/routes/monitor.py
 powershell.exe -Command "Set-Location 'D:\work\project\service\wtools'; & 'D:\work\project\tools\common\commit.ps1' 'feat: 모니터링 API 추가'"
 
-# Bash: 3순위 — commit.sh 직접 (반드시 cd 먼저)
+# 2순위: 공용 commit.sh (반드시 cd 먼저)
 cd "/d/work/project/service/wtools"
 git add app/routes/monitor.py
 bash "/d/work/project/tools/common/commit.sh" "feat: 모니터링 API 추가"
+
+# 3순위: 로컬 commit.sh (공용 스크립트 없을 때)
+cd "/d/work/project/service/wtools"
+git add app/routes/monitor.py
+bash "/d/work/project/service/wtools/.claude/skills/commit/commit.sh" "feat: 모니터링 API 추가"
 ```
