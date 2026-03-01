@@ -121,6 +121,38 @@ Claude가 구현 요청 받으면:
    - `common/docs/plan/`에서 관련 계획 확인
    - 없으면 사용자 요청을 바로 TODO에 추가
 
+1.2. **워크트리 준비 (수동 세션 main 오염 방지)**
+
+   > 이 단계는 `/implement` 수동 세션에서 워크트리를 생성하여 독립된 디렉토리+브랜치에서 작업하기 위한 것이다.
+   > 모든 커밋(emergency 포함)은 impl 브랜치에 쌓이므로 main은 오염되지 않는다.
+
+   **A. plan-runner 환경 감지:**
+   - 환경변수 `PLAN_RUNNER_WORKTREE_PATH`가 설정되어 있으면 → 이 단계 전체 **스킵** (이미 격리됨)
+
+   **B. 잔여 워크트리/브랜치 감지:**
+   - `git worktree list`에서 `.worktrees/impl-` 패턴 스캔
+   - `git branch --list "impl/*"` 스캔
+   - plan 문서에 `branch:` 필드가 **없는데** 잔여분이 존재하면 → 사용자에게 "이전 세션 잔여분 발견. 정리할까요?" 확인
+   - 사용자가 정리 허용 시: `git worktree remove {경로} --force` + `git branch -D {브랜치명}`
+
+   **C. plan 헤더에서 `> branch:` 및 `> worktree:` 필드 확인:**
+
+   - **필드가 없으면 (신규):**
+     1. slug를 plan 파일명에서 추출 (`YYYY-MM-DD_{slug}.md` → `{slug}`)
+     2. `git worktree add .worktrees/impl-{slug} -b impl/{slug}` 실행
+     3. plan 헤더에 Edit으로 추가:
+        ```
+        > branch: impl/{slug}
+        > worktree: .worktrees/impl-{slug}
+        ```
+
+   - **필드가 있으면 (크래시 복구):**
+     1. 워크트리 경로가 파일시스템에 존재하는지 확인
+     2. 존재하면 → 그대로 재개 (cwd를 워크트리로 설정)
+     3. 존재하지 않으면 → plan에서 `> branch:` + `> worktree:` 필드 제거 후 **신규 생성** 흐름으로
+
+   **D. 이후 모든 작업의 cwd를 워크트리 경로로 설정한다.**
+
 1.5. **수동 작업 필터링 (TODO/plan 스캔 시 공통)**
    - 다음 항목은 작업 후보에서 **완전 제외**하고, 사용자에게 **언급하지 않는다**:
      - `MANUAL_TASKS.md` 파일 내 항목
@@ -150,6 +182,7 @@ Claude가 구현 요청 받으면:
    > **이 게이트를 건너뛰면 안 된다.** 체크박스 누락은 전체 워크플로우를 망가뜨린다.
 
 4. **구현** (@implementing-features 스킬 사용)
+   - **🔴 모든 구현 작업은 워크트리 디렉토리 내에서 수행한다** — Bash 명령의 cwd, Read/Edit/Write의 파일 경로 모두 워크트리 기준. 워크트리가 없는 경우(plan-runner 환경, 워크트리 미생성)에만 원본 디렉토리 사용.
    - 유사 컴포넌트 참조 (같은 디렉토리/모듈 내 유사 파일의 기능 목록 확인)
    - **반복 패턴 가이드 준수** (아래 "반복 패턴 체크" 참조)
    - 테스트 작성 (RIGHT-BICEP)
@@ -182,6 +215,12 @@ plan, TODO.md, DONE.md 변경도 함께 커밋:
 ```powershell
 commit "feat: 기능 구현"
 ```
+
+**워크트리 내에서 커밋 시**: commit.sh의 cwd를 워크트리 경로로 설정해야 한다.
+```bash
+cd "{worktree_path}" && bash "/d/work/project/tools/common/commit.sh" "feat: ..."
+```
+> 워크트리 경로에서 커밋해야 impl/{slug} 브랜치에 커밋된다. 원본 디렉토리에서 커밋하면 main에 쌓인다.
 
 ## 반복 패턴 체크
 

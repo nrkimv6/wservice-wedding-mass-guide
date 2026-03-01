@@ -211,7 +211,30 @@ wtools/TODO.md를 열어 해당 프로젝트 섹션을 갱신합니다:
 3. **wtools/TODO.md 확인**: 해당 프로젝트 섹션 진행률이 갱신되었는지 확인
 4. **DONE.md 확인**: 완료 항목이 추가되었는지 확인
 
+5. **워크트리/브랜치 정리 확인**: `git worktree list`에 `impl-` 패턴 없음, `git branch --list 'impl/*'`에 현재 plan 관련 브랜치 없음
+
 누락된 항목이 있으면 돌아가서 처리합니다.
+
+### 7.3단계: 워크트리 머지 (impl 브랜치 → main)
+
+> 이 단계는 `/implement`에서 워크트리를 사용한 경우에만 실행된다.
+
+**스킵 조건**: plan 헤더에 `> branch:` 필드가 없으면 → 이 단계 **스킵** (기존 흐름 유지)
+
+**머지 실행:**
+1. **cwd를 원본 프로젝트 디렉토리(wtools 루트)로 전환** — 워크트리 내에서 `git checkout main`하면 워크트리의 HEAD가 바뀌므로 반드시 원본에서 실행
+2. 원본에서 `git merge impl/{slug} --no-ff -m "merge: impl/{slug}"` 실행
+
+**머지 성공 시 정리:**
+1. `git worktree remove .worktrees/impl-{slug} --force` (원본 cwd에서)
+2. `git branch -D impl/{slug}` (원본 cwd에서)
+3. plan 헤더에서 `> branch:` 및 `> worktree:` 라인을 Edit으로 제거
+
+**머지 충돌 시:**
+1. `git merge --abort` 실행
+2. 사용자에게 충돌 내용 보고 (stderr/stdout 출력)
+3. 워크트리+브랜치 보존 (사용자가 수동 해결 가능)
+4. **이후 단계(version-bump, 커밋 등) 중단**
 
 ### 대안: auto-done.ps1 스크립트 (plan-runner 전용)
 

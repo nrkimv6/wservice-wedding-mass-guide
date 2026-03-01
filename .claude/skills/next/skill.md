@@ -134,6 +134,10 @@ $config = Get-Content $configPath | ConvertFrom-Json
    - push 실패 시: 경고 출력하되 작업은 계속 진행
    - 로컬 마킹은 유지되므로 해당 세션에서 중복 선택 방지됨
 
+### 워크트리 크래시 복구 안내
+
+plan 헤더에 `> branch:` 필드가 있으면 해당 워크트리가 이미 존재하는 것이므로, `/implement` 실행 시 크래시 복구 흐름으로 자동 재개된다. 별도 처리 불필요.
+
 ### 3단계: implement 워크플로우 실행
 
 선택된 작업으로 implement 스킬 로직 실행:

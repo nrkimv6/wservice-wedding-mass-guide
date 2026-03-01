@@ -1,7 +1,7 @@
 ---
 name: auto-simple-plan
 description: "v2 파이프라인: 상태 없는 plan의 fallback 진입점 — what/why 보완 + 상태 부여 (코드 수정 금지)"
-model: opus
+model: sonnet
 skills:
   - plan
 tools:
