@@ -117,7 +117,11 @@ C. 매칭된 항목을 추출하여 리스트로 수집
 **수동 작업 판단 키워드**: `common/docs/guide/project-management/manual-tasks-format.md` 참조
 - 한국어: `브라우저`, `UI`, `디자인`, `육안`, `시각`, `레이아웃`, `가독성`, `실기기`, `모바일`, `스크린샷`, `스타일`, `색상`, `폰트`
 - 영어: `Android`, `iOS`
-- CLI/curl로 검증 가능한 것은 수동 아님: `배포 확인`, `Firebase Console`, `Supabase Dashboard`, `로그인 테스트` 등
+- **수동이 아닌 것** (CLI/curl/에이전트로 검증 가능):
+  - 배포 확인, Firebase Console, Supabase Dashboard, 로그인 테스트
+  - E2E 테스트, HTTP 통합 테스트, API 응답 확인 → `auto-test-e2e` 에이전트 전담
+  - 스크립트 실행 확인, 빌드 확인, pytest, npm test
+- **판별 원칙**: 사람의 눈/판단이 필수인 경우만 수동. CLI로 실행+검증 가능하면 수동 아님
 
 **MANUAL_TASKS.md 생성/갱신:**
 
