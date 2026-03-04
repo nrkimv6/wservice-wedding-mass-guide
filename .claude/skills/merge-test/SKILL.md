@@ -55,6 +55,27 @@ slug, branch명, worktree 경로를 변수로 저장.
 git merge impl/{slug} --no-ff -m "merge: impl/{slug}"
 ```
 
+머지 성공 즉시 커밋 해시를 추출하여 plan 헤더에 기록한다:
+
+```bash
+MERGE_HASH=$(git rev-parse --short HEAD)
+MERGE_DATE=$(date +%Y-%m-%d\ %H:%M)
+```
+
+plan 헤더에 다음 두 줄을 `> 상태:` 줄 바로 아래에 Edit으로 삽입:
+
+```markdown
+> 반영일: {MERGE_DATE}
+> 머지커밋: {MERGE_HASH}
+```
+
+예시:
+```markdown
+> 상태: 구현완료
+> 반영일: 2026-03-04 14:32
+> 머지커밋: a1b2c3d
+```
+
 **머지 충돌 시:**
 1. `git merge --abort` 실행
 2. 충돌 파일 목록 사용자에게 보고
@@ -131,10 +152,14 @@ plan 헤더 + 푸터를 `구현완료`로 업데이트:
 
 ```markdown
 > 상태: 구현완료
+> 반영일: {MERGE_DATE}   ← 2단계에서 이미 기록됨, 여기서 재확인만
+> 머지커밋: {MERGE_HASH} ← 2단계에서 이미 기록됨, 여기서 재확인만
 > 진행률: N/N (100%)
 ...
 *상태: 구현완료 | 진행률: N/N (100%)*
 ```
+
+`반영일`과 `머지커밋`은 2단계에서 이미 삽입되어 있으므로 중복 추가하지 않는다.
 
 ### 7단계: 완료 안내
 
@@ -143,6 +168,7 @@ plan 헤더 + 푸터를 `구현완료`로 업데이트:
 
 plan: {plan_file}
 머지: impl/{slug} → main ✅
+반영일: {MERGE_DATE} ({MERGE_HASH}) ({MERGE_HASH})
 T3/T4: {통과/해당없음} ✅
 상태: 구현완료
 
