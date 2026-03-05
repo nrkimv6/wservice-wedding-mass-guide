@@ -19,6 +19,8 @@
       "Bash(Select-String -Pattern \"instagram|error|failed|exception\" -Context 0,2)",
       "Skill(implement)",
       "Skill(implement:*)",
+      "Skill(merge-test)",
+      "Skill(merge-test:*)",
       "Bash(dir:*)",
       "Bash(Get-ChildItem -Path \"D:\\\\work\\\\project\\\\service\\\\wtools\\\\common\\\\docs\" -Recurse)",
       "Bash(Select-Object FullName, PSIsContainer)",

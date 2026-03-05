@@ -121,12 +121,46 @@ Claude가 구현 요청 받으면:
    - `common/docs/plan/`에서 관련 계획 확인
    - 없으면 사용자 요청을 바로 TODO에 추가
 
+1.2. **워크트리 준비 (수동 세션 main 오염 방지)**
+
+   > 이 단계는 `/implement` 수동 세션에서 워크트리를 생성하여 독립된 디렉토리+브랜치에서 작업하기 위한 것이다.
+   > 모든 커밋(emergency 포함)은 impl 브랜치에 쌓이므로 main은 오염되지 않는다.
+
+   **A. plan-runner 환경 감지:**
+   - 환경변수 `PLAN_RUNNER_WORKTREE_PATH`가 설정되어 있으면 → 이 단계 전체 **스킵** (이미 격리됨)
+
+   **B. 잔여 워크트리/브랜치 감지:**
+   - `git worktree list`에서 `.worktrees/impl-` 패턴 스캔
+   - `git branch --list "impl/*"` 스캔
+   - plan 문서에 `branch:` 필드가 **없는데** 잔여분이 존재하면 → 사용자에게 "이전 세션 잔여분 발견. 정리할까요?" 확인
+   - 사용자가 정리 허용 시: `git worktree remove {경로} --force` + `git branch -D {브랜치명}`
+
+   **C. plan 헤더에서 `> branch:` 및 `> worktree:` 필드 확인:**
+
+   - **필드가 없으면 (신규):**
+     1. slug를 plan 파일명에서 추출 (`YYYY-MM-DD_{slug}.md` → `{slug}`)
+     2. `git worktree add .worktrees/impl-{slug} -b impl/{slug}` 실행
+     3. plan 헤더에 Edit으로 추가:
+        ```
+        > branch: impl/{slug}
+        > worktree: .worktrees/impl-{slug}
+        ```
+
+   - **필드가 있으면 (크래시 복구):**
+     1. 워크트리 경로가 파일시스템에 존재하는지 확인
+     2. 존재하면 → 그대로 재개 (cwd를 워크트리로 설정)
+     3. 존재하지 않으면 → plan에서 `> branch:` + `> worktree:` 필드 제거 후 **신규 생성** 흐름으로
+
+   **D. 이후 모든 작업의 cwd를 워크트리 경로로 설정한다.**
+
 1.5. **수동 작업 필터링 (TODO/plan 스캔 시 공통)**
    - 다음 항목은 작업 후보에서 **완전 제외**하고, 사용자에게 **언급하지 않는다**:
      - `MANUAL_TASKS.md` 파일 내 항목
      - `(→ MANUAL_TASKS)` 태그가 붙은 항목
-     - 수동 작업 키워드가 포함된 항목 (`수동 검증`, `수동`, `브라우저 테스트 필요` 등)
+     - 수동 작업 키워드가 포함된 항목 (`육안 확인`, `디자인 일치`, `레이아웃 미관` 등)
      - 키워드 전체 목록: [manual-tasks-format.md](../../common/docs/guide/project-management/manual-tasks-format.md) 참조
+   - **수동이 아닌 것**: 스크립트 실행, 빌드 확인, T1/T2 테스트 등 CLI로 실행 가능한 것은 **제외하지 않고 직접 실행**
+   - **단, T3(E2E)/T4(HTTP 통합)는 implement에서 실행/체크 금지** — `/merge-test`에서 main 머지 후 실행
    - 후보 목록 출력 시에도 수동 항목은 표시하지 않는다
 
 2. **TODO.md 업데이트**
@@ -149,14 +183,27 @@ Claude가 구현 요청 받으면:
    3. 확인 완료 후에만 다음 항목으로 넘어감
    > **이 게이트를 건너뛰면 안 된다.** 체크박스 누락은 전체 워크플로우를 망가뜨린다.
 
+   ### 🔴 T3/T4 테스트 Phase 체크박스 터치 금지
+   - T3(E2E), T4(HTTP 통합) Phase의 체크박스는 **implement에서 절대 `[x]`로 변경하지 않는다**
+   - T3/T4 실행 및 체크는 `/merge-test` 스킬이 전담한다
+   - "단위 TC로 커버됨", "수동 테스트", "실제 환경 필요" 등의 사유로 스킵 체크하는 것도 금지
+   - T1(TC 작성), T2(TC 검증)는 implement에서 직접 실행하고 체크한다
+
 4. **구현** (@implementing-features 스킬 사용)
+   - **🔴 모든 구현 작업은 워크트리 디렉토리 내에서 수행한다** — Bash 명령의 cwd, Read/Edit/Write의 파일 경로 모두 워크트리 기준. 워크트리가 없는 경우(plan-runner 환경, 워크트리 미생성)에만 원본 디렉토리 사용.
+   - 유사 컴포넌트 참조 (같은 디렉토리/모듈 내 유사 파일의 기능 목록 확인)
+   - **반복 패턴 가이드 준수** (아래 "반복 패턴 체크" 참조)
    - 테스트 작성 (RIGHT-BICEP)
    - 코드 작성
+   - **DB 마이그레이션 SQL 파일을 생성한 경우 → 즉시 실행** (커밋 전 필수, 실행 안 하면 API 장애)
    - 기존 테스트 통과 확인
    - 빌드 확인 (webapp-testing 스킬)
 
-5. **완료 처리 → `/done` 스킬 호출**
-   - 구현 완료 후 반드시 `/done` 스킬을 호출하여 후처리 실행
+5. **완료 처리**
+   - **워크트리 사용 시** (plan 헤더에 `> branch:` 있음):
+     `/merge-test` 스킬 호출 → 머지 + 통합테스트(T3/T4) 실행 → 완료 후 `/done` 호출
+   - **워크트리 미사용 시** (plan 헤더에 `> branch:` 없음):
+     바로 `/done` 스킬 호출
    - done 스킬이 처리: plan 체크, TODO→DONE, 아카이브, wtools/TODO.md 동기화, 검증, 커밋
 
 ## plan 문서 상태 & 진행률
@@ -167,9 +214,11 @@ Claude가 구현 요청 받으면:
 | `검토대기` | 검토 요청 상태 |
 | `검토완료` | auto-plan 보완 완료 |
 | `구현중` | 구현 착수됨 |
-| `구현완료` | 모든 항목 완료 |
+| `통합테스트중` | /merge-test: main 머지 후 T3/T4 실행 중 |
+| `구현완료` | 모든 항목 완료 (/merge-test 이후 또는 직접 구현 완료) |
 | `수정필요` | 검토 후 변경 필요 |
 | `보류` | 우선순위 밀림 |
+| `완료` | /done으로 archive 처리됨 |
 
 **진행률 계산:** `[x]` 개수 / 전체 체크박스 개수 → 헤더·푸터 동시 업데이트
 
@@ -179,6 +228,35 @@ plan, TODO.md, DONE.md 변경도 함께 커밋:
 ```powershell
 commit "feat: 기능 구현"
 ```
+
+**워크트리 내에서 커밋 시**: commit.sh의 cwd를 워크트리 경로로 설정해야 한다.
+```bash
+cd "{worktree_path}" && bash "/d/work/project/tools/common/commit.sh" "feat: ..."
+```
+> 워크트리 경로에서 커밋해야 impl/{slug} 브랜치에 커밋된다. 원본 디렉토리에서 커밋하면 main에 쌓인다.
+
+## 반복 패턴 체크
+
+> 상세: @recurring-patterns 스킬 참조
+
+구현 중 아래 상황이 발생하면 해당 패턴을 반드시 따른다:
+
+### 프론트엔드
+
+| 상황 | 패턴 | 금지 |
+|------|------|------|
+| 체크박스 선택 + 벌크 액션 | `createSelection()` 유틸 사용 | Array 기반 선택 코드 |
+| 사용자 알림/피드백 | `toast.success/error/warning()` | `alert()`, `confirm()` |
+| POST/DELETE 성공 후 목록 갱신 | 로컬 상태 직접 갱신 | `await loadItems()` 전체 재요청 |
+| 인증 에러 (401) 처리 | 토스트 + 쿨다운 가드 | `window.location.reload()` |
+
+### 백엔드 (monitor-page)
+
+| 상황 | 패턴 | 금지 |
+|------|------|------|
+| 5초+ 소요 작업 API | 202 반환 + Redis 큐 + 폴링 엔드포인트 | 동기 응답으로 블로킹 |
+| Session 0에서 subprocess 필요 | Redis 큐로 유저 세션 워커에 위임 | API에서 직접 subprocess |
+| 워커 내 개별 작업 | `_safe_execute()` 예외 격리 | 예외 전파로 워커 사망 |
 
 ## 환경
 

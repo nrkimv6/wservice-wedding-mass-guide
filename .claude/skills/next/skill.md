@@ -134,6 +134,10 @@ $config = Get-Content $configPath | ConvertFrom-Json
    - push 실패 시: 경고 출력하되 작업은 계속 진행
    - 로컬 마킹은 유지되므로 해당 세션에서 중복 선택 방지됨
 
+### 워크트리 크래시 복구 안내
+
+plan 헤더에 `> branch:` 필드가 있으면 해당 워크트리가 이미 존재하는 것이므로, `/implement` 실행 시 크래시 복구 흐름으로 자동 재개된다. 별도 처리 불필요.
+
 ### 3단계: implement 워크플로우 실행
 
 선택된 작업으로 implement 스킬 로직 실행:
@@ -146,8 +150,9 @@ $config = Get-Content $configPath | ConvertFrom-Json
    - 코드 작성
    - 테스트 (빌드 확인)
 
-3. **완료 처리 → `/done` 스킬 호출**
-   - 구현 완료 후 반드시 `/done` 스킬을 호출
+3. **완료 처리**
+   - **워크트리 사용 시** (plan 헤더에 `> branch:` 있음): `/merge-test` → `/done` 순서로 호출
+   - **워크트리 미사용 시**: 바로 `/done` 호출
    - done 스킬이 처리: plan 체크, TODO→DONE, 아카이브, wtools/TODO.md 동기화, 검증, 커밋
 
 ## 선택 우선순위 로직
