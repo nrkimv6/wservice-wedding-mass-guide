@@ -88,6 +88,50 @@ $config = Get-Content $configPath | ConvertFrom-Json
 4. **프로젝트 TODO.md** — Pending에 plan 링크 항목 존재
 5. **wtools/TODO.md** — 해당 프로젝트 섹션에 항목 + 날짜 오늘
 
+### 5.5단계: 계획서 커밋 (자동)
+
+최종 검증 통과 후, 생성/수정된 문서 파일을 자동 커밋한다.
+
+**스테이징 대상 (변경된 파일만):**
+- wtools: `common/docs/plan/*.md`, `common/docs/archive/*.md`, `TODO.md`, `docs/DONE.md`
+- 외부 프로젝트: `docs/plan/*.md`, `docs/archive/*.md`, `TODO.md`, `docs/DONE.md`
+
+**커밋 실행 절차 (반드시 이 순서):**
+1. `git status --porcelain` — 변경 파일 목록 확인
+2. 화이트리스트 파일만 **개별** `git add` — 파일명 하나씩 명시:
+   - `git add "docs/plan/YYYY-MM-DD_foo.md"`
+   - `git add "TODO.md"`
+   - **절대 금지**: `git add .` / `git add -A` / `git add docs/` (디렉토리·글로브 패턴 전체 금지)
+3. `git status --porcelain` 재확인 → 비화이트리스트 파일 스테이징 없는지 검증
+   - 비화이트리스트 파일 발견 시: `git reset HEAD {해당 파일}` 로 제거
+4. 커밋 스크립트 실행: `docs: plan {주제}`
+
+## 🔴 자동 커밋 안전 규칙
+
+git add 허용 경로 (화이트리스트):
+- `docs/plan/**/*.md`, `common/docs/plan/**/*.md`
+- `docs/archive/**/*.md`, `common/docs/archive/**/*.md`
+- `TODO.md`, `docs/DONE.md`
+
+git add 금지 경로:
+- `app/`, `frontend/`, `scripts/`, `.claude/`, `tests/` 등 코드 경로
+
+검증 절차:
+1. `git status --porcelain`으로 스테이징 전 변경 파일 목록 확인
+2. 화이트리스트 경로의 파일만 `git add` — 그 외 경로는 절대 add 금지
+3. 화이트리스트 파일이 하나도 없으면 커밋 중단, 사용자에게 보고
+
+**절대 금지 명령 (에이전트가 절대 사용 금지):**
+- `git add .`
+- `git add -A`
+- `git add docs/` (디렉토리 통째로 add)
+- `git add *` (글로브 패턴)
+
+**올바른 add 방법 (파일명 명시):**
+- `git add "docs/plan/2026-03-05_foo.md"`
+- `git add "common/docs/plan/2026-03-05_bar.md"`
+- `git add "TODO.md"`
+
 ### 6단계: 안내
 
 ```

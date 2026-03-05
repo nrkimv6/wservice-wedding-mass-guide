@@ -10,6 +10,7 @@ tools:
   - Grep
   - Edit
   - Write
+  - Bash
 ---
 
 # 자동 계획 보완 에이전트 (v1 — deprecated)
@@ -84,6 +85,14 @@ tools:
    - `> 상태: 초안` 또는 `> 상태: 검토대기` 또는 `> 상태: 수정필요` → `> 상태: 검토완료` 으로 변경
    - **주의**: `구현중`, `구현완료`, `보류` 상태는 절대 변경하지 않는다 (step 2에서 이미 스킵됨)
    - 푸터의 `*상태: ...*`도 동일하게 변경
+7. **계획서 커밋** (Bash 도구) — 반드시 아래 순서로 실행
+   - a. `git status --porcelain` — 변경 파일 목록 확인
+   - b. 화이트리스트 파일만 **개별** git add (파일 경로 하나씩):
+     - 허용: `docs/plan/*.md`, `common/docs/plan/*.md`, `docs/archive/*.md`, `common/docs/archive/*.md`, `TODO.md`, `docs/DONE.md`
+     - **절대 금지**: `git add .` / `git add -A` / 디렉토리명·글로브 패턴
+   - c. `git status --porcelain` 재확인 → 비화이트리스트 파일 있으면 `git reset HEAD {파일}` 로 제거
+   - d. 화이트리스트 파일 0개이면 커밋 중단, 사용자에게 보고
+   - e. 커밋 스크립트 실행: `docs: plan 보완 — {주제}`
 
 ## 출력 형식 (반드시 이 형식으로)
 
@@ -130,8 +139,8 @@ ENHANCED-PLAN:
 
 ## 허용/금지
 
-- **허용**: plan 신규 생성(Write), 상태 필드 변경(Edit)
-- **금지**: 코드 수정, 커밋, 구현 시작, 작업 선택, 코드 블록 추가
+- **허용**: plan 신규 생성(Write), 상태 필드 변경(Edit), docs 파일 커밋(Bash — plan/archive/TODO.md/DONE.md 한정)
+- **금지**: 코드 수정, 코드 파일 커밋, 구현 시작, 작업 선택, 코드 블록 추가
 
 ---
 

@@ -10,6 +10,7 @@ tools:
   - Grep
   - Edit
   - Write
+  - Bash
 ---
 
 # Simple Plan 에이전트 (v2 파이프라인 1단계)
@@ -31,6 +32,14 @@ tools:
    - 요약 필드가 없으면 생성 (`> 요약: ...`)
    - 대략적 Phase/TODO 구조를 잡는다 (세부 분해 X)
    - 상태를 `검토대기`로 Edit
+3.5. **계획서 커밋** (Bash 도구) — 반드시 아래 순서로 실행
+   - a. `git status --porcelain` — 변경 파일 목록 확인
+   - b. 화이트리스트 파일만 **개별** git add (파일 경로 하나씩):
+     - 허용: `docs/plan/*.md`, `common/docs/plan/*.md`, `docs/archive/*.md`, `common/docs/archive/*.md`, `TODO.md`, `docs/DONE.md`
+     - **절대 금지**: `git add .` / `git add -A` / 디렉토리명·글로브 패턴
+   - c. `git status --porcelain` 재확인 → 비화이트리스트 파일 있으면 `git reset HEAD {파일}` 로 제거
+   - d. 화이트리스트 파일 0개이면 커밋 중단
+   - e. 커밋 스크립트 실행: `docs: plan 상태 부여 — {주제}`
 4. 출력 블록 반환
 
 ## 출력 형식
@@ -61,8 +70,8 @@ STAGE: simple-plan
 
 ## 허용/금지
 
-- **허용**: plan 문서 Edit (what/why 보완, 상태 변경), 요약 생성
-- **금지**: 코드 수정, 원자 분해, TC 명세, 커밋, 구현 시작
+- **허용**: plan 문서 Edit (what/why 보완, 상태 변경), 요약 생성, docs 파일 커밋(Bash — plan/archive/TODO.md/DONE.md 한정)
+- **금지**: 코드 수정, 코드 파일 커밋, 원자 분해, TC 명세, 구현 시작
 
 ---
 

@@ -10,6 +10,7 @@ tools:
   - Grep
   - Edit
   - Write
+  - Bash
 ---
 
 # Expand Plan 에이전트 (v2 파이프라인 2단계)
@@ -38,6 +39,14 @@ tools:
    - T4: HTTP 통합 테스트 (프로젝트에 HTTP 테스트 존재 시 항상 포함. Phase 생략 금지, 스킵 시 사유 체크박스 필수)
    - **T3/T4 금지 사유**: "단위 테스트로 커버됨", "수동 테스트", "실제 환경 필요" — 이런 이유로 스킵 불가
 5. 상태를 `검토완료`로 Edit
+5.5. **계획서 커밋** (Bash 도구) — 반드시 아래 순서로 실행
+   - a. `git status --porcelain` — 변경 파일 목록 확인
+   - b. 화이트리스트 파일만 **개별** git add (파일 경로 하나씩):
+     - 허용: `docs/plan/*.md`, `common/docs/plan/*.md`, `docs/archive/*.md`, `common/docs/archive/*.md`, `TODO.md`, `docs/DONE.md`
+     - **절대 금지**: `git add .` / `git add -A` / 디렉토리명·글로브 패턴
+   - c. `git status --porcelain` 재확인 → 비화이트리스트 파일 있으면 `git reset HEAD {파일}` 로 제거
+   - d. 화이트리스트 파일 0개이면 커밋 중단
+   - e. 커밋 스크립트 실행: `docs: plan 확장 — {주제}`
 6. 출력 블록 반환
 
 ## 체크박스 형식
@@ -68,8 +77,8 @@ ENHANCED-PLAN:
 
 ## 허용/금지
 
-- **허용**: plan 문서 Edit (원자 분해, TC 생성, 상태 변경)
-- **금지**: 코드 수정, 커밋, 구현 시작
+- **허용**: plan 문서 Edit (원자 분해, TC 생성, 상태 변경), docs 파일 커밋(Bash — plan/archive/TODO.md/DONE.md 한정)
+- **금지**: 코드 수정, 코드 파일 커밋, 구현 시작
 
 ---
 
