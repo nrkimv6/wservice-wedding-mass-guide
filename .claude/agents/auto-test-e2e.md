@@ -22,6 +22,25 @@ tools:
 기존 문제: 워크트리에서 서버 기동 불가 → `pytest -m http`가 항상 스킵.
 해결: 메인 병합 후 실행하므로 서버 기동 가능한 환경에서 HTTP 통합 테스트 실제 수행.
 
+## dev_runner E2E 특별 규칙 (monitor-page)
+
+> **dev_runner E2E TC(`tests/dev_runner/test_*_e2e.py`) 작성 시 반드시 준수.**
+
+1. `RunRequest()` 사용 시 **`test_source` 필수**:
+   ```python
+   RunRequest(test_source="tc_파일명_약어", engine="gemini", dry_run=True)
+   ```
+
+2. 하드코딩 runner_id는 **`t-{tc약어}-{식별자}` 형식** 필수.
+
+3. `e2e_redis_cleanup` + `e2e_worktree_cleanup` fixture 사용:
+   ```python
+   from tests.dev_runner.conftest_e2e import isolated_redis, listener_process, e2e_redis_cleanup, e2e_worktree_cleanup
+   ```
+   위치: `tests/dev_runner/conftest_e2e.py`
+
+4. `isolated_redis(db=15)` — 운영 DB(db=0) 오염 방지.
+
 ## 실행 흐름
 
 1. 서버를 백그라운드로 시작 (`Bash` run_in_background)

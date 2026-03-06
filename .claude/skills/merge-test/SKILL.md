@@ -108,17 +108,23 @@ T3/T4가 없으면 → 5단계(정리)로 바로 이동.
    ```
    wtools 내부 작업이면 해당 프로젝트의 서버 재시작 방식 사용.
 
-2. **T3 실행** (E2E 존재 시):
+2. **프론트엔드 빌드 확인** (webapp-testing 스킬):
+   ```bash
+   cd {project_root}/frontend && npm run build
+   ```
+   빌드 실패 시 → 머지 롤백(`git reset --merge HEAD~1`), plan 상태 `구현중`으로 롤백, 워크트리 보존 후 **이후 단계 중단**.
+
+3. **T3 실행** (E2E 존재 시):
    ```bash
    pytest -m e2e  # 또는 해당 프로젝트 E2E 명령
    ```
 
-3. **T4 실행** (HTTP 통합):
+4. **T4 실행** (HTTP 통합):
    ```bash
    pytest -m http  # 또는 curl 기반 테스트
    ```
 
-4. 각 T3/T4 체크박스 `[ ]` → `[x]` 업데이트, Read로 반영 확인
+5. 각 T3/T4 체크박스 `[ ]` → `[x]` 업데이트, Read로 반영 확인
 
 **테스트 실패 시:**
 ```bash

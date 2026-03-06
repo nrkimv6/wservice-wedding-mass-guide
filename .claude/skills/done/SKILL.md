@@ -70,9 +70,40 @@ common/docs/plan/*.md (wtools 내부일 때만)
 *상태: 구현완료 | 진행률: 2/2 (100%)*
 ```
 
+### 2.5단계: 아카이브 전제조건 검증 (수동 경로 전용)
+
+> **⚠️ 이 단계는 수동 `/done` 실행 시에만 적용된다.**
+> 자동 파이프라인(plan-runner Stage 6)에서는 MergeWorkflow가 이미 worktree를 삭제했으므로 중복 검증 불필요.
+
+아카이브 전에 해당 plan에 연결된 worktree/branch가 정리됐는지 확인:
+
+1. plan 헤더에서 `> branch:` 또는 `> worktree:` 필드 유무 확인
+2. **필드가 있으면** → `/merge-test` 완료 여부 재확인 후 중단:
+   ```
+   ⚠️ plan에 활성 branch/worktree가 있습니다: {branch}
+   먼저 /merge-test를 실행하여 머지 + 통합테스트를 완료하세요.
+   done 처리 중단.
+   ```
+3. **필드가 없으면** → 계속 진행
+
+> 이 검증은 진행 중인 작업이 실수로 아카이브되는 것을 방지한다.
+
 ### 3단계: plan 문서 아카이브 (모든 항목 완료 시)
 
 plan 문서의 모든 체크박스가 `[x]`이면:
+
+**🔴 `_todo.md` 동반 아카이브 필수**
+
+- `/done` 실행 시 Claude가 선택하는 **primary 파일은 `_todo.md`**이다.
+  (`YYYY-MM-DD_{주제}_todo.md` — 체크박스가 있는 실제 작업 파일)
+- `_todo.md`가 있는 경우, 같은 이름의 plan 원본(`_todo.md` 접미사 없는 `.md`)도 함께 아카이브한다.
+- `_todo.md`가 없는 경우(모드 A 단일 파일 plan)에는 plan 파일 하나만 아카이브한다.
+
+**아카이브 이동 대상:**
+
+| primary 파일 | 동반 파일 (있으면) |
+|---|---|
+| `docs/plan/YYYY-MM-DD_{주제}_todo.md` | `docs/archive/YYYY-MM-DD_{주제}.md` (이미 archive에 있으면 스킵) |
 
 1. **프로젝트 특정 plan**: `common/docs/plan/{파일}.md` (wtools만) → `{proj.path}/docs/archive/{파일}.md`
 2. **공통/복수 프로젝트 plan**: `common/docs/plan/{파일}.md` (wtools만) → `common/docs/archive/{파일}.md`
@@ -80,10 +111,13 @@ plan 문서의 모든 체크박스가 `[x]`이면:
 4. **아카이브 이동 시 반드시 `git mv` 사용** (git 히스토리 보존):
 
 ```powershell
-# ✅ 올바른 방법 — git mv로 이동 (히스토리 추적 가능)
-git mv -f "{plan경로}" "{archive경로}"
+# ✅ 올바른 방법 — _todo.md와 원본 plan 둘 다 이동
+git mv -f "docs/plan/YYYY-MM-DD_{주제}_todo.md" "docs/archive/YYYY-MM-DD_{주제}_todo.md"
+# 원본 plan이 docs/plan/ 에 남아있으면 함께 이동 (이미 archive에 있으면 스킵)
+# git mv -f "docs/plan/YYYY-MM-DD_{주제}.md" "docs/archive/YYYY-MM-DD_{주제}.md"
+
 # 이동 후 archive 헤더 추가 (Set-Content 또는 Edit 도구)
-git add "{archive경로}"
+git add "docs/archive/YYYY-MM-DD_{주제}_todo.md"
 
 # ❌ FORBIDDEN: Move-Item / Remove-Item — 히스토리 유실
 # Move-Item -Path "{plan경로}" -Destination "{archive경로}"

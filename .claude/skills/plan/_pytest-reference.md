@@ -43,3 +43,44 @@
 - Phase 4: 함수별 RIGHT-BICEP/CORRECT TC 개별 체크박스
 - Phase 5: E2E mock subprocess 통합 테스트
 - Phase 6: 검증 (실행 + 회귀 + 수동)
+
+## Runner Cleanup 필수 규칙 (monitor-page dev_runner)
+
+> **dev_runner 모듈 테스트 작성 시 반드시 준수.** 미준수 시 Redis에 고아 러너 잔류.
+
+### 1. RunRequest에 test_source 필수
+
+```python
+# ✅ 올바른 예
+req = RunRequest(test_source="tc_파일명", engine="gemini", ...)
+
+# ❌ 금지 — test_source 없으면 runner_id에 TC 이름이 포함되지 않아 추적 불가
+req = RunRequest(engine="gemini", ...)
+```
+
+`test_source` 값은 TC 파일명에서 `test_` 접두사를 제거한 짧은 식별자 사용:
+- `tests/dev_runner/test_executor_service.py` → `"executor_service"`
+- `tests/dev_runner/test_gemini_integration.py` → `"gemini_integration"`
+
+### 2. 하드코딩 runner_id에 TC 이름 접두사 필수
+
+```python
+# ✅ 올바른 예 — t-{tc약어}-{식별자} 형식
+runner_id = "t-execsvc-abc1"
+runner_id = "t-gemini-abc1"
+
+# ❌ 금지 — 임의 문자열은 어떤 TC가 생성했는지 추적 불가
+runner_id = "abc12345"
+runner_id = "testrunner"
+```
+
+### 3. conftest redis_cleanup fixture (autouse — 자동 적용)
+
+`tests/dev_runner/conftest.py`의 `redis_cleanup` fixture는 `autouse=True`이므로
+모든 dev_runner TC에 자동 적용된다. 별도 import 불필요.
+
+### 4. 세션 종료 후 잔류 러너 리포트
+
+pytest 세션 종료 시 `runner_cleanup_report` fixture가 자동으로 stderr에 출력:
+- `[CLEAN]`: 잔류 러너 0건 — 정상
+- `[DIRTY]`: 잔류 러너 목록 + source: `(unknown)` = test_source 미적용 TC 식별 단서

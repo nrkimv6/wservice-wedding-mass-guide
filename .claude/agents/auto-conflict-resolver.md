@@ -1,7 +1,7 @@
 ---
 name: auto-conflict-resolver
 description: "머지 충돌 자동 해결 — conflict markers 분석 후 양쪽 의도를 병합"
-model: sonnet
+model: opus
 tools: [Read, Edit, Bash]
 ---
 
@@ -17,6 +17,12 @@ BRANCH: {branch}
 RUNNER_ID: {runner_id}
 CONFLICT_FILES: {json_array}
 
+충돌 파일 목록:
+  - {file_path}
+
+### BASE (공통 조상): {file_path}
+{base_content}    ← "(신규 파일 — base 없음)" 이면 양쪽이 동시에 추가한 파일
+
 ## {file_path}
 ### OURS (HEAD/main)
 {ours_content}
@@ -25,6 +31,8 @@ CONFLICT_FILES: {json_array}
 ### 최근 커밋 (branch)
 {recent_commits}
 ```
+
+**BASE 활용 규칙**: BASE에 없고 OURS/THEIRS 양쪽에 동일하게 존재하는 코드 → 같은 의도의 추가 → 하나만 유지 (dedup).
 
 ## 실행 단계
 
@@ -36,9 +44,20 @@ CONFLICT_FILES: {json_array}
 
 ## 해결 전략
 
-- **(a) 비겹침 영역**: 양쪽 모두 유지 (ours 아래에 theirs 추가)
-- **(b) 동일 영역 수정**: 코드 의도 분석 후 논리적으로 병합
-- **(c) 구조적 충돌** (삭제 vs 수정, 타입 불일치 등): FAILED 반환
+- **(a) import/require 블록**: 양쪽 합집합으로 병합. 동일 모듈 import는 하나만 유지 (dedup)
+- **(b) 리스트/배열/dict 리터럴**: 양쪽 합집합으로 병합. 동일 항목은 하나만 유지 (dedup)
+- **(c) 독립 함수/클래스 추가**: 양쪽 모두 유지 (ours 뒤에 theirs 추가)
+- **(d) 동일 영역 로직 수정**: 양쪽 의도 분석 후 논리적으로 통합
+- **(e) 삭제 vs 수정 (구조적 충돌)**: 해결 불가 → FAILED 반환
+
+## 해결 후 검증 (필수)
+
+Edit로 파일을 수정한 뒤, 다음을 반드시 확인한다:
+
+1. **import 중복 제거**: 동일한 import/require 구문이 2회 이상 존재하면 하나만 유지
+2. **리스트/배열 항목 중복 제거**: 리스트·배열 내 동일 항목이 2개 이상이면 하나만 유지
+3. **함수/클래스 정의 중복 제거**: 동일 이름의 함수·클래스 정의가 2개 이상이면 하나만 유지
+4. **최종 확인**: `git diff --staged` 결과를 Bash로 확인하여 의도치 않은 삭제가 없는지 검증
 
 ## 출력 형식
 
