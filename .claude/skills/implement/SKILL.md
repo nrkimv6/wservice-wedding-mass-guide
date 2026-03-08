@@ -138,9 +138,16 @@ Claude가 구현 요청 받으면:
    **C. plan 헤더에서 `> branch:` 및 `> worktree:` 필드 확인:**
 
    - **필드가 없으면 (신규):**
+     0. **메인 레포 main 브랜치 확인**: `git rev-parse --abbrev-ref HEAD` 실행
+        - `main`이면 → 다음 단계로
+        - `main`이 아니면 → `git checkout main` 실행 후 진행
+        - checkout 실패 시 (uncommitted changes 등) → 사용자에게 "메인 레포가 {브랜치}에 있어 워크트리 생성 불가. main으로 전환 후 재시도하세요." 안내 후 중단
      1. slug를 plan 파일명에서 추출 (`YYYY-MM-DD_{slug}.md` → `{slug}`)
      2. `git worktree add .worktrees/impl-{slug} -b impl/{slug}` 실행
-     3. plan 헤더에 Edit으로 추가:
+     3. **워크트리 생성 후 메인 레포 브랜치 재확인**: `git rev-parse --abbrev-ref HEAD`
+        - `main`이면 → 정상, 다음 단계로
+        - `main`이 아니면 → 생성된 워크트리 제거 (`git worktree remove .worktrees/impl-{slug} --force`) + 사용자에게 "워크트리 생성 후 메인 레포가 main에서 벗어남. 수동 확인 필요." 경고 후 중단
+     4. plan 헤더에 Edit으로 추가:
         ```
         > branch: impl/{slug}
         > worktree: .worktrees/impl-{slug}
@@ -160,7 +167,8 @@ Claude가 구현 요청 받으면:
      - 수동 작업 키워드가 포함된 항목 (`육안 확인`, `디자인 일치`, `레이아웃 미관` 등)
      - 키워드 전체 목록: [manual-tasks-format.md](../../common/docs/guide/project-management/manual-tasks-format.md) 참조
    - **수동이 아닌 것**: 스크립트 실행, 빌드 확인, T1/T2 테스트 등 CLI로 실행 가능한 것은 **제외하지 않고 직접 실행**
-   - **단, T3(E2E)/T4(HTTP 통합)는 implement에서 실행/체크 금지** — `/merge-test`에서 main 머지 후 실행
+   - **단, T4(E2E)/T5(HTTP 통합)는 implement에서 실행/체크 금지** — `/merge-test`에서 main 머지 후 실행
+   - **T3(재현/통합TC)는 implement에서 T2 직후 실행** — 서버 불필요, 워크트리에서 실행 가능
    - 후보 목록 출력 시에도 수동 항목은 표시하지 않는다
 
 2. **TODO.md 업데이트**
@@ -183,11 +191,18 @@ Claude가 구현 요청 받으면:
    3. 확인 완료 후에만 다음 항목으로 넘어감
    > **이 게이트를 건너뛰면 안 된다.** 체크박스 누락은 전체 워크플로우를 망가뜨린다.
 
-   ### 🔴 T3/T4 테스트 Phase 체크박스 터치 금지
-   - T3(E2E), T4(HTTP 통합) Phase의 체크박스는 **implement에서 절대 `[x]`로 변경하지 않는다**
-   - T3/T4 실행 및 체크는 `/merge-test` 스킬이 전담한다
+   ### 🔴 T4/T5 테스트 Phase 체크박스 터치 금지
+   - T4(E2E), T5(HTTP 통합) Phase의 체크박스는 **implement에서 절대 `[x]`로 변경하지 않는다**
+   - T4/T5 실행 및 체크는 `/merge-test` 스킬이 전담한다
    - "단위 TC로 커버됨", "수동 테스트", "실제 환경 필요" 등의 사유로 스킵 체크하는 것도 금지
    - T1(TC 작성), T2(TC 검증)는 implement에서 직접 실행하고 체크한다
+   - **T3(재현/통합TC)는 implement에서 T2 직후 실행하고 체크한다** — fix: plan이면 필수
+
+3.5. **T3 실행 (재현/통합 TC)**
+   - plan에 T3 Phase 체크박스가 있으면 T2 직후 실행
+   - 워크트리에서 `pytest {T3 테스트 경로} -v --timeout=30` 실행
+   - 통과 시 T3 체크박스 `[x]`로 업데이트
+   - 실패 시 코드 수정 → 재실행 → 통과까지 반복
 
 4. **구현** (@implementing-features 스킬 사용)
    - **🔴 모든 구현 작업은 워크트리 디렉토리 내에서 수행한다** — Bash 명령의 cwd, Read/Edit/Write의 파일 경로 모두 워크트리 기준. 워크트리가 없는 경우(plan-runner 환경, 워크트리 미생성)에만 원본 디렉토리 사용.
@@ -200,11 +215,8 @@ Claude가 구현 요청 받으면:
    - **⚠️ 빌드 확인 (webapp-testing 스킬)은 워크트리에서 실행 금지** — 반드시 `/merge-test`에서 main 머지 후 실행
 
 5. **완료 처리**
-   - **워크트리 사용 시** (plan 헤더에 `> branch:` 있음):
-     `/merge-test` 스킬 호출 → 머지 + 통합테스트(T3/T4) 실행 → 완료 후 `/done` 호출
-   - **워크트리 미사용 시** (plan 헤더에 `> branch:` 없음):
-     바로 `/done` 스킬 호출
-   - done 스킬이 처리: plan 체크, TODO→DONE, 아카이브, wtools/TODO.md 동기화, 검증, 커밋
+   - `/merge-test` 스킬 호출 — 워크트리 머지 + T4/T5 통합테스트 + 완료 처리(archive, TODO→DONE, 커밋)까지 일괄 실행
+   - 워크트리 미사용 시에도 `/merge-test` 호출 (머지 스킵하고 done 처리만 실행)
 
 ## plan 문서 상태 & 진행률
 
@@ -214,7 +226,7 @@ Claude가 구현 요청 받으면:
 | `검토대기` | 검토 요청 상태 |
 | `검토완료` | auto-plan 보완 완료 |
 | `구현중` | 구현 착수됨 |
-| `통합테스트중` | /merge-test: main 머지 후 T3/T4 실행 중 |
+| `통합테스트중` | /merge-test: main 머지 후 T4/T5 실행 중 |
 | `구현완료` | 모든 항목 완료 (/merge-test 이후 또는 직접 구현 완료) |
 | `수정필요` | 검토 후 변경 필요 |
 | `보류` | 우선순위 밀림 |

@@ -77,6 +77,8 @@ DETAIL:
 
 ⚠ 이 에이전트는 **워크트리 내에서** 실행됩니다:
 
+> **참고**: `tests/conftest.py`가 editable install의 MAPPING을 워크트리 경로로 자동 패치함 — plan-runner pytest 실행 시 별도 조치 불필요.
+
 - ❌ 서버 기동 금지 (`uvicorn`, `npm run dev`, `npm start`)
 - ❌ HTTP 요청 금지 (`curl`, `httpx`, `requests.get`)
 - ❌ 포트 바인딩 금지

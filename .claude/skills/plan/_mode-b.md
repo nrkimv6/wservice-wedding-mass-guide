@@ -82,7 +82,7 @@ plan 문서는 **분석 + 근거**만 남기고, **별도 TODO 파일을 생성*
 
 ## 🔴 백엔드/Python 변경 시 — SKILL.md `pytest 강제 Phase 규칙` 적용
 
-Python 수정 포함 시 구현 Phase 뒤에 **T1~T4 테스트 Phase 체크박스 필수**.
+Python 수정 포함 시 구현 Phase 뒤에 **T1~T5 테스트 Phase 체크박스 필수**.
 규칙 상세·카테고리 테이블 → SKILL.md "🔴 pytest 강제 Phase 규칙" 참조.
 
 ---
