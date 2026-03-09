@@ -136,9 +136,11 @@ COMMITS: {커밋 메시지들}
 
 **참고**: `PRIORITY: SKIP-PLAN`으로 호출된 경우에도 plan 파일에 미완료 항목이 있으면 반드시 구현한다. SKIP-PLAN은 "plan 보완 불필요"이지 "구현 불필요"가 아니다.
 
-### 🔴 RESULT 블록 출력 후 안내 (STATUS: SUCCESS 시 필수)
+### RESULT 블록 출력 후 안내 (STATUS: SUCCESS 시)
 
-RESULT 블록 출력 직후, 다음 단계를 사용자에게 안내한다:
+> **프롬프트에 `[CALLER: plan-runner]`가 포함된 경우 이 안내를 생략한다.** plan-runner가 자동으로 다음 단계를 실행하므로 토큰 낭비.
+
+사용자가 직접 실행한 경우에만, RESULT 블록 출력 직후 다음 단계를 안내한다:
 
 ```
 ## 다음 단계

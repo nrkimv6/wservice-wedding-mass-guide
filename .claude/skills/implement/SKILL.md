@@ -127,7 +127,8 @@ Claude가 구현 요청 받으면:
    > 모든 커밋(emergency 포함)은 impl 브랜치에 쌓이므로 main은 오염되지 않는다.
 
    **A. plan-runner 환경 감지:**
-   - 환경변수 `PLAN_RUNNER_WORKTREE_PATH`가 설정되어 있으면 → 이 단계 전체 **스킵** (이미 격리됨)
+   - 환경변수 `PLAN_RUNNER_WORKTREE_PATH`가 설정되어 있고 **AND** 해당 경로가 현재 프로젝트의 `.worktrees/` 하위인 경우에만 → 이 단계 전체 **스킵** (이미 격리됨)
+   - 환경변수는 설정되어 있지만 경로가 다른 프로젝트를 가리키는 경우 → 환경변수를 무시하고 신규 worktree 생성 흐름(Step 1.2.B~D)으로 진행
 
    **B. 잔여 워크트리/브랜치 감지:**
    - `git worktree list`에서 `.worktrees/impl-` 패턴 스캔
