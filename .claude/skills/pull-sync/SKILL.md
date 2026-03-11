@@ -55,6 +55,20 @@ git pull origin main
 - clean + pull 성공 → 2단계로 진행
 - dirty/비main/실패 → 스킵 (보고 목록에 추가)
 
+### 1.5단계: Redis 잔존 상태 정리 (monitor-page 전용)
+
+**1단계 git pull 완료 후 즉시 실행:**
+
+```bash
+curl -s -X POST http://localhost:8001/api/v1/dev-runner/runners/cleanup-stale \
+  -H "Content-Type: application/json" \
+  --max-time 5
+```
+
+- API 실패(서버 미실행, 타임아웃 등) 시 → **경고만 출력하고 계속 진행** (중단 금지)
+- 응답에서 `cleaned` > 0 이면 → 5단계 리포트에 "Redis 잔존 N개 정리됨" 표시
+- `cleaned` = 0 이면 → 리포트에서 생략
+
 ### 2단계: 변경된 plan 문서 감지
 
 **대상:** 1단계에서 pull 성공한 프로젝트만
@@ -151,6 +165,10 @@ git diff ${BEFORE_HASH} --name-only
 
 ### wtools/TODO.md
 - ✅ 동기화 완료 (마지막 업데이트: 2026-02-05)
+
+### Redis 정리 (monitor-page)
+- ✅ Redis 잔존 N개 정리됨  ← cleaned > 0 일 때만 표시
+- ⚠️ Redis cleanup API 호출 실패 (서버 미실행?)  ← 실패 시 표시
 
 ### 주의사항
 - ⚠️ {N}개 프로젝트 스킵됨 (미커밋/비main 브랜치)
