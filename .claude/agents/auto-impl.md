@@ -41,6 +41,7 @@ skills:
    - 코드 작성
 3. **빌드/테스트 검증 (커밋 전 필수)**
    - plan 문서에 `npm run build`, `pytest` 등 빌드/테스트 체크박스가 있으면 **반드시 실행**
+   - **⚠️ 워크트리 예외**: 워크트리에서 작업 중(`PLAN_RUNNER_WORKTREE_PATH` 설정됨 또는 plan 헤더에 `> worktree:` 있음)이면 `npm run build`/`npm run check` 체크박스는 `[ ]` 유지. 출력: `[SKIP] 워크트리 — 프론트엔드 빌드는 /merge-test에서 실행`
    - 빌드 실패 시: 원인 파악 → 코드 수정 → 재빌드 → 성공할 때까지 반복
    - 빌드 성공 후에만 plan 체크박스를 `[x]`로 업데이트
    - **빌드를 스킵하고 완료 처리하는 것은 금지** — 빌드 체크박스가 `[ ]`인 채 커밋하면 안 된다
@@ -204,6 +205,7 @@ v2 파이프라인(`--pipeline v2`)에서 호출 시:
 - **워크트리 경로**: plan-runner가 `--worktree-path` 인자로 전달. 해당 경로에서 작업
 - **main 브랜치 보호** — 워크트리에서 작업 시 메인 레포의 `git checkout`은 절대 실행 금지. 메인 레포 브랜치 변경이 필요한 상황이면 작업을 중단하고 에러를 반환한다.
 - **서버 기동 금지** — `uvicorn`, `npm run dev`, `npm start` 등 금지 (워크트리에서는 포트 바인딩 불가)
+- **프론트엔드 빌드/체크 금지** — `npm run build`, `npm run check`, `npx vite build` 등 금지 (워크트리에는 node_modules 없음, 구조적 불가. `/merge-test`에서 main 머지 후 실행)
 
 ### 체크박스 범위
 

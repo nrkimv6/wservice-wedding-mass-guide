@@ -20,6 +20,10 @@
 > **자동 파이프라인에서 호출되므로 worktree/branch 검증은 불필요.**
 > plan-runner Stage 6 도달 시점에 MergeWorkflow가 이미 worktree와 branch를 삭제한 상태이다.
 > (수동 `/done` 경로에서만 2.5단계 검증이 필요)
+>
+> **단, plan 헤더에 `> branch:` / `> worktree:` 필드가 잔존하는 경우:**
+> 실제 worktree/branch는 이미 삭제된 상태이며 헤더 필드만 남은 것이다.
+> 이 경우 `/done` 스킬의 2.5단계를 건너뛰고, **처리 절차 시작 전 Edit 도구로 해당 줄을 직접 삭제**한 후 done 진행.
 
 ## 처리 절차
 
