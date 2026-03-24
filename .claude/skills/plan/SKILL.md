@@ -169,7 +169,7 @@ todo: common/docs/plan/YYYY-MM-DD_{주제}_todo.md (N phases, M tasks)
 | **T2: TC 검증 및 수정** | 실행 → passed 확인 → 실패 수정 → 회귀 확인 | `/implement` | Python 수정 시 항상 |
 | **T3: 재현/통합 TC** | mock 최소화, 실제 의존성(git, 파일시스템, 환경변수 등) 사용. 근본 원인 재현 + 수정 검증 | `/implement` (워크트리 OK) | **fix: 필수**, feat: 권장 |
 | **T4: E2E 테스트** | mock 기반 end-to-end 흐름 검증 | `/merge-test` | E2E 존재 시 |
-| **T5: HTTP 통합** | `METHOD endpoint` 정상/에러 응답 검증 | `/merge-test` | API 변경 시 |
+| **T5: HTTP 통합** | `METHOD endpoint` 정상/에러 응답 검증. **다른 프로젝트의 API를 통해 간접 실행되는 모듈**(예: plan-runner → monitor-page admin API)은 해당 API 레벨 E2E 필수 | `/merge-test` | API 변경 시, 또는 **API를 통해 간접 실행되는 모듈의 내부 로직 변경 시** |
 
 **T3 규칙 (재현/통합 TC):**
 - **fix: plan이면 필수** — 근본 원인을 실제 환경에서 재현하는 TC 1개 이상 + 수정 후 통과 검증
@@ -188,7 +188,13 @@ todo: common/docs/plan/YYYY-MM-DD_{주제}_todo.md (N phases, M tasks)
   - "단위 테스트로 커버됨" — T4/T5는 단위 테스트와 검증 범위가 다르므로 대체 불가
   - "수동 테스트" — T4/T5는 pytest로 자동 실행하는 테스트임
   - "실제 환경 필요" — 워크트리에서 못 돌리는 건 스킵 사유가 아님, `/merge-test`에서 main 머지 후 실행
+  - "API 변경 없음" (간접 실행 모듈) — plan-runner처럼 다른 프로젝트 API를 통해 실행되는 모듈은 내부 로직 변경도 API 레벨 결과를 깨뜨릴 수 있음. **반드시 해당 API를 통한 E2E 테스트 포함**
 - T4/T5 실행 시점: 워크트리 머지 후 main에서 (`/merge-test` 스킬)
+
+**🔴 간접 실행 모듈의 T5 규칙 (plan-runner 등):**
+- 모듈이 직접 HTTP API를 노출하지 않더라도, **다른 프로젝트의 API를 통해 트리거**되는 경우 T5는 해당 API 레벨 E2E로 작성
+- 예: plan-runner 내부 로직 수정 → monitor-page admin API(`POST /api/v1/dev-runner/run`)로 실행 → plan 체크박스 최종 상태 검증
+- 이 규칙의 근거: plan-runner T4/T5 파이프라인에서 동일 현상 5회 재발 — 모두 단위 테스트만으로 검증하여 함수 간 계약 불일치를 놓침
 
 **T1 TC 카테고리** (R·B·E 필수, 나머지 해당 시):
 - **RIGHT-BICEP**: R(정상), B(경계), I(역), C(교차), E(에러), P(성능)

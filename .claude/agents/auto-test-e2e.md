@@ -47,9 +47,10 @@ tools:
    - Python: `uvicorn main:app --port 8000`
    - Node: `npm run dev`
    - 프로젝트 구조에 맞게 판단
-2. Health check 루프 (최대 30초)
+2. Health check 루프 (최대 30초, monitor-page는 최대 120초)
    - `curl http://localhost:{port}/health` 또는 유사 엔드포인트
    - 200 응답 확인
+   - ⚠️ monitor-page: API 서버(NSSM 관리)는 머지 후 재시작 완료까지 약 2분 소요 — 타임아웃 120초 이상 설정
 3. 테스트 실행
    - `pytest -m http -v` 또는
    - curl 기반 수동 테스트
