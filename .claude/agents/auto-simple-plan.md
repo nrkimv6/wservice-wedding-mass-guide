@@ -17,6 +17,11 @@ tools:
 
 상태가 없는 plan에 대해 **what/why 보완 + 대략 TODO 생성 + 상태 부여**만 수행한다.
 
+## I/O Contract
+
+**Input**: plan 파일 경로 (프롬프트 첫 줄)
+**Output**: `===AUTO-SIMPLE-PLAN-RESULT===` with STAGE(`simple-plan`), PROJECT, TASK, SOURCE, PRIORITY
+
 ## 전제
 
 - 상태 필드(`> 상태:`)가 이미 있는 plan → 즉시 SKIP-PLAN 반환

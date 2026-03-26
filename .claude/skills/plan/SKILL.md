@@ -35,7 +35,7 @@ $config = Get-Content $configPath | ConvertFrom-Json
 | 복수 프로젝트 | `common/docs/plan/` (wtools만) | **각 프로젝트별** `{proj.path}/docs/plan/` |
 | 공통 (스킬, 설정 등) | `common/docs/plan/` (wtools만) | `common/docs/plan/` |
 
-파일명: `YYYY-MM-DD_{주제}.md`, 별도 TODO(모드B): `_todo.md` 접미사, 아카이브(모드B): `docs/archive/`로 이동
+파일명: `YYYY-MM-DD_{주제}.md`. 대형 계획 분리 시: `_todo-N.md` 접미사 (N=1,2,...). 기존 `_todo.md` 단일 파일도 하위 호환으로 인식
 
 ## 실행 단계
 
@@ -53,16 +53,18 @@ $config = Get-Content $configPath | ConvertFrom-Json
 - 기존 패턴, 컨벤션 파악
 - 의존성 및 영향 범위 확인
 
-### 3단계: 계획 문서 작성 + 모드 선택
+### 3단계: 계획 문서 작성
 
-계획 문서를 작성한 뒤, **분량에 따라 모드를 선택**하고 해당 헬퍼 파일을 읽어 실행한다.
+계획 문서를 작성한 뒤, 같은 폴더의 **`_template.md`를 Read 도구로 읽고** 적절한 형태(단일/분리)로 출력한다.
 
-| 모드 | 판단 기준 | 헬퍼 파일 |
-|------|----------|----------|
-| **모드 A** | 한눈에 읽히는 분량 (Phase 1-2개, 작업 5개 이하) | `_mode-a.md` |
-| **모드 B** | 스크롤이 길어지는 분량 (Phase 3개+, 작업 6개+) | `_mode-b.md` |
+| 형태 | 판단 기준 | 결과물 |
+|------|----------|--------|
+| **단일** | 작업 30개 이하 | `plan.md` 1개 (분석 + TODO 합본) |
+| **분리** | 작업 31개+ AND 독립 Phase 묶음 2개+ | `plan.md` (대표 문서) + `_todo-N.md` 복수 |
 
-**실행:** 모드 판단 후, 같은 폴더의 해당 헬퍼 파일을 **Read 도구로 읽고** 지시에 따른다.
+**분리 조건**: 작업 수가 31개 이상이고, 상호 의존 없는 Phase 그룹이 2개 이상 존재할 때만 분리. Phase 간 순차 의존(A의 출력이 B의 입력)이면 같은 파일에 유지.
+
+**실행:** 같은 폴더의 `_template.md`를 **Read 도구로 읽고** 지시에 따른다.
 
 ### 4단계: wtools/TODO.md 동기화 (wtools만 해당)
 
@@ -82,9 +84,9 @@ $config = Get-Content $configPath | ConvertFrom-Json
 
 안내 출력 **전에** 아래 5항목을 Read로 확인. 하나라도 실패 시 해당 단계로 돌아가 수정.
 
-1. **plan 파일 존재** — 모드A: `docs/plan/`, 모드B: `docs/archive/`
-2. **TODO 체크박스 존재** — 모드A: plan 내부, 모드B: `_todo.md` 파일
-3. **모드B 역참조** — `_todo.md`의 `> 계획:` 링크가 archive를 가리킴
+1. **plan 파일 존재** — `docs/plan/`에 대표 문서 존재
+2. **TODO 체크박스 존재** — 단일: plan 내부에 체크박스. 분리: 각 `_todo-N.md`에 체크박스
+3. **분리 시 링크 정합성** — 대표 문서의 `> **실행 TODO:**` 링크가 실제 `_todo-N.md` 파일을 가리킴. 각 `_todo-N.md`의 `> 계획서:` 링크가 대표 문서를 가리킴
 4. **프로젝트 TODO.md** — Pending에 plan 링크 항목 존재
 5. **wtools/TODO.md** — 해당 프로젝트 섹션에 항목 + 날짜 오늘
 
@@ -137,12 +139,13 @@ git add 금지 경로:
 ```
 계획 문서 생성 완료
 
-[모드 A]
-plan: common/docs/plan/YYYY-MM-DD_{주제}.md (분석 + TODO 포함)
+[단일]
+plan: docs/plan/YYYY-MM-DD_{주제}.md (분석 + TODO 포함, N phases, M tasks)
 
-[모드 B]
-plan: {archive 경로} (분석용, 아카이브됨)
-todo: common/docs/plan/YYYY-MM-DD_{주제}_todo.md (N phases, M tasks)
+[분리]
+plan: docs/plan/YYYY-MM-DD_{주제}.md (대표 문서)
+todo-1: docs/plan/YYYY-MM-DD_{주제}_todo-1.md (Phase 1~3, N tasks)
+todo-2: docs/plan/YYYY-MM-DD_{주제}_todo-2.md (Phase 4~6, M tasks)
 
 다음 단계:
 - 검토 후 수정이 필요하면 말씀해주세요

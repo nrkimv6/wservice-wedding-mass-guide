@@ -17,6 +17,11 @@ tools:
 
 **메인 브랜치 병합 후** 서버를 기동하고 HTTP/E2E 통합 테스트를 실행한다.
 
+## I/O Contract
+
+**Input**: 머지된 main 코드 + plan_file 인자 (T4/T5 체크박스)
+**Output**: `===AUTO-TEST-E2E-RESULT===` with STAGE(`test-e2e`), PROJECT, TASK, STATUS(`PASS`/`FAIL`), DETAIL, FAILED-ENDPOINTS
+
 ## 핵심 동기
 
 기존 문제: 워크트리에서 서버 기동 불가 → `pytest -m http`가 항상 스킵.
@@ -41,8 +46,18 @@ tools:
 
 4. `isolated_redis(db=15)` — 운영 DB(db=0) 오염 방지.
 
+## 관련 경로
+
+T4/T5 테스트 파일 위치:
+- `tests/test_*_http.py` — HTTP 통합 테스트
+- `tests/test_*_e2e.py` — E2E 테스트
+- `tests/conftest.py` — 공통 fixture
+
 ## 실행 흐름
 
+0. **plan 파일에서 미완료 체크박스 목록화** (plan_file 인자가 있는 경우)
+   - `Read`로 plan 파일을 읽고 `Phase T4` / `Phase T5` 섹션 아래 `- [ ]` 상위 체크박스를 모두 찾아 목록화
+   - 각 체크박스 텍스트를 그대로 보존 (실행 시 내용을 직접 해석)
 1. 서버를 백그라운드로 시작 (`Bash` run_in_background)
    - Python: `uvicorn main:app --port 8000`
    - Node: `npm run dev`
@@ -51,10 +66,14 @@ tools:
    - `curl http://localhost:{port}/health` 또는 유사 엔드포인트
    - 200 응답 확인
    - ⚠️ monitor-page: API 서버(NSSM 관리)는 머지 후 재시작 완료까지 약 2분 소요 — 타임아웃 120초 이상 설정
-3. 테스트 실행
-   - `pytest -m http -v` 또는
-   - curl 기반 수동 테스트
+3. **각 미완료 체크박스 텍스트를 이해하여 실행**
+   - 백틱 명령(`` `python -m pytest ...` ``)이 있으면 그대로 실행
+   - 자연어 지시(예: "pytest 실행하세요", "HTTP 엔드포인트 검증")면 내용을 직접 해석하여 수행
+   - 체크박스 없는 경우(plan_file 미제공 또는 T4/T5 섹션 없음): `pytest -m http -v` 또는 curl 기반 수동 테스트 실행
 4. 서버 프로세스 종료
+4.5. **체크박스 갱신** (plan_file 인자가 있는 경우)
+   - 각 체크박스 실행 성공 시 `Edit`으로 `- [ ]` → `- [x]` 갱신
+   - 실패 시 `- [ ]` 유지 (fix 루프에서 재시도)
 5. 출력 블록 반환
 
 ## 출력 형식
@@ -84,8 +103,9 @@ FAILED-ENDPOINTS:
 
 ## 허용/금지
 
-- **허용**: 서버 시작/종료, pytest 실행, HTTP 요청, 테스트 결과 보고
+- **허용**: 서버 시작/종료, pytest 실행, HTTP 요청, 테스트 결과 보고, plan 파일 체크박스 `[x]` 갱신
 - **금지**: 코드 수정 (fix는 runner의 fix 루프에서 별도 에이전트로 처리), **커밋 금지** (커밋은 plan-runner가 관리)
+- **금지**: 체크박스 내용 무시 — 백틱 `python -m pytest` 패턴이 없어도 자연어 내용을 직접 실행할 것. 패턴 없다고 스킵하면 안 됨
 
 ---
 

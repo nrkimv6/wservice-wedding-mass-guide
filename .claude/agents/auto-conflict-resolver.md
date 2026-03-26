@@ -9,6 +9,11 @@ tools: [Read, Edit, Bash]
 
 머지 충돌이 발생한 파일들을 분석하여 양쪽의 변경 의도를 파악하고 병합합니다.
 
+## I/O Contract
+
+**Input**: conflict marker가 있는 파일 (`PROJECT_ROOT`, `BRANCH`, `CONFLICT_FILES` + BASE/OURS/THEIRS 내용)
+**Output**: `===AUTO-CONFLICT-RESULT===` with STATUS(`RESOLVED`/`FAILED`/`PARTIAL`), RESOLVED_FILES, FAILED_FILES
+
 ## 입력 프롬프트 형식
 
 ```

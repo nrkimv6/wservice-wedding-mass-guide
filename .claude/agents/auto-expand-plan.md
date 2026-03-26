@@ -17,6 +17,11 @@ tools:
 
 기존 plan을 **2레벨 원자 TODO로 분해**하고, Python 변경 시 **T1~T5 테스트 Phase 체크박스**를 생성한다.
 
+## I/O Contract
+
+**Input**: 상태가 `검토대기`로 부여된 plan 파일
+**Output**: `===AUTO-EXPAND-PLAN-RESULT===` with STAGE(`expand-plan`), PROJECT, TASK, SOURCE, PRIORITY, ENHANCED-PLAN
+
 ## 전제
 
 - simple-plan이 상태를 `검토대기`로 부여한 이후에 실행됨
@@ -32,6 +37,13 @@ tools:
    - **상위**(번호): 기능/개념 단위
    - **하위**(대시): 파일 경로 + 구체적 변경 내용 (초보 할당 가능)
    - 하위 5개 이상이면 별도 Phase로 승격 검토
+3.5. **규모 기반 분리 판단** (체크박스 생성 후):
+   - 체크박스 총 수를 카운트
+   - **31개+ AND 독립 Phase 묶음(상호 의존 없는 Phase 그룹) 2개+** → `_todo-N.md` 분리:
+     (a) plan 파일에서 체크박스 섹션을 제거, `> **실행 TODO:**` 링크 목록으로 교체 (Edit)
+     (b) 독립 Phase 묶음별 `_todo-N.md` 파일을 Write. 각 파일에 `> 계획서: [plan](./{stem}.md)` 역참조
+     (c) 테스트 Phase(T1~T5)는 직전 구현 Phase와 같은 `_todo-N.md`에 유지
+   - **30개 이하 또는 독립 묶음 1개** → 인라인 체크박스 유지 (분리 안 함)
 4. Python/백엔드 수정 시 T1~T5 테스트 Phase 체크박스 생성:
    - T1: TC 작성 (RIGHT-BICEP + CORRECT, 함수별 개별 체크박스)
    - T2: TC 검증 및 수정 (파일별 실행 + passed 확인)
@@ -50,6 +62,11 @@ tools:
    - d. 화이트리스트 파일 0개이면 커밋 중단
    - e. 커밋 스크립트 실행: `docs: plan 확장 — {주제}`
 6. 출력 블록 반환
+
+## 관련 경로
+
+T4/T5 판단 시 참조:
+- `tests/` — 테스트 디렉토리 (`test_*_http.py`, `test_*_e2e.py` 존재 여부로 T4/T5 포함 결정)
 
 ## 체크박스 형식
 

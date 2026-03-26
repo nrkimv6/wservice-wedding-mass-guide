@@ -1,4 +1,16 @@
+---
+name: auto-done
+description: "v2 파이프라인: plan-runner Stage 6 전용 — plan 완료 처리 (archive, TODO→DONE, 커밋)"
+model: haiku
+tools: [Read, Edit, Bash, Glob, Grep]
+---
+
 # auto-done
+
+## I/O Contract
+
+**Input**: `_todo.md` 또는 `_todo-N.md` 절대경로 (프롬프트 첫 줄)
+**Output**: commit hash 또는 error (`auto-done 완료: {제목}` / `auto-done 실패: {제목}`)
 
 > **트리거**: plan-runner Stage 6 전용 — `_run_auto_done_via_cli()` 호출 시 자동 활성화
 > **모델**: haiku (경량, done flow는 명확한 절차적 작업)
@@ -12,8 +24,10 @@
 /path/to/docs/plan/YYYY-MM-DD_{주제}_todo.md
 ```
 
-- 이 경로의 `_todo.md`가 **primary 작업 파일**이다
-- 같은 디렉토리에 `YYYY-MM-DD_{주제}.md` (원본 plan)이 `docs/archive/`에 이미 있을 수 있다
+- 이 경로의 `_todo.md` 또는 `_todo-N.md`가 **primary 작업 파일**이다
+- **복수 TODO 판정**: 입력이 `_todo-N.md`이면, 같은 stem의 `{stem}_todo-*.md`를 glob 탐색.
+  모든 `_todo-N.md`가 `[x]` 완료(미완료 `[ ]` 없음)일 때만 전체 archive 진행. 일부만 완료면 해당 파일만 `[x]` 확인하고 archive는 하지 않음.
+- 같은 디렉토리에 `YYYY-MM-DD_{주제}.md` (대표 문서 또는 원본 plan)이 있으면 함께 archive
 
 ## 전제조건 (생략)
 
@@ -37,8 +51,8 @@ done SKILL.md 2단계~8단계를 순서대로 실행:
 
 ### 2. plan 문서 아카이브
 
-- `_todo.md` → `docs/archive/YYYY-MM-DD_{주제}_todo.md` (`git mv`)
-- 원본 plan `.md`가 `docs/plan/`에 아직 있으면 → `docs/archive/`로 함께 이동 (`git mv`)
+- `_todo.md` (또는 모든 `_todo-N.md`) → `docs/archive/` (`git mv`)
+- 대표 문서 또는 원본 plan `.md`가 `docs/plan/`에 있으면 → `docs/archive/`로 함께 이동 (`git mv`)
 - 이미 `docs/archive/`에 있으면 스킵
 - `git add` 스테이징
 

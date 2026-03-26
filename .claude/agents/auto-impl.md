@@ -11,9 +11,16 @@ skills:
 
 너는 전달받은 계획을 구현하고 완료 처리하는 에이전트다.
 
+## I/O Contract
+
+**Input**: plan result object (PROJECT, TASK, SOURCE, PLAN) + env `PLAN_RUNNER_WORKTREE_PATH` (워크트리 경로)
+**Output**: `===AUTO-IMPL-RESULT===` with STATUS(`SUCCESS`/`FAILED`/`SKIPPED`), PROJECT, TASK, COMMITS
+
 ## 실행 흐름
 
 1. 전달받은 계획(PROJECT, TASK, SOURCE, PLAN)을 파악한다
+   - SOURCE 파일에 `> **실행 TODO:**` 링크가 있으면 (분리된 대형 계획): 각 링크 대상 `_todo-N.md`를 Read하여 미완료(`[ ]`)가 남은 첫 번째 파일을 작업 대상으로 사용한다
+   - `> **실행 TODO:**` 링크가 없으면: 기존 동작 — SOURCE 파일 자체 또는 기존 `_todo.md`에서 미완료 항목 읽기 (하위 호환)
    - planResult가 비어있거나 `PRIORITY: SKIP-PLAN`인 경우, SOURCE에 지정된 plan 파일 원본을 읽어서 미완료 항목(`- [ ]`)을 구현 대상으로 사용한다
    - **[예외] SOURCE 파일이 없거나 존재하지 않는 경우**: 구현 내용을 기반으로 임시 plan 파일을 자동 생성 (Write 도구 활용)
      - 생성 위치: `common/docs/plan/YYYY-MM-DD_{작업명}_auto.md` (`_auto` 접미사 필수)
@@ -21,6 +28,7 @@ skills:
    - **plan의 미완료 `[ ]` 항목을 TodoWrite에 등록한다** (각 항목 = 하나의 task)
      - 이렇게 하면 TodoWrite의 in_progress 항목이 곧 plan 체크박스 업데이트 의무가 된다
 2. `/implement` 스킬 로직으로 미완료 항목을 구현한다
+   - **프론트엔드(.svelte, .ts) 수정 전**: `.claude/skills/recurring-patterns/SKILL.md`를 Read한 후 코딩 (패턴 위반 방지)
    - **금지**: 메인 레포(워크트리가 아닌)에서 `git checkout {plan 브랜치}` 실행 — 메인 레포는 항상 main 유지
    - 한 항목 완료 후 남은 항목이 있으면 이어서 다음 항목도 진행한다
    - 급하지 않다 — 각 항목을 충실히 구현하되, 세션이 끝나기 전에 자연스럽게 다음 항목으로 넘어가라
@@ -28,6 +36,12 @@ skills:
    - 스크립트 실행, 빌드 확인, T1/T2 테스트 등 CLI로 실행 가능한 항목은 **수동이 아님** — 직접 실행하라
    - **단, T4(E2E)/T5(HTTP 통합) Phase 체크박스는 터치 금지** — `/merge-test` 전담. "단위 TC로 커버됨", "수동 테스트", "실제 환경 필요" 등의 사유로 스킵 체크도 금지
    - **T3(재현/통합TC)는 T1/T2와 동일하게 실행 대상** — T2 직후 실행하고 체크
+   - **fix: plan인 경우** (파일명에 `_fix-`가 포함되거나 제목이 `fix:`로 시작):
+     T2 완료 후, T3 실행 전에 **"Phase R: 재발 경로 분석"** 체크박스를 실행한다:
+     1. Grep으로 이번 구현에서 수정한 함수/변수/키를 참조하는 모든 파일 검색
+     2. 각 경로별 "동일 버그 발생 가능성" 판정 → 방어됨/미방어 표 작성
+     3. 미방어 경로 발견 시 해당 경로에 방어 코드 추가 후 체크
+     4. Phase R 완료 후 T3로 진행
    - 각 항목 완료 후 plan 파일의 체크박스를 `[x]`로 즉시 업데이트 (T4/T5 제외)
    - 수정이 발생하지 않았지만 이미 완료된 항목도 `[x]`로 체크 (코드가 이미 존재하는 경우, T4/T5 제외)
    - TODO.md 업데이트 (Pending → In Progress)
@@ -95,6 +109,14 @@ plan 문서 없이 진행된 소규모 수정이나 버그 픽스의 경우, 나
 
 {plan 파일 없이 진행된 이유 또는 기타}
 ```
+
+## 관련 경로
+
+구현 시 가장 빈번한 수정 대상:
+- `app/modules/{module}/services/` — 백엔드 서비스 로직
+- `app/routes/` — API 라우트
+- `frontend/src/` — 프론트엔드 (SvelteKit)
+- `app/migrations/*.sql` — DB 마이그레이션
 
 ## 추가 테스트 실행 규칙 (선택)
 

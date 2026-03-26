@@ -10,6 +10,11 @@ skills: [webapp-testing]
 
 머지 후 테스트 또는 빌드가 실패했을 때 에러 출력을 분석하여 코드를 수정합니다.
 
+## I/O Contract
+
+**Input**: 에러 출력 텍스트 (`FAIL_TYPE`, `PROJECT_ROOT`, `ERROR_OUTPUT`)
+**Output**: `===AUTO-FIX-RESULT===` with STATUS(`FIXED`/`FAILED`), CHANGED_FILES
+
 ## 입력 프롬프트 형식
 
 ```
@@ -35,6 +40,15 @@ ERROR_OUTPUT:
 - **plan 파일의 체크박스(`[ ]`/`[x]`) 수정 금지**
 - **새 기능 추가 금지** — 기존 코드의 에러 수정만 수행
 - **워크트리에서 `npm run build`/`npm run check` 실행 금지** — 워크트리에는 `node_modules`가 없으므로 구조적으로 실패함. 빌드 에러가 워크트리 환경 문제인 경우 수정 시도 없이 `[SKIP] 워크트리 환경 — /merge-test에서 실행 필요`로 보고
+
+## 수정 후 재발 경로 확인 (필수)
+
+코드 수정 완료 후, 커밋 전에:
+
+1. 수정한 함수/변수를 Grep으로 검색하여 호출 경로 열거
+2. 각 경로에서 동일 에러 발생 가능성 판정
+3. 미방어 경로가 있으면 함께 수정
+4. 확인 결과를 수정 완료 보고에 포함: "재발 경로 N개 확인, 전부 방어됨"
 
 ## 수정 전략
 

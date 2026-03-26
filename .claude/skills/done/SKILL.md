@@ -88,22 +88,45 @@ common/docs/plan/*.md (wtools 내부일 때만)
 
 > 이 검증은 진행 중인 작업이 실수로 아카이브되는 것을 방지한다.
 
+### 2.6단계: fix: plan 재발 경로 검증
+
+plan/todo 파일명에 `_fix-`가 포함되거나 제목이 `fix:`로 시작하면:
+
+1. plan/todo 내용에서 "재발 경로 분석" 또는 "Phase R" 문자열 검색
+2. **없으면** → 경고 출력 + 아카이브 중단:
+   ```
+   ⚠️ fix: plan에 재발 경로 분석(Phase R)이 없습니다.
+   /implement에서 Phase R을 먼저 실행하세요.
+   done 처리 중단.
+   ```
+3. **있으면** → Phase R 섹션(### Phase R ~ 다음 ### 사이) 내에서만 "미방어" 문자열 검색 (코드블럭·템플릿 텍스트 제외)
+4. Phase R 섹션 내 "미방어" 경로가 남아있으면 → 경고 + 중단:
+   ```
+   ⚠️ 재발 경로 분석에 미방어 경로가 남아있습니다.
+   미방어 경로를 모두 수정한 후 다시 /done 하세요.
+   ```
+5. 전부 "방어됨"이면 → 정상 통과
+
 ### 3단계: plan 문서 아카이브 (모든 항목 완료 시)
 
 plan 문서의 모든 체크박스가 `[x]`이면:
 
-**🔴 `_todo.md` 동반 아카이브 필수**
+**🔴 TODO 파일 동반 아카이브 필수**
 
-- `/done` 실행 시 Claude가 선택하는 **primary 파일은 `_todo.md`**이다.
-  (`YYYY-MM-DD_{주제}_todo.md` — 체크박스가 있는 실제 작업 파일)
-- `_todo.md`가 있는 경우, 같은 이름의 plan 원본(`_todo.md` 접미사 없는 `.md`)도 함께 아카이브한다.
-- `_todo.md`가 없는 경우(모드 A 단일 파일 plan)에는 plan 파일 하나만 아카이브한다.
+- `/done` 실행 시 Claude가 선택하는 **primary 파일은 TODO 파일**이다.
+  (`_todo.md` 단일 파일 또는 `_todo-N.md` 복수 파일)
+- **복수 TODO (`_todo-N.md`)**: 같은 stem의 `{stem}_todo-*.md`를 glob 탐색하여 **모든 `_todo-N.md`가 완료**(`[ ]` 잔존 없음)일 때만 전체 archive 진행. 대표 문서(`{stem}.md`)도 함께 archive.
+  대표 문서의 진행률 = 모든 `_todo-N.md`의 `[x]` 합계 / 전체 체크박스 합계.
+- **단일 TODO (`_todo.md`)**: 기존 동작 유지 — plan 원본도 함께 archive. (하위 호환)
+- **단일 파일 plan** (TODO 분리 없음): plan 파일 하나만 아카이브.
 
 **아카이브 이동 대상:**
 
-| primary 파일 | 동반 파일 (있으면) |
-|---|---|
-| `docs/plan/YYYY-MM-DD_{주제}_todo.md` | `docs/archive/YYYY-MM-DD_{주제}.md` (이미 archive에 있으면 스킵) |
+| 형태 | primary | 동반 파일 |
+|---|---|---|
+| 분리 | `_todo-1.md`, `_todo-2.md`, ... | 대표 문서 `{stem}.md` |
+| 단일 TODO | `_todo.md` | plan 원본 `{stem}.md` (archive에 있으면 스킵) |
+| 단일 파일 | plan `.md` | 없음 |
 
 1. **프로젝트 특정 plan**: `common/docs/plan/{파일}.md` (wtools만) → `{proj.path}/docs/archive/{파일}.md`
 2. **공통/복수 프로젝트 plan**: `common/docs/plan/{파일}.md` (wtools만) → `common/docs/archive/{파일}.md`
@@ -134,6 +157,12 @@ git add "docs/archive/YYYY-MM-DD_{주제}_todo.md"
 > 진행률: N/N (100%)
 > 요약: {원본 plan에서 복사}
 ```
+
+### 3.5단계: 금지어 체크 (fix: plan만)
+
+fix: plan인 경우, 안내 텍스트와 커밋 메시지에 아래 표현이 포함되면 경고 후 대체:
+- ❌ "근본 수정", "근본 해결", "완전 해결", "최종 수정", "영구 수정"
+- ✅ 대체: "N개 경로 방어 완료", "재발 경로 M개 중 M개 방어됨"
 
 ### 4단계: TODO → DONE 이동 (수동 검증 항목 분리)
 

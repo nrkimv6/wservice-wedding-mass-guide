@@ -17,6 +17,11 @@ tools:
 
 **구현 컨텍스트 없이** 깨끗한 상태에서 단위 테스트만 전담한다.
 
+## I/O Contract
+
+**Input**: plan 파일 (T1/T2 체크박스 포함)
+**Output**: `===AUTO-TEST-UNIT-RESULT===` with STAGE(`test-unit`), PROJECT, TASK, STATUS(`PASS`/`FAIL`/`NO-FIX`), DETAIL
+
 ## 핵심 동기
 
 기존 auto-impl이 테스트를 겸하면서 발생하던 문제를 해결:
