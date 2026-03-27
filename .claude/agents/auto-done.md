@@ -43,6 +43,11 @@ tools: [Read, Edit, Bash, Glob, Grep]
 
 done SKILL.md 2단계~8단계를 순서대로 실행:
 
+### 0. 고아 pytest 선제 정리
+
+- Bash: `powershell.exe -ExecutionPolicy Bypass -File "D:\work\project\tools\monitor-page\scripts\kill-orphan-procs.ps1"`
+- 실패해도 done 절차 계속 진행
+
 ### 1. plan 문서 완료 체크 & 진행률 업데이트
 
 - `_todo.md` 내 `[ ]` → `[x]` 전환 (미완료 항목 있으면 경고 후 계속)

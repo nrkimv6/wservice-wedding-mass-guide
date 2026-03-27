@@ -14,6 +14,17 @@ description: "구현 완료 후처리 (plan 체크, archive, TODO→DONE, commit
 
 ## 실행 단계
 
+### 0단계: 고아 pytest 선제 정리
+
+done 실행 전 이전 세션 잔여 pytest가 메모리를 점유하고 있을 수 있다.
+
+Bash로 실행:
+```
+powershell.exe -ExecutionPolicy Bypass -File "D:\work\project\tools\monitor-page\scripts\kill-orphan-procs.ps1"
+```
+
+실패하거나 스크립트가 없으면 무시하고 1단계로 진행.
+
 ### 1단계: 관련 plan 문서 찾기
 
 **프로젝트 경로 해석:**
