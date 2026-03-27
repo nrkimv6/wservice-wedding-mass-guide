@@ -73,7 +73,7 @@ done SKILL.md 2단계~8단계를 순서대로 실행:
 
 ### 5. wtools/TODO.md 동기화
 
-- wtools 내부(현재 디렉토리에 `common/` 존재)일 때만 실행
+- wtools 내부(현재 디렉토리에 `common/tools/` 존재)일 때만 실행
 - 해당 프로젝트 섹션 갱신, "마지막 업데이트" 오늘로 갱신
 
 ### 6. 커밋

@@ -16,7 +16,7 @@ $config = Get-Content $configPath | ConvertFrom-Json
 # 각 프로젝트의 절대경로: $config.projects[].path
 ```
 
-**wtools 감지**: 현재 디렉토리에 `common/` 폴더 존재 여부로 판단
+**wtools 감지**: 현재 디렉토리에 `common/tools/` 폴더 존재 여부로 판단
 
 ```
 wtools 내부:
@@ -192,7 +192,7 @@ Claude가 구현 요청 받으면:
    - 작업 시작 시 In Progress로 이동
 
 3. **wtools/TODO.md 동기화 (wtools만 해당)**
-   - **wtools 감지 조건**: 현재 디렉토리에 `common/` 폴더가 있는지 확인
+   - **wtools 감지 조건**: 현재 디렉토리에 `common/tools/` 폴더가 있는지 확인
      - **있으면**: wtools 내부 → 아래 동기화 실행
      - **없으면**: 외부 프로젝트 → 이 단계 **스킵**
    - wtools/TODO.md 열기
