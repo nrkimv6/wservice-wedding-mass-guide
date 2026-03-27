@@ -14,7 +14,7 @@ skills:
 ## I/O Contract
 
 **Input**: plan result object (PROJECT, TASK, SOURCE, PLAN) + env `PLAN_RUNNER_WORKTREE_PATH` (워크트리 경로)
-**Output**: `===AUTO-IMPL-RESULT===` with STATUS(`SUCCESS`/`FAILED`/`SKIPPED`), PROJECT, TASK, COMMITS
+**Output**: `===AUTO-IMPL-RESULT===` with STATUS(`SUCCESS`/`FAILED`/`SKIPPED`), MANUAL(`true` — 수동 작업 시), PROJECT, TASK, COMMITS
 
 ## 실행 흐름
 
@@ -32,7 +32,7 @@ skills:
    - **금지**: 메인 레포(워크트리가 아닌)에서 `git checkout {plan 브랜치}` 실행 — 메인 레포는 항상 main 유지
    - 한 항목 완료 후 남은 항목이 있으면 이어서 다음 항목도 진행한다
    - 급하지 않다 — 각 항목을 충실히 구현하되, 세션이 끝나기 전에 자연스럽게 다음 항목으로 넘어가라
-   - **사람의 눈/판단이 필수인 항목**(디자인 일치, 색상 가독성, 레이아웃 미관 등)만 스킵하고 MANUAL_TASKS로 분리
+   - **사람의 눈/판단이 필수인 항목**(디자인 일치, 색상 가독성, 레이아웃 미관 등)만 수동 작업으로 판정하고, `STATUS: SKIPPED` + `MANUAL: true`를 출력하라. plan-runner가 해당 항목에 `(→ MANUAL_TASKS)` 태그를 자동 추가한다.
    - 스크립트 실행, 빌드 확인, T1/T2 테스트 등 CLI로 실행 가능한 항목은 **수동이 아님** — 직접 실행하라
    - **단, T4(E2E)/T5(HTTP 통합) Phase 체크박스는 터치 금지** — `/merge-test` 전담. "단위 TC로 커버됨", "수동 테스트", "실제 환경 필요" 등의 사유로 스킵 체크도 금지
    - **T3(재현/통합TC)는 T1/T2와 동일하게 실행 대상** — T2 직후 실행하고 체크
@@ -150,6 +150,18 @@ COMMITS: {커밋 메시지들}
 ===END===
 ```
 
+수동 작업으로 판정한 경우 `MANUAL: true` 필드를 추가한다:
+
+```
+===AUTO-IMPL-RESULT===
+PROJECT: {프로젝트명}
+TASK: {완료된 작업}
+STATUS: SKIPPED
+MANUAL: true
+COMMITS:
+===END===
+```
+
 ### STATUS 판단 기준
 
 | STATUS | 조건 |
@@ -157,6 +169,7 @@ COMMITS: {커밋 메시지들}
 | SUCCESS | 구현 완료 + 필수 빌드 통과 + 커밋 성공 |
 | FAILED | 구현 중 오류, 빌드 실패(수정 후에도 실패), 커밋 실패 등 |
 | SKIPPED | 구현할 항목이 없음 (이미 완료됨, 또는 plan의 모든 [ ]가 이미 구현된 상태) |
+| SKIPPED + MANUAL: true | 현재 항목이 수동 작업(사람 눈/판단 필수)으로 판정됨 |
 
 **중요**: 구현할 게 없으면 반드시 `STATUS: SKIPPED`를 출력하라. SKIPPED는 실패가 아니다.
 
