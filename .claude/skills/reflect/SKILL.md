@@ -1,6 +1,6 @@
 ---
-name: review
-description: "구현 후 컨텍스트 리뷰 — 우려점·유사문제·리팩토링·미발견오류 추출 → 계획서 생성. Use when: 리뷰, review, 검토, 우려점"
+name: reflect
+description: "구현 후 회고 — 우려점·유사문제·리팩토링·미발견오류 추출 → 계획서 생성. Use when: 리뷰, reflect, 회고, 검토, 우려점"
 ---
 
 # 컨텍스트 리뷰
