@@ -40,7 +40,7 @@ tools:
 3.5. **계획서 커밋** (Bash 도구) — 반드시 아래 순서로 실행
    - a. `git status --porcelain` — 변경 파일 목록 확인
    - b. 화이트리스트 파일만 **개별** git add (파일 경로 하나씩):
-     - 허용: `docs/plan/*.md`, `common/docs/plan/*.md`, `docs/archive/*.md`, `common/docs/archive/*.md`, `TODO.md`, `docs/DONE.md`
+     - 허용: CLAUDE.md `문서 위치 규칙`에 명시된 plan/archive 경로의 `*.md` + `TODO.md`, `docs/DONE.md`
      - **절대 금지**: `git add .` / `git add -A` / 디렉토리명·글로브 패턴
    - c. `git status --porcelain` 재확인 → 비화이트리스트 파일 있으면 `git reset HEAD {파일}` 로 제거
    - d. 화이트리스트 파일 0개이면 커밋 중단

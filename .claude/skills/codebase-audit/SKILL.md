@@ -255,13 +255,13 @@ Get-ChildItem "D:\work\project\service\wtools\common\docs\archive" |
 
 점검 결과를 파일로 저장:
 ```
-common/docs/audit/{날짜}_codebase-audit.md
+CLAUDE.md 문서 위치 규칙의 audit 경로/{날짜}_codebase-audit.md (기본: docs/audit/)
 ```
 
 ## 후속 조치
 
 1. **즉시 수정 가능한 항목**: 사용자 확인 후 바로 수정
-2. **계획 필요 항목**: `common/docs/plan/` 에 계획서 생성
+2. **계획 필요 항목**: CLAUDE.md 문서 위치 규칙의 plan 경로에 계획서 생성
 3. **TODO 등록**: 각 프로젝트 TODO.md에 발견 사항 등록
 
 ---
@@ -273,7 +273,7 @@ common/docs/audit/{날짜}_codebase-audit.md
 - [ ] 각 프로젝트 빌드 가능 상태인지 확인
 
 실행 후:
-- [ ] 보고서 `common/docs/audit/` 에 저장됨
+- [ ] 보고서 CLAUDE.md 문서 위치 규칙의 audit 경로에 저장됨
 - [ ] 심각도 높음 항목 사용자에게 보고됨
 - [ ] 후속 조치 계획 수립됨
 

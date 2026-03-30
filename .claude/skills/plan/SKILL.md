@@ -23,17 +23,19 @@ $config = Get-Content $configPath | ConvertFrom-Json
 # 각 프로젝트의 절대경로: $config.projects[].path
 ```
 
+**경로 규칙**: CLAUDE.md `문서 위치 규칙` 테이블을 참조하라. 테이블이 없으면 기본 경로(`docs/plan/`, `docs/archive/`)를 사용. 상세: [`_path-rules.md`](./_path-rules.md)
+
 **wtools 감지**: 현재 디렉토리에 `common/tools/` 폴더 존재 여부로 판단
-- **있으면**: wtools 내부 → `common/docs/plan/`에 공통 계획 저장 + wtools/TODO.md 동기화 **실행**
-- **없으면**: 외부 프로젝트 → `{proj.path}/docs/plan/`에 저장 + wtools/TODO.md 동기화 **스킵**
+- **있으면**: wtools 내부 → CLAUDE.md의 plan 경로에 공통 계획 저장 + wtools/TODO.md 동기화 **실행**
+- **없으면**: 외부 프로젝트 → CLAUDE.md의 plan 경로에 저장 + wtools/TODO.md 동기화 **스킵**
 
 **TODO는 반드시 프로젝트 단위로 생성한다:**
 
 | 대상 | plan 위치 | TODO 위치 |
 |------|----------|----------|
-| 단일 프로젝트 | `{proj.path}/docs/plan/` | `{proj.path}/docs/plan/` |
-| 복수 프로젝트 | `common/docs/plan/` (wtools만) | **각 프로젝트별** `{proj.path}/docs/plan/` |
-| 공통 (스킬, 설정 등) | `common/docs/plan/` (wtools만) | `common/docs/plan/` |
+| 단일 프로젝트 | CLAUDE.md의 plan 경로 | CLAUDE.md의 plan 경로 |
+| 복수 프로젝트 | CLAUDE.md의 plan 경로 | **각 프로젝트별** CLAUDE.md의 plan 경로 |
+| 공통 (스킬, 설정 등) | CLAUDE.md의 plan 경로 | CLAUDE.md의 plan 경로 |
 
 파일명: `YYYY-MM-DD_{주제}.md`. 대형 계획 분리 시: `_todo-N.md` 접미사 (N=1,2,...). 기존 `_todo.md` 단일 파일도 하위 호환으로 인식
 
@@ -95,8 +97,7 @@ $config = Get-Content $configPath | ConvertFrom-Json
 최종 검증 통과 후, 생성/수정된 문서 파일을 자동 커밋한다.
 
 **스테이징 대상 (변경된 파일만):**
-- wtools: `common/docs/plan/*.md`, `common/docs/archive/*.md`, `TODO.md`, `docs/DONE.md`
-- 외부 프로젝트: `docs/plan/*.md`, `docs/archive/*.md`, `TODO.md`, `docs/DONE.md`
+- CLAUDE.md 문서 위치 규칙의 plan/archive 경로의 `*.md` + `TODO.md`, `docs/DONE.md`
 
 **커밋 실행 절차 (반드시 이 순서):**
 1. `git status --porcelain` — 변경 파일 목록 확인
@@ -111,8 +112,8 @@ $config = Get-Content $configPath | ConvertFrom-Json
 ## 🔴 자동 커밋 안전 규칙
 
 git add 허용 경로 (화이트리스트):
-- `docs/plan/**/*.md`, `common/docs/plan/**/*.md`
-- `docs/archive/**/*.md`, `common/docs/archive/**/*.md`
+- CLAUDE.md 문서 위치 규칙의 plan 경로/**/*.md
+- CLAUDE.md 문서 위치 규칙의 archive 경로/**/*.md
 - `TODO.md`, `docs/DONE.md`
 
 git add 금지 경로:
@@ -131,7 +132,6 @@ git add 금지 경로:
 
 **올바른 add 방법 (파일명 명시):**
 - `git add "docs/plan/2026-03-05_foo.md"`
-- `git add "common/docs/plan/2026-03-05_bar.md"`
 - `git add "TODO.md"`
 
 ### 6단계: 안내

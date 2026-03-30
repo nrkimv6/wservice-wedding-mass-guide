@@ -102,7 +102,7 @@ git diff ${BEFORE_HASH} --name-only
 **아카이빙:**
 1. plan 파일 이동:
    - 프로젝트별 plan: `{project}/docs/plan/*.md` → `{project}/docs/archive/*.md`
-   - 공통 plan: `common/docs/plan/*.md` → `common/docs/archive/*.md`
+   - plan: CLAUDE.md 문서 위치 규칙의 plan 경로 → archive 경로
 
 2. plan 헤더 수정:
    ```markdown

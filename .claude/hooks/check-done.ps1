@@ -5,8 +5,12 @@ if ($input.stop_hook_active -eq $true) {
     exit 0
 }
 
-# common/docs/plan/에서 완료됐지만 아카이브 안 된 plan 확인
-$planDir = Join-Path $input.cwd "common\docs\plan"
+# CLAUDE.md 문서 위치 규칙에 따라 plan 디렉토리 결정
+if (Test-Path (Join-Path $input.cwd "common\tools")) {
+    $planDir = Join-Path $input.cwd "common\docs\plan"
+} else {
+    $planDir = Join-Path $input.cwd "docs\plan"
+}
 $unarchived = @()
 
 if (Test-Path $planDir) {

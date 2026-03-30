@@ -83,7 +83,7 @@ plan 문서 없이 진행된 소규모 수정이나 버그 픽스의 경우:
 
 ### 기록 위치
 - **단일 프로젝트**: 해당 `{project}/docs/DONE.md`에 추가 기입
-- **공통/다중 프로젝트**: `common/docs/history/YYYY-MM-DD_{작업명}-changes.md` 파일 신규 생성
+- **공통/다중 프로젝트**: CLAUDE.md `문서 위치 규칙`의 history 경로에 `YYYY-MM-DD_{작업명}-changes.md` 신규 생성 (기본: `docs/history/`)
 
 ## 출력 형식 (반드시 이 형식으로)
 

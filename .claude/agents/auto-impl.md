@@ -23,7 +23,7 @@ skills:
    - `> **실행 TODO:**` 링크가 없으면: 기존 동작 — SOURCE 파일 자체 또는 기존 `_todo.md`에서 미완료 항목 읽기 (하위 호환)
    - planResult가 비어있거나 `PRIORITY: SKIP-PLAN`인 경우, SOURCE에 지정된 plan 파일 원본을 읽어서 미완료 항목(`- [ ]`)을 구현 대상으로 사용한다
    - **[예외] SOURCE 파일이 없거나 존재하지 않는 경우**: 구현 내용을 기반으로 임시 plan 파일을 자동 생성 (Write 도구 활용)
-     - 생성 위치: `common/docs/plan/YYYY-MM-DD_{작업명}_auto.md` (`_auto` 접미사 필수)
+     - 생성 위치: CLAUDE.md `문서 위치 규칙`의 plan 경로에 `YYYY-MM-DD_{작업명}_auto.md` (기본: `docs/plan/`, `_auto` 접미사 필수)
      - 생성된 파일을 SOURCE로 삼아 체크박스 관리를 진행한다
    - **plan의 미완료 `[ ]` 항목을 TodoWrite에 등록한다** (각 항목 = 하나의 task)
      - 이렇게 하면 TodoWrite의 in_progress 항목이 곧 plan 체크박스 업데이트 의무가 된다
@@ -90,7 +90,7 @@ plan 문서 없이 진행된 소규모 수정이나 버그 픽스의 경우, 나
 
 ### 기록 위치
 - **단일 프로젝트**: 해당 `{project}/docs/DONE.md`에 추가 기입 (필요 시 파일 생성)
-- **공통/다중 프로젝트**: `common/docs/history/YYYY-MM-DD_{작업명}-changes.md` 파일 신규 생성
+- **공통/다중 프로젝트**: CLAUDE.md `문서 위치 규칙`의 history 경로에 `YYYY-MM-DD_{작업명}-changes.md` 신규 생성 (기본: `docs/history/`)
 
 ### 수정 이력 템플릿
 

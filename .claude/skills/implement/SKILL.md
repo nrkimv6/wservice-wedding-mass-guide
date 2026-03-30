@@ -18,23 +18,7 @@ $config = Get-Content $configPath | ConvertFrom-Json
 
 **wtools 감지**: 현재 디렉토리에 `common/tools/` 폴더 존재 여부로 판단
 
-```
-wtools 내부:
-├── common/docs/plan/           # 아이디어/계획 (전체 공유, wtools만)
-│   └── YYYY-MM-DD_*.md
-└── {proj.path}/                # 각 프로젝트 (절대경로)
-    ├── TODO.md                 # 진행할 작업
-    └── docs/
-        ├── DONE.md             # 완료 (최근 20개)
-        └── history/
-            └── DONE-YYYY-Wnn.md # 주별 아카이브
-
-외부 프로젝트:
-{proj.path}/
-├── docs/plan/                  # 프로젝트별 계획
-├── TODO.md
-└── docs/DONE.md
-```
+**경로 규칙**: CLAUDE.md `문서 위치 규칙` 테이블을 참조하라. 테이블이 없으면 기본 경로(`docs/plan/`, `docs/archive/`)를 사용. 상세: [`_path-rules.md`](../plan/_path-rules.md)
 
 ## 워크플로우
 
@@ -129,7 +113,7 @@ plan 문서에서 구현할 항목 선택 시:
 Claude가 구현 요청 받으면:
 
 1. **plan 확인**
-   - `common/docs/plan/`에서 관련 계획 확인
+   - CLAUDE.md 문서 위치 규칙의 plan 경로에서 관련 계획 확인
    - plan 파일에 `> **실행 TODO:**` 링크가 있으면 (분리된 대형 계획):
      각 링크 대상 `_todo-N.md`를 Read하여 미완료(`[ ]`)가 남은 첫 번째 파일을 작업 대상으로 선택
    - `> **실행 TODO:**` 링크가 없으면: plan 파일 자체 또는 기존 `_todo.md` 단일 파일에서 체크박스 읽기 (하위 호환)

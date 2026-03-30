@@ -34,8 +34,7 @@ $config = Get-Content $configPath | ConvertFrom-Json
 **스캔 대상:**
 
 ```
-common/docs/plan/*_todo.md
-{proj.path}/docs/plan/*_todo.md  (모든 프로젝트)
+CLAUDE.md 문서 위치 규칙의 plan 경로/*_todo.md  (모든 프로젝트)
 ```
 
 **완료 판정 기준 (기계적 — LLM 불필요):**

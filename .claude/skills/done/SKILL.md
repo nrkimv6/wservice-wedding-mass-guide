@@ -35,14 +35,13 @@ $config = Get-Content $configPath | ConvertFrom-Json
 ```
 
 **wtools 감지**: 현재 디렉토리에 `common/tools/` 폴더 존재 여부로 판단
-- **있으면**: wtools 내부 → `common/docs/plan/` 및 `{proj.path}/docs/plan/` 확인
-- **없으면**: 외부 프로젝트 → 현재 프로젝트의 `docs/plan/`만 확인
+- **있으면**: wtools 내부 → CLAUDE.md 문서 위치 규칙의 plan 경로 확인
+- **없으면**: 외부 프로젝트 → CLAUDE.md 문서 위치 규칙의 plan 경로 확인 (기본: `docs/plan/`)
 
 아래 **모든 경로**에서 현재 작업과 관련된 계획 문서를 찾습니다:
 
 ```
-common/docs/plan/*.md (wtools 내부일 때만)
-{proj.path}/docs/plan/*.md
+CLAUDE.md 문서 위치 규칙의 plan 경로/*.md
 ```
 
 ### 2단계: plan 문서 완료 체크 & 진행률 업데이트
@@ -139,9 +138,7 @@ plan 문서의 모든 체크박스가 `[x]`이면:
 | 단일 TODO | `_todo.md` | plan 원본 `{stem}.md` (archive에 있으면 스킵) |
 | 단일 파일 | plan `.md` | 없음 |
 
-1. **프로젝트 특정 plan**: `common/docs/plan/{파일}.md` (wtools만) → `{proj.path}/docs/archive/{파일}.md`
-2. **공통/복수 프로젝트 plan**: `common/docs/plan/{파일}.md` (wtools만) → `common/docs/archive/{파일}.md`
-3. **외부 프로젝트 plan**: `{proj.path}/docs/plan/{파일}.md` → `{proj.path}/docs/archive/{파일}.md`
+1. **plan**: CLAUDE.md 문서 위치 규칙의 plan 경로 → CLAUDE.md 문서 위치 규칙의 archive 경로
 4. **아카이브 이동 시 반드시 `git mv` 사용** (git 히스토리 보존):
 
 ```powershell
@@ -292,7 +289,7 @@ wtools/TODO.md를 열어 해당 프로젝트 섹션을 갱신합니다:
 
 커밋 전 실제로 정리가 되었는지 확인합니다:
 
-1. **plan 문서 확인**: `common/docs/plan/`, `{project}/docs/plan/`에 완료된 작업의 plan이 남아있지 않은지 확인
+1. **plan 문서 확인**: CLAUDE.md 문서 위치 규칙의 plan 경로에 완료된 작업의 plan이 남아있지 않은지 확인
 2. **프로젝트 TODO 확인**: `{project}/TODO.md`에서 완료 항목이 제거되었는지 확인
 3. **wtools/TODO.md 확인**: 해당 프로젝트 섹션 진행률이 갱신되었는지 확인
 4. **DONE.md 확인**: 완료 항목이 추가되었는지 확인
@@ -380,7 +377,7 @@ git commit -m "..."
 실행 후 확인사항:
 
 - [ ] **커밋 완료** 🔴
-- [ ] plan 문서 항목 체크됨 (common/docs/plan + {project}/docs/plan 모두)
+- [ ] plan 문서 항목 체크됨 (CLAUDE.md 문서 위치 규칙의 plan 경로)
 - [ ] 완료된 plan은 archive로 이동됨
 - [ ] {project}/TODO.md에서 항목 제거됨
 - [ ] {project}/docs/DONE.md에 항목 추가됨
@@ -397,10 +394,8 @@ git commit -m "..."
 
 | 문서 | 경로 |
 |------|------|
-| 계획 문서 (공통) | `common/docs/plan/*.md` |
-| 계획 문서 (프로젝트) | `{project}/docs/plan/*.md` |
-| 아카이브 (프로젝트별) | `{project}/docs/archive/*.md` |
-| 아카이브 (공통) | `common/docs/archive/*.md` |
+| 계획 문서 | CLAUDE.md 문서 위치 규칙의 plan 경로 |
+| 아카이브 | CLAUDE.md 문서 위치 규칙의 archive 경로 |
 | 프로젝트 TODO | `{project}/TODO.md` |
 | 프로젝트 DONE | `{project}/docs/DONE.md` |
 
