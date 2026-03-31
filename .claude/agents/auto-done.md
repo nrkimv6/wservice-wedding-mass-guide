@@ -82,9 +82,11 @@ done SKILL.md 2단계~8단계를 순서대로 실행:
 
 ### 3. TODO → DONE 이동
 
-- `{project}/TODO.md` 열기
-- plan과 연관된 항목을 `In Progress`/`Pending`에서 제거
-- `{project}/docs/DONE.md` 상단에 `- [x] {오늘날짜}: {제목}` 추가
+- 각 `_todo-N.md`의 `> 대상 프로젝트:` 헤더를 읽어 **프로젝트별** 처리:
+  - 해당 프로젝트의 `TODO.md` 열기
+  - plan과 연관된 항목을 `In Progress`/`Pending`에서 제거
+  - 해당 프로젝트의 `docs/DONE.md` 상단에 `- [x] {오늘날짜}: {제목}` 추가
+- `> 대상 프로젝트:` 필드가 없는 레거시 파일: 기존 방식(단일 프로젝트) 유지
 
 ### 4. DONE.md 아카이브 (10개 초과 시)
 

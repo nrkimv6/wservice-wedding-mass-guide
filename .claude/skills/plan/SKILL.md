@@ -64,7 +64,9 @@ $config = Get-Content $configPath | ConvertFrom-Json
 | **단일** | 작업 30개 이하 | `plan.md` 1개 (분석 + TODO 합본) |
 | **분리** | 작업 31개+ AND 독립 Phase 묶음 2개+ | `plan.md` (대표 문서) + `_todo-N.md` 복수 |
 
-**분리 조건**: 작업 수가 31개 이상이고, 상호 의존 없는 Phase 그룹이 2개 이상 존재할 때만 분리. Phase 간 순차 의존(A의 출력이 B의 입력)이면 같은 파일에 유지.
+**🔴 프로젝트 기반 분리 (강제)**: `> 대상 프로젝트:`가 2개+ (쉼표 구분) → **프로젝트별 `_todo-N.md` 강제 분리** (작업 수와 무관). child(의존성 없는 쪽)에 낮은 N, parent(child를 import하는 쪽)에 높은 N 부여. parent의 `> 선행조건:`에 child `_todo-N.md` 상대경로 자동 기재.
+
+**Phase 기반 분리**: 작업 수가 31개 이상이고, 상호 의존 없는 Phase 그룹이 2개 이상 존재할 때 분리. Phase 간 순차 의존(A의 출력이 B의 입력)이면 같은 파일에 유지.
 
 **실행:** 같은 폴더의 `_template.md`를 **Read 도구로 읽고** 지시에 따른다.
 
