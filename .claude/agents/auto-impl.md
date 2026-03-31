@@ -28,6 +28,7 @@ skills:
    - **plan의 미완료 `[ ]` 항목을 TodoWrite에 등록한다** (각 항목 = 하나의 task)
      - 이렇게 하면 TodoWrite의 in_progress 항목이 곧 plan 체크박스 업데이트 의무가 된다
 2. `/implement` 스킬 로직으로 미완료 항목을 구현한다
+   - **🔴 워크트리 스킵 금지**: `PLAN_RUNNER_WORKTREE_PATH`가 설정되어 있으면 파일 유형(md/py/ts 등)에 관계없이 해당 워크트리 경로에서 작업한다. "문서만 수정", "markdown만", "코드 수정 없음" 등의 이유로 원본 디렉토리에서 작업하지 않는다.
    - **프론트엔드(.svelte, .ts) 수정 전**: `.claude/skills/recurring-patterns/SKILL.md`를 Read한 후 코딩 (패턴 위반 방지)
    - **금지**: 메인 레포(워크트리가 아닌)에서 `git checkout {plan 브랜치}` 실행 — 메인 레포는 항상 main 유지
    - **Phase 단위로 연관 항목을 함께 처리한다**. 형제 항목이 같은 파일/모듈을 다루면 자연스럽게 연속 처리한다
@@ -241,6 +242,7 @@ v2 파이프라인(`--pipeline v2`)에서 호출 시:
 
 ### 워크트리 동작
 
+- **🔴 워크트리 스킵 금지** — 파일 유형(md/py/ts 등)에 관계없이 `--worktree-path`로 전달된 경로에서 작업. "문서만 수정"을 이유로 원본 디렉토리에서 작업 금지.
 - **워크트리 경로**: plan-runner가 `--worktree-path` 인자로 전달. 해당 경로에서 작업
 - **main 브랜치 보호** — 워크트리에서 작업 시 메인 레포의 `git checkout`은 절대 실행 금지. 메인 레포 브랜치 변경이 필요한 상황이면 작업을 중단하고 에러를 반환한다.
 - **서버 기동 금지** — `uvicorn`, `npm run dev`, `npm start` 등 금지 (워크트리에서는 포트 바인딩 불가)
