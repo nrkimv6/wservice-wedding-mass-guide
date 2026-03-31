@@ -82,6 +82,17 @@ $config = Get-Content $configPath | ConvertFrom-Json
 4. **"마지막 업데이트" 날짜를 오늘로 Edit**
 5. **반드시 Edit 완료 후 다시 Read하여 반영을 확인한다** (Read → Edit → Read 패턴)
 
+### 4.5단계: plan 정합성 검증 (필수)
+
+plan 작성 후, 최종 검증 전에 **코드 대비 기본 검증**을 수행한다.
+검증 체크리스트 상세: [_verify-checklist.md](../../docs/_verify-checklist.md)
+
+**최소 검증 항목 (V1 + V2):**
+1. **V1. 경로 존재 검증**: plan에 명시된 모든 파일 경로에 대해 Glob/Read로 실제 존재 확인. 존재하지 않는 경로 발견 시 즉시 Edit으로 수정.
+2. **V2. 참조 전수 조사**: plan이 변경하려는 주요 함수/변수/키를 Grep으로 검색. plan이 커버하지 않는 참조 파일 발견 시 해당 파일을 plan에 추가.
+
+발견 시 즉시 수정 (Edit) → Read로 수정 확인 후 다음 단계로.
+
 ### 5단계: 최종 검증 (필수)
 
 안내 출력 **전에** 아래 5항목을 Read로 확인. 하나라도 실패 시 해당 단계로 돌아가 수정.

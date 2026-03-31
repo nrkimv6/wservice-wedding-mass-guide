@@ -48,6 +48,25 @@ done SKILL.md 2단계~8단계를 순서대로 실행:
 - Bash: `powershell.exe -ExecutionPolicy Bypass -File "D:\work\project\tools\monitor-page\scripts\kill-orphan-procs.ps1"`
 - 실패해도 done 절차 계속 진행
 
+### 0.5. done 사전 검증 (구현완료 설정 전 게이트)
+
+> **🔴 이 검증은 Step 1(구현완료 설정) 전에 반드시 통과해야 한다.**
+> branch/worktree 검증은 면제 (plan-runner가 이미 정리).
+
+- plan/todo 파일명에 `_fix-`/`_fix_`가 포함되거나 제목이 `fix:`로 시작하면:
+  1. 내용에서 "Phase R" 또는 "재발 경로 분석" 문자열 검색
+  2. **없으면** → 에러 출력 + 즉시 중단 (구현완료 설정 금지):
+     ```
+     ❌ fix plan에 Phase R 섹션이 없습니다. /implement에서 Phase R 먼저 실행하세요.
+     ```
+  3. **있으면** → Phase R 섹션 내 "미방어" 문자열 검색 (코드블럭 제외)
+  4. "미방어" 잔존 시 → 에러 출력 + 즉시 중단:
+     ```
+     ❌ Phase R에 미방어 경로가 남아있습니다. 모든 경로 방어 완료 후 다시 실행하세요.
+     ```
+- fix plan이 아니면 → 통과
+- **금지어 주의**: Step 6(커밋) 단계에서 "근본 수정" 등 금지어 사용하지 않을 것
+
 ### 1. plan 문서 완료 체크 & 진행률 업데이트
 
 - `_todo.md` 내 `[ ]` → `[x]` 전환 (미완료 항목 있으면 경고 후 계속)
