@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "powershell.exe -NoProfile -Command \"$input = [Console]::In.ReadToEnd(); $dangerous = ($input -match 'checkout\\s+--') -or ($input -match 'reset\\s+(--hard|HEAD\\s+--)') -or ($input -match 'clean\\s+-[fd]') -or ($input -match 'restore\\s+\\.'); if ($dangerous) { $status = git status --porcelain 2>&1; if ($status) { $count = ($status | Measure-Object -Line).Lines; Write-Host \\\"`n[BLOCKED] 미커밋 변경 $count개 있음! 파괴적 명령 차단.`n  -> git stash 먼저 실행하세요`n\\\" -ForegroundColor Red; Write-Host $status -ForegroundColor Yellow; exit 1 } }\"",
+            "command": "powershell.exe -NoProfile -Command \"$input = [Console]::In.ReadToEnd(); $dangerous = ($input -match 'checkout\\s+--') -or ($input -match 'reset\\s+(--hard|HEAD\\s+--)') -or ($input -match 'clean\\s+-[fd]') -or ($input -match 'restore\\s+\\.'); if ($dangerous) { $status = git status --porcelain 2>&1; if ($status) { $count = ($status | Measure-Object -Line).Lines; Write-Host \\\"[BLOCKED] 미커밋 변경 $count 개 있음! 파괴적 명령 차단. git stash 먼저 실행하세요.\\\" -ForegroundColor Red; Write-Host $status -ForegroundColor Yellow; exit 1 } }\"",
             "timeout": 5
           }
         ]
