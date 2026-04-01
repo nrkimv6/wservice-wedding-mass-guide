@@ -1,6 +1,6 @@
 ---
 name: reflect
-description: "구현 후 회고 — 우려점·유사문제·리팩토링·미발견오류 추출 → 계획서 생성 → /review-plan 자동 호출 (조사만 모드: 계획서 생성까지만). Use when: 리뷰, reflect, 회고, 검토, 우려점"
+description: "구현 후 회고 — 우려점·유사문제·리팩토링·미발견오류 추출 → 계획서 생성 → review-plan 자동 수행. Use when: 리뷰, reflect, 회고, 검토, 우려점"
 ---
 
 # 컨텍스트 리뷰
@@ -103,8 +103,9 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
 
 ### 3단계: 계획서 재검토 및 확장
 
-생성된 계획서에 대해 `/review-plan` 스킬의 실행 단계를 수행한다.
-계획서 경로 목록을 인자로 전달하여 재검토 → expand-todo → 커밋까지 일괄 처리한다.
+생성된 계획서에 대해 `/review-plan` 스킬의 SKILL.md를 읽고, 그 실행 단계를 **직접 수행**한다.
+(Skill 도구로 `/review-plan`을 호출하는 것이 아님 — reflect 실행 중에 인라인으로 재검토 → expand-todo → 커밋을 처리)
+계획서 경로 목록을 review-plan의 입력으로 사용한다.
 
 ## 출력 형식
 
