@@ -11,14 +11,14 @@ plan → TODO → DONE 흐름으로 작업을 관리합니다.
 
 **프로젝트 경로 해석:**
 ```powershell
-$configPath = "D:\work\project\service\wtools\.claude\projects.json"
+$configPath = "D:\work\project\service\wtools\.Codex\projects.json"
 $config = Get-Content $configPath | ConvertFrom-Json
 # 각 프로젝트의 절대경로: $config.projects[].path
 ```
 
 **wtools 감지**: 현재 디렉토리에 `common/tools/` 폴더 존재 여부로 판단
 
-**경로 규칙**: CLAUDE.md `문서 위치 규칙` 테이블을 참조하라. 테이블이 없으면 기본 경로(`docs/plan/`, `docs/archive/`)를 사용. 상세: [`_path-rules.md`](../plan/_path-rules.md)
+**경로 규칙**: AGENTS.md `문서 위치 규칙` 테이블을 참조하라. 테이블이 없으면 기본 경로(`docs/plan/`, `docs/archive/`)를 사용. 상세: [`_path-rules.md`](../plan/_path-rules.md)
 
 ## 워크플로우
 
@@ -110,10 +110,10 @@ plan 문서에서 구현할 항목 선택 시:
 
 ## 실행 단계
 
-Claude가 구현 요청 받으면:
+Codex가 구현 요청 받으면:
 
 1. **plan 확인**
-   - CLAUDE.md 문서 위치 규칙의 plan 경로에서 관련 계획 확인
+   - AGENTS.md 문서 위치 규칙의 plan 경로에서 관련 계획 확인
    - plan 파일에 `> **실행 TODO:**` 링크가 있으면 (분리된 대형 계획):
      각 링크 대상 `_todo-N.md`를 Read하여 미완료(`[ ]`)가 남은 첫 번째 파일을 작업 대상으로 선택
    - `> **실행 TODO:**` 링크가 없으면: plan 파일 자체 또는 기존 `_todo.md` 단일 파일에서 체크박스 읽기 (하위 호환)
@@ -127,6 +127,12 @@ Claude가 구현 요청 받으면:
    > 🔴 **파일 유형(md/py/ts/svelte 등)에 관계없이 워크트리 생성을 스킵하지 않는다.**
    > "문서만 수정", "markdown만", "코드 수정 없음" 등 어떤 사유로도 이 단계를 건너뛰지 않는다.
    > 유일한 예외: Step A의 plan-runner 환경 감지뿐이다.
+   >
+   > 🔴 **루트(main worktree) 브랜치 고정 규칙 (절대)**
+   > 원본 프로젝트 루트의 현재 브랜치는 항상 `main`이어야 한다.
+   > 루트에서 `git switch impl/*`, `git checkout impl/*`, `git switch -c impl/*`, `git checkout -b impl/*` 실행을 금지한다.
+   > impl/plan 브랜치 작업은 `.worktrees/...` 경로에서만 허용한다.
+   > 루트가 `main`이 아니면 자동 전환하지 말고 즉시 중단 후 사용자에게 보고한다.
 
    **A. plan-runner 환경 감지:**
    - 환경변수 `PLAN_RUNNER_WORKTREE_PATH`가 설정되어 있고 **AND** 해당 경로가 현재 프로젝트의 `.worktrees/` 하위인 경우에만 → 이 단계 전체 **스킵** (이미 격리됨)
