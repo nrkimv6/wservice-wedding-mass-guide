@@ -141,8 +141,8 @@ Codex가 구현 요청 받으면:
    **B. 잔여 워크트리/브랜치 감지:**
    - `git worktree list`에서 `.worktrees/impl-` 패턴 스캔
    - `git branch --list "impl/*"` 스캔
-   - plan 문서에 `branch:` 필드가 **없는데** 잔여분이 존재하면 → 사용자에게 "이전 세션 잔여분 발견. 정리할까요?" 확인
-   - 사용자가 정리 허용 시: `git worktree remove {경로} --force` + `git branch -D {브랜치명}`
+   - 잔여 `impl/*` 워크트리/브랜치는 정리하지 않고 그대로 유지한다.
+   - 신규 워크트리 생성 시 이름 충돌이 있으면 `{slug}-2`, `{slug}-3`처럼 새 이름으로 생성한다.
 
    **C. plan 헤더에서 `> branch:` 및 `> worktree:` 필드 확인:**
 
