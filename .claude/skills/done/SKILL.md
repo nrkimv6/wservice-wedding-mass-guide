@@ -19,8 +19,15 @@ description: "구현 완료 후처리 (plan 체크, archive, TODO→DONE, commit
 done 실행 전 이전 세션 잔여 pytest가 메모리를 점유하고 있을 수 있다.
 
 Bash로 실행:
-```
-powershell.exe -ExecutionPolicy Bypass -File "D:\work\project\tools\monitor-page\scripts\kill-orphan-procs.ps1"
+```powershell
+# 1순위: 현재 프로젝트 스크립트
+if (Test-Path ".\scripts\kill-orphan-procs.ps1") {
+  powershell.exe -ExecutionPolicy Bypass -File ".\scripts\kill-orphan-procs.ps1"
+}
+# 2순위(선택): 공용 fallback 경로가 존재할 때만 실행
+elseif (Test-Path "D:\work\project\tools\monitor-page\scripts\kill-orphan-procs.ps1") {
+  powershell.exe -ExecutionPolicy Bypass -File "D:\work\project\tools\monitor-page\scripts\kill-orphan-procs.ps1"
+}
 ```
 
 실패하거나 스크립트가 없으면 무시하고 1단계로 진행.

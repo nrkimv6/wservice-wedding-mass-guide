@@ -19,8 +19,15 @@ description: "구현 완료 후처리 (plan 체크, archive, TODO→DONE, commit
 done 실행 전 이전 세션 잔여 pytest가 메모리를 점유하고 있을 수 있다.
 
 Bash로 실행:
-```
-powershell.exe -ExecutionPolicy Bypass -File "D:\work\project\tools\monitor-page\scripts\kill-orphan-procs.ps1"
+```powershell
+# 1순위: 현재 프로젝트 스크립트
+if (Test-Path ".\scripts\kill-orphan-procs.ps1") {
+  powershell.exe -ExecutionPolicy Bypass -File ".\scripts\kill-orphan-procs.ps1"
+}
+# 2순위(선택): 공용 fallback 경로가 존재할 때만 실행
+elseif (Test-Path "D:\work\project\tools\monitor-page\scripts\kill-orphan-procs.ps1") {
+  powershell.exe -ExecutionPolicy Bypass -File "D:\work\project\tools\monitor-page\scripts\kill-orphan-procs.ps1"
+}
 ```
 
 실패하거나 스크립트가 없으면 무시하고 1단계로 진행.
@@ -43,6 +50,15 @@ $config = Get-Content $configPath | ConvertFrom-Json
 ```
 AGENTS.md 문서 위치 규칙의 plan 경로/*.md
 ```
+
+### 1.2단계: main 기존 수정사항 무시 모드 (사용자 명시 지시 시)
+
+사용자가 "main의 기존 수정사항을 고려하지 말라"고 명시한 경우:
+
+- 루트(main worktree)의 기존 dirty 파일은 done 중단 사유로 취급하지 않는다.
+- 루트(main)의 기존 수정 파일은 읽기/수정/복구/스테이징 대상에서 제외한다.
+- plan 완료 판정, TODO→DONE 이동, 커밋 대상 판단은 현재 작업 워크트리(impl/\*) 변경분만 기준으로 수행한다.
+- 단, `.git` 보호 규칙과 파괴적 명령 금지 규칙은 그대로 유지한다.
 
 ### 2단계: plan 문서 완료 체크 & 진행률 업데이트
 

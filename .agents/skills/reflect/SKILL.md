@@ -78,9 +78,10 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
 - 최소 1개 ~ 최대 N개 (강제 상한 없음)
 
 **생성 절차:**
-1. 프로젝트 plan 디렉토리 확인: `{project}/docs/plan/`
+1. 프로젝트 문서 위치 규칙(AGENTS.md/CLAUDE.md)의 plan 경로를 확인한다.
+   (예: wtools는 `common/docs/plan`, 일반 프로젝트는 `docs/plan`)
 2. `/plan` 스킬의 `_template.md` 형식으로 계획서 작성
-3. 파일명: `{project}/docs/plan/YYYY-MM-DD_{주제}.md`
+3. 파일명: `{plan경로}/YYYY-MM-DD_{주제}.md`
 4. 헤더에 `> 출처: /review에서 자동 생성` 표기
 
 **0건 처리:**
@@ -94,7 +95,7 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
 
 - 신규 계획서가 1개 이상 생성되면 **반드시 커밋한다**.
 - 기본 모드: 3단계에서 수행되는 `/review-plan`의 커밋으로 충족한다.
-- 예외(Fallback): `/review-plan` 단계가 실패/스킵되면, `reflect`가 직접 화이트리스트 커밋(`docs/plan/*.md`, 필요 시 `TODO.md`)을 수행하고 종료한다.
+- 예외(Fallback): `/review-plan` 단계가 실패/스킵되면, `reflect`가 직접 화이트리스트 커밋(`{plan경로}/*.md`, 필요 시 `TODO.md`)을 수행하고 종료한다.
 - 조사만/조사 모드: 3단계를 스킵하므로 `reflect`가 직접 화이트리스트 커밋을 수행한다.
 - 커밋 메시지 예: `docs: reflect — add follow-up plans`
 - 생성 계획서가 0건이면 커밋하지 않는다.
@@ -129,7 +130,7 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
 | 4 | 미발견 오류 | {내용 또는 해당 없음} | {plan 링크 또는 —} |
 
 생성된 계획서: N개
-→ /review-plan으로 재검토 및 확장 진행 중...
+→ review-plan 실행 단계를 인라인으로 수행 중...
 ```
 
 ## 주의사항
