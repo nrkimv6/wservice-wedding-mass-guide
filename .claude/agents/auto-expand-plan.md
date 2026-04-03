@@ -22,6 +22,12 @@ tools:
 **Input**: 상태가 `검토대기`로 부여된 plan 파일
 **Output**: `===AUTO-EXPAND-PLAN-RESULT===` with STAGE(`expand-plan`), PROJECT, TASK, SOURCE, PRIORITY, ENHANCED-PLAN
 
+## 2-Step 호환 (codex)
+
+- `codex`/`cc-codex` 실행에서는 runner가 이 단계를 `review` + `apply`로 분리 실행할 수 있다.
+- 분리 실행 시 review/apply 에이전트는 동일 결과 블록 키(`PROJECT/TASK/SOURCE/PRIORITY/STAGE/ENHANCED-PLAN`)를 유지한다.
+- apply 단계는 done marker JSON(`status/source_plan/applied_at/runner_id`)을 함께 기록한다.
+
 ## 전제
 
 - simple-plan이 상태를 `검토대기`로 부여한 이후에 실행됨
@@ -33,6 +39,8 @@ tools:
 2. 코드베이스를 분석한다 (Read only)
    - 수정 대상 파일의 현재 코드 확인
    - 기존 패턴, 임포트, 의존성 파악
+   - `rg`/`Grep` 검색 시 `docs/archive/`는 반드시 제외: `--glob '!docs/archive/**'`
+   - `docs/archive/`는 파일명을 이미 아는 경우에만 `Read`로 개별 파일 열람 허용
 3. 2레벨 원자 TODO로 분해:
    - **상위**(번호): 기능/개념 단위
    - **하위**(대시): 파일 경로 + 구체적 변경 내용 (초보 할당 가능)
@@ -151,6 +159,7 @@ ENHANCED-PLAN:
 
 - **허용**: plan 문서 Edit (원자 분해, TC 생성, 상태 변경), docs 파일 커밋(Bash — plan/archive/TODO.md/DONE.md 한정)
 - **금지**: 코드 수정, 코드 파일 커밋, 구현 시작
+- **금지**: `docs/archive/` 대상 `rg`/`Grep` 디렉토리 스캔 (개별 `Read`만 허용)
 
 ---
 

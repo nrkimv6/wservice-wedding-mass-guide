@@ -9,16 +9,21 @@ tools: [Read, Edit, Bash, Glob, Grep]
 
 ## I/O Contract
 
-**Input**: `_todo.md` 또는 `_todo-N.md` 절대경로 (프롬프트 첫 줄)
+**Input**: 프롬프트는 다음 순서로 전달된다.
+1. (선택) `스킬 파일: {절대경로}` — monitor-page done 스킬 경로 참조 줄 (없을 수 있음)
+2. `/done {plan_file_path}에 대한 완료 처리를 진행해줘` — plan 파일 경로 포함
+
 **Output**: commit hash 또는 error (`auto-done 완료: {제목}` / `auto-done 실패: {제목}`)
 
 > **트리거**: plan-runner Stage 6 전용 — `_run_auto_done_via_cli()` 호출 시 자동 활성화
 > **모델**: haiku (경량, done flow는 명확한 절차적 작업)
 > **직접 호출 금지**: 이 agent는 plan-runner가 자동 호출. 수동 완료 처리는 `/done` 스킬 사용.
+> **스킬 경로 참조**: 프롬프트에 `스킬 파일:` 줄이 있으면 해당 파일을 우선 참조하여 done 절차를 수행한다.
+> 기본 참조 경로: `D:\work\project\tools\monitor-page\.agents\skills\done\SKILL.md`
 
 ## 입력 규약
 
-프롬프트 첫 줄에 plan 파일 절대경로가 전달된다:
+프롬프트 첫 줄에 (선택적으로 스킬 파일 경로 참조가 있고) plan 파일 절대경로가 전달된다:
 
 ```
 /path/to/docs/plan/YYYY-MM-DD_{주제}_todo.md

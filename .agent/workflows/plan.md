@@ -44,7 +44,7 @@ common/docs/plan/YYYY-MM-DD_{주제}.md
 ```markdown
 # {제목}
 
-> 작성일: YYYY-MM-DD
+> 작성일시: YYYY-MM-DD HH:MM
 > 대상 프로젝트: {project-name | 공통}
 > 상태: 초안
 > 진행률: 0%
