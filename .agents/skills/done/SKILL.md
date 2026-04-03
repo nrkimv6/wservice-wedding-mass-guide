@@ -102,6 +102,7 @@ AGENTS.md 문서 위치 규칙의 plan 경로/*.md
    ```
    ⚠️ plan에 활성 branch/worktree가 있습니다: {branch}
    먼저 /merge-test를 실행하여 머지 + 통합테스트를 완료하세요.
+   (_todo-N.md라면 같은 `> 계획서:` parent를 가진 항목을 배치로 함께 처리)
    done 처리 중단.
    ```
 3. **필드가 없으면** → 계속 진행
