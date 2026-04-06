@@ -183,11 +183,36 @@ $collision = $untracked | Where-Object { $branchFiles -contains $_ }
   - 로그 prefix: `MERGE_PRECHECK_FAILED[untracked_overwrite]`
   - 충돌 경로를 최대 20개 출력
   - **자동 삭제/자동 이동 금지** (운영자가 수동 정리 후 재시도)
-- `$collision`이 0개면 다음 `git merge`를 진행한다.
+- `$collision`이 0개면 다음 단계로 진행한다.
+
+**루트(main) dirty 처리 — stash-merge-pop:**
+
+머지 전 루트에 staged/unstaged 변경이 있으면 stash로 임시 보관 후 머지한다:
 
 ```powershell
+$rootDirty = git status --porcelain
+$stashCreated = $false
+if ($rootDirty) {
+  Write-Host "[merge-test] root dirty 감지 — stash push"
+  git stash push --include-untracked -m "merge-test: $($target.branch) 머지 전 임시 보관"
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host "❌ MERGE_FAILED[stash_push_failed]: root stash 실패. 수동으로 정리 후 재시도하세요."
+    exit 1
+  }
+  $stashCreated = $true
+}
+
 # 원본 프로젝트 루트에서 실행
 git merge {target.branch} --no-ff -m "merge: {target.branch}"
+
+if ($stashCreated) {
+  Write-Host "[merge-test] stash pop 실행"
+  git stash pop
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host "⚠️ STASH_POP_CONFLICT: 충돌 발생. 수동으로 해결하세요. (머지는 이미 완료됨)"
+    # 머지 자체는 성공했으므로 중단하지 않고 경고만 출력
+  }
+}
 ```
 
 각 머지 성공 직후 커밋 해시를 추출하여 **해당 target 파일 헤더**에 기록한다:
@@ -320,13 +345,18 @@ git reset --merge HEAD~1
 ```powershell
 # 원본 프로젝트 루트에서 실행
 foreach ($target in $merge_targets) {
-  # dirty 체크 — 미커밋 변경이 있으면 즉시 중단
+  # dirty 체크 — 미커밋 변경이 있으면 자동 커밋 후 계속 진행
   $dirtyFiles = git -C $target.worktree status --porcelain
   if ($dirtyFiles) {
-    Write-Host "❌ MERGE_FAILED[worktree_dirty]: 워크트리에 미커밋 변경이 있습니다: $($target.worktree)"
+    Write-Host "⚠️ WORKTREE_DIRTY: 미커밋 변경 감지 — 자동 커밋 실행: $($target.worktree)"
     Write-Host $dirtyFiles
-    Write-Host "제거를 중단합니다. 변경을 커밋하거나 직접 확인하세요."
-    exit 1
+    git -C $target.worktree add -A
+    git -C $target.worktree commit -m "emergency: merge 전 미커밋 변경 자동 저장 ($($target.branch))"
+    if ($LASTEXITCODE -ne 0) {
+      Write-Host "❌ MERGE_FAILED[emergency_commit_failed]: 자동 커밋 실패. 수동으로 해결 후 재시도하세요."
+      exit 1
+    }
+    Write-Host "✅ 자동 커밋 완료"
   }
   # lock 해제 후 제거 (implement 스킬이 lock을 걸었을 경우 대비)
   git worktree unlock $target.worktree 2>$null  # lock 없는 경우 무시
