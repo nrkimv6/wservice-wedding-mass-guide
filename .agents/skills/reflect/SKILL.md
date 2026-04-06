@@ -82,7 +82,6 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
 
 수정한 파일을 대상으로:
 - 줄 수 확인 — 500줄 초과 파일 탐지
-- 파일별 고정 줄수 임계값(예: `loop.py 220`, `commands.py 550`)은 사용하지 않음
 - 중복 코드 여부 — 같은 로직이 2곳 이상에 존재하는지
 - 임시 해결책 잔존 — HACK/WORKAROUND 주석
 
