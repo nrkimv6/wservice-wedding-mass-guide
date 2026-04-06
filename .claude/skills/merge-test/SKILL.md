@@ -313,9 +313,23 @@ git reset --merge HEAD~1
 
 배치 대상 전체가 성공한 뒤, worktree/branch를 **한 번에 정리**한다:
 
+**제거 전 필수: 워크트리 dirty 체크 게이트**
+
+각 target 제거 전에 워크트리 내 uncommitted 변경을 반드시 확인한다:
+
 ```powershell
 # 원본 프로젝트 루트에서 실행
 foreach ($target in $merge_targets) {
+  # dirty 체크 — 미커밋 변경이 있으면 즉시 중단
+  $dirtyFiles = git -C $target.worktree status --porcelain
+  if ($dirtyFiles) {
+    Write-Host "❌ MERGE_FAILED[worktree_dirty]: 워크트리에 미커밋 변경이 있습니다: $($target.worktree)"
+    Write-Host $dirtyFiles
+    Write-Host "제거를 중단합니다. 변경을 커밋하거나 직접 확인하세요."
+    exit 1
+  }
+  # lock 해제 후 제거 (implement 스킬이 lock을 걸었을 경우 대비)
+  git worktree unlock $target.worktree 2>$null  # lock 없는 경우 무시
   git worktree remove $target.worktree --force
   git branch -D $target.branch
 }

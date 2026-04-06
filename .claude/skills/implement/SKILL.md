@@ -165,6 +165,12 @@ Claude가 구현 요청 받으면:
         - 자동 전환 후 `git rev-parse --abbrev-ref HEAD` 재확인 결과가 `main`이 아니면 중단
      1. slug를 plan 파일명에서 추출 (`YYYY-MM-DD_{slug}.md` → `{slug}`)
      2. `git worktree add .worktrees/impl-{slug} -b impl/{slug}` 실행
+     2.5. **워크트리 생성 직후 lock 실행** (단일 `--force`로 실수 삭제 방지):
+        ```bash
+        git worktree lock .worktrees/impl-{slug} --reason "impl/{slug} 구현 진행 중"
+        ```
+        - lock된 워크트리는 `git worktree remove --force` 한 번으로는 삭제 불가 (`--force --force` 필요)
+        - lock 실패 시 경고만 출력하고 계속 진행 (lock은 안전장치, 필수 중단 조건 아님)
      3. **워크트리 생성 후 메인 레포 브랜치 재확인**: `git rev-parse --abbrev-ref HEAD`
         - `main`이면 → 정상, 다음 단계로
         - `main`이 아니면 → 생성된 워크트리 제거 (`git worktree remove .worktrees/impl-{slug} --force`) + 사용자에게 "워크트리 생성 후 메인 레포가 main에서 벗어남. 수동 확인 필요." 경고 후 중단
