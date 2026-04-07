@@ -189,6 +189,14 @@ git add "docs/archive/YYYY-MM-DD_{주제}_todo.md"
 > 요약: {원본 plan에서 복사}
 ```
 
+6. **LLM Wiki ingest** — archive 이동 + 헤더 추가 성공 후 반드시 호출
+   - 방금 이동된 archive 파일에 대해 태그 추출:
+     - `docs/wiki-schema.md`의 `## 3. 태그 Vocabulary` 섹션에서 화이트리스트 로드
+     - 파일명 + 첫 H1(title) + 본문 앞 100자를 소문자 매칭
+     - 매칭 0건이면 `["untagged"]` 단독 부여
+   - 이후 `/archive-sweep` 스킬의 "LLM Wiki ingest" 절차(INDEX.md 1행 insert + 매칭 가이드 AUTO 블록 1행 insert + `_meta.yaml` `last_archive_scan` 갱신)에 위임
+   - ingest 실패는 경고만 출력, done 전체 흐름은 중단하지 않음
+
 ### 3.5단계: 금지어 체크 (fix: plan만)
 
 fix: plan인 경우, 안내 텍스트와 커밋 메시지에 아래 표현이 포함되면 경고 후 대체:
