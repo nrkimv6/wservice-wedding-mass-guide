@@ -21,7 +21,7 @@
 
 ## 핵심 규칙
 
-1. **파일 우선**: 분석 결과는 반드시 `docs/reports/YYYY-MM-DD_<slug>.md`로 저장
+1. **파일 우선**: 분석 결과는 반드시 `docs/report/YYYY-MM-DD_<slug>.md`로 저장
 2. **채팅 금지**: 보고서 내용을 채팅으로만 출력하고 파일을 안 만드는 것은 금지
 3. **중복 방지**: 같은 날짜+주제 파일이 존재하면 `-2`, `-3` 접미사 추가
 4. **커밋 별도**: 파일 작성 후 자동 커밋하지 않음. 경로만 알리고 커밋은 사용자 판단
@@ -39,14 +39,14 @@
 ### 2단계: 보고서 디렉토리 확인
 
 ```
-docs/reports/
+docs/report/
 ```
 
 디렉토리가 없으면 생성한다.
 
 ### 3단계: 파일 작성
 
-**경로 규칙**: `docs/reports/YYYY-MM-DD_<slug>.md`
+**경로 규칙**: `docs/report/YYYY-MM-DD_<slug>.md`
 - slug: 분석 주제를 kebab-case로 (예: `reboot-analysis`, `memory-leak-investigation`, `api-timeout-diagnosis`)
 - 날짜: 분석 수행일 기준
 
@@ -104,7 +104,7 @@ mdsched.exe
 파일 경로를 사용자에게 알린다:
 
 ```
-보고서 작성 완료: docs/reports/YYYY-MM-DD_<slug>.md
+보고서 작성 완료: docs/report/YYYY-MM-DD_<slug>.md
 ```
 
 ## 보고서 유형별 가이드
