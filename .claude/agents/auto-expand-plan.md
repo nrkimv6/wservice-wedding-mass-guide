@@ -95,8 +95,11 @@ tools:
       - ☐ 미방어 경로가 있으면 해당 경로에 방어 코드 추가
       - ☐ 모든 경로 방어 완료 확인 ("전체 방어 완료" 명시, "근본 수정" 표현 금지)
 
-   🔴 fix: plan인데 Phase R이 없으면 /done과 /merge-test에서 차단된다.
+   🔴 fix: plan인데 Phase R이 없으면 /implement, /done, /merge-test에서 차단된다.
    ```
+
+   **Phase R 삽입 후 검증 (필수):** 삽입 완료 후 plan 본문에서 `### Phase R` 또는 `재발 경로 분석` 문자열을 검색한다. 미존재 시 경고 출력 + 재삽입 (1회). 재삽입 후에도 미존재 시 INCOMPLETE 판정 반환.
+
 4. Python/백엔드 수정 시 T1~T5 테스트 Phase 체크박스 생성:
    - T1: TC 작성 (RIGHT-BICEP + CORRECT, 함수별 개별 체크박스)
    - T2: TC 검증 및 수정 (파일별 실행 + passed 확인)

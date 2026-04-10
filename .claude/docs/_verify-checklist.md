@@ -91,8 +91,32 @@ plan 문서 자체의 **구조적 오류**를 검토한다.
 - **Phase 누락**: 구현 Phase와 테스트 Phase 사이에 빠진 단계가 없는가
 - **경로 교차 검증**: 프론트엔드 경로(`frontend/src/...`)와 백엔드 경로(`app/...`)가 뒤섞이지 않았는가
 - **진행률 정합성**: 체크박스 개수와 헤더/푸터의 진행률이 일치하는가
+- **Phase R 존재 (fix: plan 전용)**: 파일명 `_fix-`/`_fix_` 또는 제목 `fix:`인 plan에 `### Phase R` 또는 `재발 경로 분석` 문자열이 있는가
+- **Phase R 완전성 (fix: plan 전용)**: Phase R 섹션 내 `미방어` 문자열이 잔존하는가
 
 **결과:**
 - 번호 충돌, 중복 → 🟢 GREEN
 - Phase 누락 → 🟡 YELLOW
 - 진행률 불일치 → 🟢 GREEN
+- Phase R 미존재 (fix: plan) → 🔴 RED (INCONSISTENT 판정)
+- Phase R 내 미방어 경로 잔존 → 🔴 RED (INCONSISTENT 판정)
+
+
+---
+
+## V2-S. 보안 패턴 전파
+
+CLAUDE.md에 보안 패턴 레지스트리가 있을 때, plan이 새로 추가/수정하는 코드에 해당 패턴이 적용되어야 하는지 확인한다.
+
+**절차:**
+1. CLAUDE.md에서 보안 패턴 레지스트리(예: `subprocess.run` safe.directory 요구 등) 확인
+2. plan의 변경 대상 코드에 동일 계열 패턴(새 subprocess 호출, 외부 명령 실행 등)이 추가/수정되는지 확인
+3. 보안 패턴 레지스트리의 패턴이 적용되지 않은 파일이 있으면 → 🔴 RED (plan에 해당 작업 추가)
+
+**예시:**
+- plan이 새 `subprocess.run(["git", "..."])` 호출을 추가하는데 `safe.directory` 설정 없음 → RED
+- CLAUDE.md에 보안 패턴 레지스트리가 없으면 → 해당 없음 (GREEN)
+
+**결과:**
+- 미적용 패턴 발견 → 🔴 RED
+- 모두 적용됨 또는 레지스트리 없음 → 🟢 GREEN
