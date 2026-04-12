@@ -63,6 +63,10 @@
     {
       "name": "monitor-page",
       "path": "D:\\work\\project\\tools\\monitor-page"
+    },
+    {
+      "name": "kakaocli-win",
+      "path": "D:\\work\\project\\tools\\kakaocli-win"
     }
   ]
 }
