@@ -74,6 +74,13 @@ tools:
      (c) 테스트 Phase(T1~T5)는 직전 구현 Phase와 같은 `_todo-N.md`에 유지
    - **30개 이하 또는 독립 묶음 1개** → 인라인 체크박스 유지 (분리 안 함)
    - **⚠️ 프로젝트별 분리와 중첩 분리(`_todo-1a.md`)는 하지 않는다** — 단일 프로젝트당 하나의 `_todo-N.md` 유지
+3.6. **파일 이동/구조변경 영향 분석 — Phase IA 자동 삽입**:
+   plan/TODO에 파일 이동·삭제·이름변경·경로변경 키워드가 감지되면(mv, Move-Item, git mv, rename, 이동, 재구성, reorganize 등), 구현 Phase 직후·테스트 Phase 직전에 "Phase IA: 이동 영향 분석 및 참조처 수정"을 자동 삽입한다:
+   - 이동 대상의 기존 경로를 프로젝트 전체에서 Grep 검색 (import, source, 설정 파일, 프로세스 실행 참조)
+   - 이동 대상 파일 내 상대경로 깊이 탐지 패턴(`$PSScriptRoot`, `Split-Path`, `__file__`, `Path().parent`) 검증
+   - 참조처 일괄 수정 + 잔존 참조 0건 재검색 확인
+   키워드 미감지 시 건너뛴다.
+
 3.7. **🔴 fix: plan 감지 시 — Phase R 자동 삽입**:
    plan이 아래 조건 중 하나에 해당하면 fix: plan으로 판정:
    - 파일명에 `_fix-` 포함 (예: `2026-03-26_fix-visible-runner.md`)

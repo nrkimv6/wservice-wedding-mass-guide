@@ -104,6 +104,12 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
 
 "해당 없음" 기준: Grep 결과 동일 패턴 0건, 또는 이미 방어된 패턴. 보안 패턴 레지스트리의 모든 패턴이 프로젝트 전체에서 적용되어 있음.
 
+**[파일 이동/구조변경 참조처 검증]** 구현에서 파일 이동·삭제·이름변경·경로변경을 수행한 경우:
+- 이전 경로를 참조하는 코드가 프로젝트에 잔존하는지 Grep으로 전체 검색
+- `$PSScriptRoot`, `Split-Path`, `__file__`, `Path().parent` 등 상대경로 깊이 탐지 패턴이 새 디렉토리 구조의 깊이와 일치하는지 검증
+- 설정 파일(CLAUDE.md, README, INDEX.md 등)의 하드코딩 경로가 업데이트되었는지 확인
+- "해당 없음" 추가 기준: 파일 이동이 있었던 경우, 이전 경로 참조 0건 AND 상대경로 깊이 일치 확인됨
+
 **Q3. 리팩토링**
 
 수정한 파일을 대상으로:
@@ -136,6 +142,10 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
 **생성 절차:**
 1. 프로젝트 문서 위치 규칙(AGENTS.md/CLAUDE.md)의 plan 경로를 확인한다.
    (예: wtools는 `common/docs/plan`, 일반 프로젝트는 `docs/plan`)
+   **계획서 생성 위치 분기** — 발견 항목의 수정 대상에 따라 올바른 프로젝트에 생성:
+   - 수정 대상이 `.claude/skills/`, `.claude/agents/`, 공통 스크립트 → **wtools** `common/docs/plan/`에 생성
+   - 수정 대상이 특정 프로젝트의 `app/`, `frontend/`, `scripts/` 등 → **해당 프로젝트**의 `docs/plan/`에 생성
+   - 복수 프로젝트에 걸친 변경 → **wtools** `common/docs/plan/`에 생성
 2. `/plan` 스킬의 `_template.md` 형식으로 계획서 작성
 3. 파일명: `{plan경로}/YYYY-MM-DD_{주제}.md`
 4. 헤더에 `> 출처: /review에서 자동 생성` 표기

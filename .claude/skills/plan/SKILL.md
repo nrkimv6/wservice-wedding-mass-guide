@@ -29,6 +29,16 @@ $config = Get-Content $configPath | ConvertFrom-Json
 - **있으면**: wtools 내부 → CLAUDE.md의 plan 경로에 공통 계획 저장 + wtools/TODO.md 동기화 **실행**
 - **없으면**: 외부 프로젝트 → CLAUDE.md의 plan 경로에 저장 + wtools/TODO.md 동기화 **스킵**
 
+**🔴 계획서 생성 위치 분기** — 수정 대상에 따라 올바른 프로젝트에 생성:
+
+| 수정 대상 | 생성 위치 | 예시 |
+|----------|----------|------|
+| `.claude/skills/`, `.claude/agents/`, 공통 스크립트 | **wtools** `common/docs/plan/` | 스킬 개선, 에이전트 수정 |
+| 특정 프로젝트의 `app/`, `frontend/`, `scripts/` 등 | **해당 프로젝트**의 `docs/plan/` | monitor-page 버그 수정 |
+| 복수 프로젝트에 걸친 변경 | **wtools** `common/docs/plan/` | 공통 인프라 변경 |
+
+외부 프로젝트에서 작업 중이더라도 수정 대상이 스킬/에이전트이면, 사용자에게 "이 계획서는 wtools에 생성해야 합니다"라고 안내하고 wtools 경로에 생성한다.
+
 **TODO는 반드시 프로젝트 단위로 생성한다:**
 
 | 대상 | plan 위치 | TODO 위치 |
