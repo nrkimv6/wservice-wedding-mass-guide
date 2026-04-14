@@ -80,12 +80,9 @@ done SKILL.md 2단계~8단계를 순서대로 실행:
 
 ### 2. plan 문서 아카이브
 
-- `_path-rules.md` 동적 폴백으로 plan 루트/archive 루트 결정
-- **orphan 도입 프로젝트** (`.worktrees/plans/` 존재): plans 워크트리 내에서 `git mv` 수행
-  - `Set-Location .worktrees/plans` → `git mv docs/plan/... docs/archive/...` → `git add` → `git commit` → `git push origin plans`
-  - plans 워크트리 git status가 clean인지 확인 — 비어있지 않으면 commit 누락으로 처리
-- **orphan 미도입 프로젝트**: 기존 방식 (`_todo.md` → archive 경로 git mv)
-- 이미 archive에 있으면 스킵
+- `_todo.md` (또는 모든 `_todo-N.md`) → `docs/archive/` (`git mv`)
+- 대표 문서 또는 원본 plan `.md`가 `docs/plan/`에 있으면 → `docs/archive/`로 함께 이동 (`git mv`)
+- 이미 `docs/archive/`에 있으면 스킵
 - `git add` 스테이징
 
 ### 3. TODO → DONE 이동
@@ -138,3 +135,5 @@ auto-done 완료: {plan 제목}
 auto-done 실패: {plan 제목}
 ERROR: {오류 메시지}
 ```
+
+

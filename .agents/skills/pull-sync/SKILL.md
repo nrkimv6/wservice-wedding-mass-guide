@@ -16,12 +16,15 @@ description: "git pull 후 plan/TODO 자동 동기화. Use when: 풀 동기화, 
 
 ### 1단계: 전체 하위 프로젝트 git pull (병렬)
 
-**대상 프로젝트:** `.Codex/projects.json`의 모든 프로젝트 (15개, 절대경로 사용)
+**대상 프로젝트:** `.agents/projects.json`의 모든 프로젝트(없을 경우 `.claude/projects.json` fallback) (15개, 절대경로 사용)
 
 **프로젝트 목록 읽기:**
 ```powershell
-$configPath = "D:\work\project\service\wtools\.Codex\projects.json"
-$config = Get-Content $configPath | ConvertFrom-Json
+$projectConfigPath = "D:\work\project\service\wtools\.agents\projects.json"
+if (-not (Test-Path $projectConfigPath)) {
+  $projectConfigPath = "D:\work\project\service\wtools\.claude\projects.json"
+}
+$config = Get-Content $projectConfigPath | ConvertFrom-Json
 # 각 프로젝트의 절대경로: $config.projects[].path
 ```
 

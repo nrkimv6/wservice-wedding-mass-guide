@@ -164,14 +164,24 @@ plan 문서의 모든 체크박스가 `[x]`이면:
 1. **plan**: CLAUDE.md 문서 위치 규칙의 plan 경로 → CLAUDE.md 문서 위치 규칙의 archive 경로
 4. **아카이브 이동 시 반드시 `git mv` 사용** (git 히스토리 보존):
 
+> 경로 결정: `_path-rules.md` 동적 폴백 로직 참조 (`Get-PlanRoot`, `Get-ArchiveRoot`)
+> - orphan 도입 프로젝트 (`.worktrees/plans/` 존재): plans 워크트리 내부에서 수행
+> - 미도입 프로젝트: 일반 git mv (아래 기본 예시)
+
 ```powershell
-# ✅ 올바른 방법 — _todo.md와 원본 plan 둘 다 이동
+# ✅ orphan 도입 프로젝트 — plans 워크트리 내에서 git mv
+Set-Location ".worktrees/plans"
 git mv -f "docs/plan/YYYY-MM-DD_{주제}_todo.md" "docs/archive/YYYY-MM-DD_{주제}_todo.md"
 # 원본 plan이 docs/plan/ 에 남아있으면 함께 이동 (이미 archive에 있으면 스킵)
 # git mv -f "docs/plan/YYYY-MM-DD_{주제}.md" "docs/archive/YYYY-MM-DD_{주제}.md"
-
-# 이동 후 archive 헤더 추가 (Set-Content 또는 Edit 도구)
 git add "docs/archive/YYYY-MM-DD_{주제}_todo.md"
+git commit -m "chore: archive {주제}"
+git push origin plans
+Set-Location -  # 이전 경로로 복귀
+
+# ✅ orphan 미도입 프로젝트 — 기존 방식
+git mv -f "{plan루트}/YYYY-MM-DD_{주제}_todo.md" "{archive루트}/YYYY-MM-DD_{주제}_todo.md"
+git add "{archive루트}/YYYY-MM-DD_{주제}_todo.md"
 
 # ❌ FORBIDDEN: Move-Item / Remove-Item — 히스토리 유실
 # Move-Item -Path "{plan경로}" -Destination "{archive경로}"

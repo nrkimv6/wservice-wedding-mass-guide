@@ -39,8 +39,8 @@ tools:
 2. 코드베이스를 분석한다 (Read only)
    - 수정 대상 파일의 현재 코드 확인
    - 기존 패턴, 임포트, 의존성 파악
-   - `rg`/`Grep` 검색 시 archive 디렉토리는 반드시 제외: `--glob '!docs/archive/**'` 및 `--glob '!.worktrees/plans/docs/archive/**'`
-   - archive 파일은 파일명을 이미 아는 경우에만 `Read`로 개별 파일 열람 허용
+   - `rg`/`Grep` 검색 시 `docs/archive/`는 반드시 제외: `--glob '!docs/archive/**'`
+   - `docs/archive/`는 파일명을 이미 아는 경우에만 `Read`로 개별 파일 열람 허용
 3. 2레벨 원자 TODO로 분해:
    - **상위**(번호): 기능/개념 단위
    - **하위**(대시): 파일 경로 + 구체적 변경 내용 (초보 할당 가능)
@@ -127,7 +127,7 @@ tools:
 5.5. **계획서 커밋** (Bash 도구) — 반드시 아래 순서로 실행
    - a. `git status --porcelain` — 변경 파일 목록 확인
    - b. 화이트리스트 파일만 **개별** git add (파일 경로 하나씩):
-     - 허용: CLAUDE.md `문서 위치 규칙`에 명시된 plan/archive 경로의 `*.md` + `TODO.md`, `docs/DONE.md`
+     - 허용: AGENTS.md/CLAUDE.md `문서 위치 규칙`에 명시된 plan/archive 경로의 `*.md` + `TODO.md`, `docs/DONE.md`
      - **절대 금지**: `git add .` / `git add -A` / 디렉토리명·글로브 패턴
    - c. `git status --porcelain` 재확인 → 비화이트리스트 파일 있으면 `git reset HEAD {파일}` 로 제거
    - d. 화이트리스트 파일 0개이면 커밋 중단
@@ -181,3 +181,5 @@ ENHANCED-PLAN:
 - **PowerShell 버전 (deprecated)**: v2 미지원 — 이 에이전트 사용 불가
 
 출력 형식 (`===AUTO-EXPAND-PLAN-RESULT===`)은 Python plan-runner에서 파싱됩니다.
+
+

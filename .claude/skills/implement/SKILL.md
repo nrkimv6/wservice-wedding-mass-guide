@@ -113,11 +113,17 @@ plan 문서에서 구현할 항목 선택 시:
 Claude가 구현 요청 받으면:
 
 1. **plan 확인**
-   - CLAUDE.md 문서 위치 규칙의 plan 경로에서 관련 계획 확인
+   - `_path-rules.md` 동적 폴백 로직으로 plan 루트 결정 (`Get-PlanRoot` 참조):
+     - `.worktrees/plans/docs/plan/` 존재 시: 이 경로에서 plan 검색
+     - 없으면: CLAUDE.md 문서 위치 규칙의 plan 경로 (기본: `docs/plan/`)
    - plan 파일에 `> **실행 TODO:**` 링크가 있으면 (분리된 대형 계획):
      각 링크 대상 `_todo-N.md`를 Read하여 미완료(`[ ]`)가 남은 첫 번째 파일을 작업 대상으로 선택
    - `> **실행 TODO:**` 링크가 없으면: plan 파일 자체 또는 기존 `_todo.md` 단일 파일에서 체크박스 읽기 (하위 호환)
    - 없으면 사용자 요청을 바로 TODO에 추가
+   - **plans 워크트리 도입 프로젝트 — impl 워크트리에서의 plan 접근**:
+     - impl 워크트리(`.worktrees/impl-{slug}/`)에서 plan 파일은 파일시스템 상 형제 디렉토리에 있음
+     - 상대경로 `../plans/docs/plan/` 또는 절대경로 `{RepoRoot}/.worktrees/plans/docs/plan/`으로 접근
+     - plan 헤더의 `> branch:`, `> worktree:` Edit 대상은 plans 워크트리 내 절대경로 사용
 
 1.1. **부모 계획서(owner) 식별 (필수)**
    - 작업 대상이 `_todo.md` 또는 `_todo-N.md`이면 헤더의 `> 계획서:` 링크를 해석해 **부모 계획서 절대경로**를 `parent_plan_path`로 저장한다.
@@ -268,6 +274,7 @@ Claude가 구현 요청 받으면:
    - **반복 패턴 가이드 준수** (아래 "반복 패턴 체크" 참조)
    - 테스트 작성 (RIGHT-BICEP)
    - 코드 작성
+   - **테스트 파일 네이밍 규칙**: `_e2e` 접미사는 실서버(localhost) 또는 실브라우저(Playwright) 필요 테스트에만 사용. mock/AsyncMock 기반 테스트는 `_integration` 또는 도메인명만 사용 (예: `test_coupang_monitor_integration.py`)
    - **DB 마이그레이션 SQL 파일을 생성한 경우 → 즉시 실행** (커밋 전 필수, 실행 안 하면 API 장애)
    - 기존 테스트 통과 확인
    - **⚠️ 빌드 확인 (webapp-testing 스킬)은 워크트리에서 실행 금지** — 반드시 `/merge-test`에서 main 머지 후 실행

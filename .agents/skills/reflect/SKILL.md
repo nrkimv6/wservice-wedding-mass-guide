@@ -72,11 +72,19 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
 
 **Q2. 유사 문제**
 
-수정한 파일과 같은 모듈 내 동일 패턴 검색:
-- 수정한 버그의 핵심 패턴을 Grep으로 같은 디렉토리/모듈에서 검색
+프로젝트 전체(`tests/`, `.worktrees/`, `node_modules/` 제외)에서 Grep으로 같은 패턴 재검색:
+- 프로젝트 전체(`tests/`, `.worktrees/`, `node_modules/` 제외)에서 Grep 수행 후 동일 패턴의 위치를 정렬
 - 같은 함수명/변수명 패턴이 다른 파일에도 존재하는지 확인
+- 동일 패턴이 모듈 경계를 넘어 나타나는지 판단
 
-"해당 없음" 기준: Grep 결과 동일 패턴 0건, 또는 이미 방어된 패턴.
+"해당 없음" 기준: 프로젝트 전체 Grep 결과 동일 패턴 0건, 또는 이미 방어된 패턴.
+
+### 파일 이동/구조변경 참조처 검증
+
+수정한 파일이 경로 이동/이름 변경/재배치와 연관되어 있으면, 같은 패턴의 이전 경로를 전체 Grep한 뒤 참조 처리를 점검한다.
+- 이전 경로 문자열로 프로젝트 전체 Grep 검색 (`tests/`, `.worktrees/`, `node_modules/` 제외)
+- `../`, `./`, `$PSScriptRoot`, `__file__`, `Path().parent` 등의 상대경로 깊이 일치 여부를 검증
+- 깊이 불일치 또는 경로 하드코딩이 남아 있으면 Q1/Q2에 우려 항목으로 추가
 
 **Q3. 리팩토링**
 
@@ -110,6 +118,10 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
 **생성 절차:**
 1. 프로젝트 문서 위치 규칙(AGENTS.md/CLAUDE.md)의 plan 경로를 확인한다.
    (예: wtools는 `common/docs/plan`, 일반 프로젝트는 `docs/plan`)
+   **계획서 생성 위치 분기** — 발견 항목의 수정 대상에 따라 올바른 프로젝트에 생성:
+   - 수정 대상이 `.claude/skills/`, `.claude/agents/`, 공통 스크립트 → **wtools** `common/docs/plan/`에 생성
+   - 수정 대상이 특정 프로젝트의 `app/`, `frontend/`, `scripts/` 등 → **해당 프로젝트**의 `docs/plan/`에 생성
+   - 복수 프로젝트에 걸친 변경 → **wtools** `common/docs/plan/`에 생성
 2. `/plan` 스킬의 `_template.md` 형식으로 계획서 작성
 3. 파일명: `{plan경로}/YYYY-MM-DD_{주제}.md`
 4. 헤더에 `> 출처: /review에서 자동 생성` 표기

@@ -39,7 +39,7 @@ cd "/d/work/project/service/wtools" && git add <files> && bash "/d/work/project/
 ### 3순위: commit.sh (로컬, 최후 fallback)
 ```bash
 # 공용 스크립트가 모두 없을 때 스킬 폴더 내 commit.sh 사용
-cd "/d/work/project/service/wtools" && git add <files> && bash "/d/work/project/service/wtools/.Codex/skills/commit/commit.sh" "커밋 메시지"
+cd "/d/work/project/service/wtools" && git add <files> && bash "/d/work/project/service/wtools/.agents/skills/commit/commit.sh" "커밋 메시지"
 ```
 
 **참고**: 모든 commit.sh는 commit.ps1과 동일한 기능을 수행합니다.
@@ -112,5 +112,5 @@ bash "/d/work/project/tools/common/commit.sh" "feat: 모니터링 API 추가"
 # 3순위: 로컬 commit.sh (공용 스크립트 없을 때)
 cd "/d/work/project/service/wtools"
 git add app/routes/monitor.py
-bash "/d/work/project/service/wtools/.Codex/skills/commit/commit.sh" "feat: 모니터링 API 추가"
+bash "/d/work/project/service/wtools/.agents/skills/commit/commit.sh" "feat: 모니터링 API 추가"
 ```

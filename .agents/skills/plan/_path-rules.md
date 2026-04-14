@@ -4,7 +4,7 @@
 
 ## 규칙
 
-문서 경로(plan, archive, DONE, history 등)를 사용할 때는 **현재 프로젝트의 CLAUDE.md `문서 위치 규칙` 테이블**을 참조하라.
+문서 경로(plan, archive, DONE, history 등)를 사용할 때는 **현재 프로젝트의 AGENTS.md/CLAUDE.md `문서 위치 규칙` 테이블**을 참조하라.
 
 테이블이 없으면 아래 기본 경로를 사용:
 

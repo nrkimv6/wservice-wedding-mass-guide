@@ -76,6 +76,48 @@ N+2. ☐ **참조처 일괄 수정**
 - PowerShell 이동: `Grep "old/path" --glob "*.ps1"`, `Grep "Split-Path" {이동된 파일}`
 - Python 이동: `Grep "from old.module import" --glob "*.py"`, `Grep "Path\(__file__\)" {이동된 파일}`
 
+### 2.4단계: DB 마이그레이션 감지
+
+plan/TODO에 **DB 스키마 변경(마이그레이션)** 작업이 포함된 경우, "직접 실행" 체크박스를 포함하는 Phase DB-Direct를 자동 삽입한다.
+
+**트리거 키워드 감지** (plan 제목, 개요, TODO 텍스트에서 1개 이상 감지 시 활성화):
+
+| 분류 | 키워드 |
+|------|--------|
+| SQL DDL | `ALTER TABLE`, `ADD COLUMN`, `DROP COLUMN`, `RENAME COLUMN` |
+| 코드 패턴 | `_add_col(`, `migrate_`, `migration`, `마이그레이션` |
+| 파일/경로 | `database.py` 수정, `migrations/` 수정, `migrate_sqlite_to_pg`, `.sql` 파일 신규 생성 |
+| 삭제+DB | 파일 삭제 키워드 AND 위 키워드 동시 감지 (삭제 파일 내 마이그레이션 코드 이전 여부 강제 확인) |
+
+> **`CREATE TABLE` 단독은 트리거에서 제외**: SQLAlchemy `Base.metadata.create_all()`이 자동 생성하므로 오탐 위험. `CREATE TABLE`은 `_add_col` 또는 `ALTER TABLE`과 함께 등장하는 경우에만 감지.
+
+**키워드가 1개 이상 감지되면**, 구현 Phase 마지막 항목 직후·T1 Phase 직전에 아래 Phase를 자동 삽입 (Phase IA와 동일 위치):
+
+```
+### Phase DB-Direct: DB 스키마 직접 수행 (마이그레이션 필수)
+
+N. - [ ] **마이그레이션 코드 추가 (DB 모듈 또는 마이그레이션 스크립트)** — worktree/impl 단계에서 수행
+   - [ ] 프로젝트의 DB 초기화 모듈에 `_add_col` / SQL DDL 추가 — 앱 재시작 시 자동 마이그레이션
+   - [ ] 신규 컬럼이 있으면 `ADD COLUMN IF NOT EXISTS` 패턴 사용
+
+N+1. - [ ] **DB에 직접 실행 (running DB 즉시 반영)** — ⚠️ 실행 시점: main 머지 후, T4/T5 직전
+   - [ ] 실행 중인 DB에 `ALTER TABLE {테이블} ADD COLUMN IF NOT EXISTS {컬럼} {타입} DEFAULT {값}` 직접 실행
+   - [ ] 실행 확인: `SELECT column_name FROM information_schema.columns WHERE table_name='{테이블}'`로 컬럼 존재 검증
+
+N+2. - [ ] **스키마 드리프트 검증** — N+1 직후 실행
+   - [ ] `routes/`, `services/` 등에서 수정된 테이블을 SELECT하는 쿼리 Grep 검색
+   - [ ] 쿼리에서 참조하는 컬럼이 실제 DB 스키마에 모두 존재하는지 대조 확인
+
+⚠️ N+1·N+2는 main 머지 후에 실행해야 한다 (worktree 코드는 running 서버에 반영되지 않으므로). Pipeline 순서: impl(N) → /merge-test(머지) → N+1·N+2 → T4/T5.
+```
+
+**삭제+DB 복합 감지**: 파일 삭제 키워드(2.3단계 트리거)와 DB 키워드가 동시에 감지되면, N+2(스키마 드리프트 검증)에 추가 체크박스를 삽입:
+- `- [ ] 삭제된 파일에 ALTER TABLE/ADD COLUMN이 있었다면, 해당 코드를 DB 초기화 모듈의 _add_col 호출로 이전 완료 확인`
+
+**중복 삽입 방지**: plan에 이미 `### Phase DB-Direct` 헤더 또는 "직접 실행" + "ALTER TABLE" 체크박스가 존재하면 삽입을 스킵한다.
+
+**Phase DB-Direct 미감지 시**: 키워드가 감지되지 않으면 이 단계를 건너뛴다.
+
 ### 2.5단계: main 드리프트 점검 (게이트 적용 항목)
 
 이 단계는 전파 게이트 판정이 `필수`이거나 `선택(적용)`으로 결정된 경우에만 적용한다.
@@ -235,7 +277,7 @@ Python/백엔드를 수정하는 plan 확장 시, 구현 Phase 뒤에 반드시 
 **Phase T4: E2E 테스트 수행 및 수정**
 - **포함 여부 결정 전 필수**: Glob으로 `tests/**/*e2e*`, `tests/**/*integration*` 탐색 → 1개라도 있으면 포함
 - 탐색 결과 파일 없음이 확인된 경우에만 해당 없음 처리 허용
-- **T4 재분류 주의**: `tests/**/*e2e*` Glob으로 파일 발견 시, 해당 파일 내용을 Read하여 TestClient 기반 여부를 확인한다. TestClient 기반이면 T3(integration)으로 재분류 필요 — 실서버/Playwright 없으면 T4가 아님
+- **T4 재분류 주의**: `tests/**/*e2e*` Glob으로 파일 발견 시, 해당 파일 내용을 Read하여 TestClient 기반 또는 mock 기반(AsyncMock/MagicMock/patch 다수 사용 + 실서버/Playwright 미사용) 여부를 확인한다. 해당하면 T3(integration)으로 재분류 필요 — 실서버/Playwright 없으면 T4가 아님
 - 시나리오별 개별 체크박스
 - **Phase 헤더 유지** — 해당 없으면 **블록쿼트로 사유만 기재** (`> T4 해당 없음: {사유}`), **체크박스 생성 금지**
 

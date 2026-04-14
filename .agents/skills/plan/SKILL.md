@@ -16,14 +16,27 @@ description: "계획 문서 작성. Use when: 계획해, plan, 아이디어, 기
 
 ### 프로젝트 경로 해석
 
-**`.Codex/projects.json`에서 프로젝트 경로 읽기:**
+**프로젝트 경로 읽기 (`.agents/projects.json` 우선):**
 ```powershell
-$configPath = "D:\work\project\service\wtools\.Codex\projects.json"
-$config = Get-Content $configPath | ConvertFrom-Json
+$projectConfigPath = "D:\work\project\service\wtools\.agents\projects.json"
+if (-not (Test-Path $projectConfigPath)) {
+  $projectConfigPath = "D:\work\project\service\wtools\.claude\projects.json"
+}
+$config = Get-Content $projectConfigPath | ConvertFrom-Json
 # 각 프로젝트의 절대경로: $config.projects[].path
 ```
 
 **경로 규칙**: AGENTS.md `문서 위치 규칙` 테이블을 참조하라. 테이블이 없으면 기본 경로(`docs/plan/`, `docs/archive/`)를 사용. 상세: [`_path-rules.md`](./_path-rules.md)
+
+**🔴 계획서 생성 위치 분기** — 수정 대상에 따라 올바른 프로젝트에 생성:
+
+| 수정 대상 | 생성 위치 | 예시 |
+|----------|----------|------|
+| `.claude/skills/`, `.claude/agents/`, 공통 스크립트 | **wtools** `common/docs/plan/` | 스킬 개선, 에이전트 수정 |
+| 특정 프로젝트의 `app/`, `frontend/`, `scripts/` 등 | **해당 프로젝트**의 `docs/plan/` | monitor-page 버그 수정 |
+| 복수 프로젝트에 걸친 변경 | **wtools** `common/docs/plan/` | 공통 인프라 변경 |
+
+외부 프로젝트에서 작업 중이더라도 수정 대상이 스킬/에이전트이면, 사용자에게 "이 계획서는 wtools에 생성해야 합니다"라고 안내하고 wtools 경로에 생성한다.
 
 **wtools 감지**: 현재 디렉토리에 `common/tools/` 폴더 존재 여부로 판단
 - **있으면**: wtools 내부 → AGENTS.md의 plan 경로에 공통 계획 저장 + wtools/TODO.md 동기화 **실행**
@@ -91,11 +104,12 @@ $config = Get-Content $configPath | ConvertFrom-Json
 ### 4.5단계: plan 정합성 검증 (필수)
 
 plan 작성 후, 최종 검증 전에 **코드 대비 기본 검증**을 수행한다.
-검증 체크리스트 상세: [_verify-checklist.md](../../../.claude/docs/_verify-checklist.md)
+검증 체크리스트 상세: [_verify-checklist.md](../../../.agents/docs/_verify-checklist.md)
 
-**최소 검증 항목 (V1 + V2):**
+**최소 검증 항목 (V1 + V2 + V2-S):**
 1. **V1. 경로 존재 검증**: plan에 명시된 모든 파일 경로에 대해 Glob/Read로 실제 존재 확인. 존재하지 않는 경로 발견 시 즉시 Edit으로 수정.
 2. **V2. 참조 전수 조사**: plan이 변경하려는 주요 함수/변수/키를 Grep으로 검색. plan이 커버하지 않는 참조 파일 발견 시 해당 파일을 plan에 추가.
+3. **V2-S. 보안 패턴 전파**: AGENTS.md/CLAUDE.md에 보안 패턴 레지스트리가 있으면, 새 코드에 해당 패턴이 적용되어야 하는지 검증. 예: `subprocess.run`, `os.system`, `exec` 사용 시 안전 실행 패턴/허용 경로 확인.
 
 발견 시 즉시 수정 (Edit) → Read로 수정 확인 후 다음 단계로.
 

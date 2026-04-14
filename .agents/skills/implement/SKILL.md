@@ -11,8 +11,11 @@ plan → TODO → DONE 흐름으로 작업을 관리합니다.
 
 **프로젝트 경로 해석:**
 ```powershell
-$configPath = "D:\work\project\service\wtools\.Codex\projects.json"
-$config = Get-Content $configPath | ConvertFrom-Json
+$projectConfigPath = "D:\work\project\service\wtools\.agents\projects.json"
+if (-not (Test-Path $projectConfigPath)) {
+  $projectConfigPath = "D:\work\project\service\wtools\.claude\projects.json"
+}
+$config = Get-Content $projectConfigPath | ConvertFrom-Json
 # 각 프로젝트의 절대경로: $config.projects[].path
 ```
 
@@ -165,10 +168,12 @@ Codex가 구현 요청 받으면:
         - 자동 전환 후 `git rev-parse --abbrev-ref HEAD` 재확인 결과가 `main`이 아니면 중단
      1. slug를 plan 파일명에서 추출 (`YYYY-MM-DD_{slug}.md` → `{slug}`)
      2. `git worktree add .worktrees/impl-{slug} -b impl/{slug}` 실행
-     3. **워크트리 생성 후 메인 레포 브랜치 재확인**: `git rev-parse --abbrev-ref HEAD`
+     3. `git worktree lock .worktrees/impl-{slug} --reason "implement in progress"` 실행
+        - 실패해도 경고 출력 후 계속 진행 (`exit 1`로 중단하지 않음)
+     4. **워크트리 생성 후 메인 레포 브랜치 재확인**: `git rev-parse --abbrev-ref HEAD`
         - `main`이면 → 정상, 다음 단계로
         - `main`이 아니면 → 생성된 워크트리 제거 (`git worktree remove .worktrees/impl-{slug} --force`) + 사용자에게 "워크트리 생성 후 메인 레포가 main에서 벗어남. 수동 확인 필요." 경고 후 중단
-     4. plan 헤더에 Edit으로 추가:
+     5. plan 헤더에 Edit으로 추가:
         ```
         > branch: impl/{slug}
         > worktree: .worktrees/impl-{slug}
@@ -200,6 +205,13 @@ Codex가 구현 요청 받으면:
    - 무시 모드는 "중단 판정 완화"에만 적용되며, 판정 범위를 제외한 동작은 기존 규칙을 유지한다.
    - 단, `.git` 보호 및 파괴적 명령 금지 규칙은 그대로 적용한다.
 
+1.4. **fix: plan 하드 게이트 (Phase R 필수)**
+
+   - plan 파일명에 `_fix-`가 있거나 헤더 제목이 `fix:`로 시작하면 **fix: plan**으로 판정한다.
+   - fix: plan이면 `plan/todo` 본문에서 `### Phase R` 또는 `재발 경로 분석` 문자열이 존재해야 한다.
+   - 미존재 시 즉시 중단한다:
+     - 메시지: `fix: plan이므로 Phase R(재발 경로 분석) 없이는 구현을 시작할 수 없습니다.`
+
 1.5. **수동 작업 필터링 (TODO/plan 스캔 시 공통)**
    - 다음 항목은 작업 후보에서 **완전 제외**하고, 사용자에게 **언급하지 않는다**:
      - `MANUAL_TASKS.md` 파일 내 항목
@@ -207,6 +219,8 @@ Codex가 구현 요청 받으면:
      - 수동 작업 키워드가 포함된 항목 (`육안 확인`, `디자인 일치`, `레이아웃 미관` 등)
      - 키워드 전체 목록: [manual-tasks-format.md](../../common/docs/guide/project-management/manual-tasks-format.md) 참조
    - **수동이 아닌 것**: 스크립트 실행, 빌드 확인, T1/T2 테스트 등 CLI로 실행 가능한 것은 **제외하지 않고 직접 실행**
+   - 명령 실행 전 먼저 `코드 수정` / `표적 테스트` / `frontend verify`로 분류한다.
+   - `frontend verify`에 해당하면 `merge-test` 전용 intent로 보고 즉시 중단한다.
    - **단, T4(E2E)/T5(HTTP 통합)는 implement에서 실행/체크 금지** — `/merge-test`에서 main 머지 후 실행
    - **T3(재현/통합TC)는 implement에서 T2 직후 실행** — 서버 불필요, 워크트리에서 실행 가능
    - 후보 목록 출력 시에도 수동 항목은 표시하지 않는다
@@ -249,10 +263,12 @@ Codex가 구현 요청 받으면:
    - 유사 컴포넌트 참조 (같은 디렉토리/모듈 내 유사 파일의 기능 목록 확인)
    - **반복 패턴 가이드 준수** (아래 "반복 패턴 체크" 참조)
    - 테스트 작성 (RIGHT-BICEP)
+   - **테스트 파일 네이밍 가드**: `_e2e` 접미사는 실서버/Playwright 필요 테스트에만 사용. mock/AsyncMock 기반이면 `_integration` 또는 도메인명 접미사를 사용한다.
    - 코드 작성
    - **DB 마이그레이션 SQL 파일을 생성한 경우 → 즉시 실행** (커밋 전 필수, 실행 안 하면 API 장애)
    - 기존 테스트 통과 확인
-   - **⚠️ 빌드 확인 (webapp-testing 스킬)은 워크트리에서 실행 금지** — 반드시 `/merge-test`에서 main 머지 후 실행
+   - **⚠️ frontend verify (webapp-testing / `npm run build` / `npm run check` / `npm run check:watch` / `svelte-kit sync` / `svelte-check` / `vite build` / `node ... svelte-kit.js sync`)는 워크트리에서 실행 금지** — 반드시 `/merge-test`에서 main 머지 후 실행
+   - `_build_worktree.ps1` 같은 helper 예외는 setup 전용이며, implement 중 임의 probe의 근거로 쓰면 안 된다.
 
 5. **완료 처리**
    - 기본: `/merge-test` 스킬 호출 — 워크트리 머지 + T4/T5 통합테스트 + 완료 처리(archive, TODO→DONE, 커밋)까지 일괄 실행

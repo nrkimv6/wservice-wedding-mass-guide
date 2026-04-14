@@ -27,8 +27,11 @@ description: "완료 plan 일괄 done 처리 (full done flow). Use when: 일괄 
 **프로젝트 경로 해석:**
 
 ```powershell
-$configPath = "D:\work\project\service\wtools\.Codex\projects.json"
-$config = Get-Content $configPath | ConvertFrom-Json
+$projectConfigPath = "D:\work\project\service\wtools\.agents\projects.json"
+if (-not (Test-Path $projectConfigPath)) {
+  $projectConfigPath = "D:\work\project\service\wtools\.claude\projects.json"
+}
+$config = Get-Content $projectConfigPath | ConvertFrom-Json
 ```
 
 **스캔 대상:**

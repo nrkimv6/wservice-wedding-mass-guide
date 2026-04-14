@@ -23,18 +23,13 @@ skills:
    - `> **실행 TODO:**` 링크가 없으면: 기존 동작 — SOURCE 파일 자체 또는 기존 `_todo.md`에서 미완료 항목 읽기 (하위 호환)
    - planResult가 비어있거나 `PRIORITY: SKIP-PLAN`인 경우, SOURCE에 지정된 plan 파일 원본을 읽어서 미완료 항목(`- [ ]`)을 구현 대상으로 사용한다
    - **[예외] SOURCE 파일이 없거나 존재하지 않는 경우**: 구현 내용을 기반으로 임시 plan 파일을 자동 생성 (Write 도구 활용)
-     - 생성 위치: `_path-rules.md` 동적 폴백으로 결정 (`Get-PlanRoot` 참조)
-       - orphan 도입 프로젝트: `.worktrees/plans/docs/plan/YYYY-MM-DD_{작업명}_auto.md`
-       - 미도입: CLAUDE.md `문서 위치 규칙`의 plan 경로 (기본: `docs/plan/`)
+     - 생성 위치: AGENTS.md/CLAUDE.md `문서 위치 규칙`의 plan 경로에 `YYYY-MM-DD_{작업명}_auto.md` (기본: `docs/plan/`, `_auto` 접미사 필수)
      - 생성된 파일을 SOURCE로 삼아 체크박스 관리를 진행한다
-   - **plans 워크트리 도입 프로젝트**: 구현 완료 후 plans 워크트리에서 plan 파일 commit 누락 여부 확인
-     - `git -C .worktrees/plans status --porcelain` 결과가 비어있어야 통과
-     - 비어있지 않으면 plans 측 commit 누락 → 스테이징 후 commit + push 수행
    - **plan의 미완료 `[ ]` 항목을 TodoWrite에 등록한다** (각 항목 = 하나의 task)
      - 이렇게 하면 TodoWrite의 in_progress 항목이 곧 plan 체크박스 업데이트 의무가 된다
 2. `/implement` 스킬 로직으로 미완료 항목을 구현한다
    - **🔴 워크트리 스킵 금지**: `PLAN_RUNNER_WORKTREE_PATH`가 설정되어 있으면 파일 유형(md/py/ts 등)에 관계없이 해당 워크트리 경로에서 작업한다. "문서만 수정", "markdown만", "코드 수정 없음" 등의 이유로 원본 디렉토리에서 작업하지 않는다.
-   - **프론트엔드(.svelte, .ts) 수정 전**: `.claude/skills/recurring-patterns/SKILL.md`를 Read한 후 코딩 (패턴 위반 방지)
+   - **프론트엔드(.svelte, .ts) 수정 전**: `.agents/skills/recurring-patterns/SKILL.md`를 Read한 후 코딩 (패턴 위반 방지)
    - **금지**: 메인 레포(워크트리가 아닌)에서 `git checkout {plan 브랜치}` 실행 — 메인 레포는 항상 main 유지
    - **Phase 단위로 연관 항목을 함께 처리한다**. 형제 항목이 같은 파일/모듈을 다루면 자연스럽게 연속 처리한다
    - 한 세션에서 처리할 수 있는 모든 미완료 항목을 처리하고 결과 블록을 출력한다
@@ -98,7 +93,7 @@ plan 문서 없이 진행된 소규모 수정이나 버그 픽스의 경우, 나
 
 ### 기록 위치
 - **단일 프로젝트**: 해당 `{project}/docs/DONE.md`에 추가 기입 (필요 시 파일 생성)
-- **공통/다중 프로젝트**: CLAUDE.md `문서 위치 규칙`의 history 경로에 `YYYY-MM-DD_{작업명}-changes.md` 신규 생성 (기본: `docs/history/`)
+- **공통/다중 프로젝트**: AGENTS.md/CLAUDE.md `문서 위치 규칙`의 history 경로에 `YYYY-MM-DD_{작업명}-changes.md` 신규 생성 (기본: `docs/history/`)
 
 ### 수정 이력 템플릿
 
@@ -277,3 +272,5 @@ v2 파이프라인(`--pipeline v2`)에서 호출 시:
 2. **PowerShell 버전 (deprecated)**: `.\plan-runner-sequential.ps1 -PlanFile <파일>`
 
 출력 형식 (`===AUTO-IMPL-RESULT===`)은 두 버전 모두에서 동일하게 파싱됩니다.
+
+

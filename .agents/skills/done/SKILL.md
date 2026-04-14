@@ -36,8 +36,11 @@ elseif (Test-Path "D:\work\project\tools\monitor-page\scripts\kill-orphan-procs.
 
 **프로젝트 경로 해석:**
 ```powershell
-$configPath = "D:\work\project\service\wtools\.Codex\projects.json"
-$config = Get-Content $configPath | ConvertFrom-Json
+$projectConfigPath = "D:\work\project\service\wtools\.agents\projects.json"
+if (-not (Test-Path $projectConfigPath)) {
+  $projectConfigPath = "D:\work\project\service\wtools\.claude\projects.json"
+}
+$config = Get-Content $projectConfigPath | ConvertFrom-Json
 # 각 프로젝트의 절대경로: $config.projects[].path
 ```
 
