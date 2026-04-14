@@ -302,6 +302,7 @@ plan, TODO.md, DONE.md 변경도 함께 커밋:
 ```powershell
 commit "feat: 기능 구현"
 ```
+plans 워크트리가 있으면 `Resolve-DocsCommitRoot` 기준 cwd로 이동하고, `Resolve-DocsCommitCandidates` 반환 파일만 `git add`한다. `git add -A`는 사용하지 않는다.
 
 **워크트리 내에서 커밋 시**: commit.sh의 cwd를 워크트리 경로로 설정해야 한다.
 ```bash

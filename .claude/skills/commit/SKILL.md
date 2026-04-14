@@ -47,7 +47,8 @@ cd "/d/work/project/service/wtools" && git add <files> && bash "/d/work/project/
 ## Workflow
 
 1. **변경사항 확인**: `git status`로 수정된 파일 확인
-2. **스테이징**: `git add <files>` 또는 `git add .`
+2. **스테이징**: `git add <files>`만 사용한다. `git add .` / `git add -A` / 디렉토리 통째 add는 사용하지 않는다.
+   - plans 워크트리가 있으면 `Resolve-DocsCommitRoot` 기준 cwd로 이동한 뒤 `Resolve-DocsCommitCandidates` 반환 파일만 add한다.
 2.5. **커밋 prefix 판단**: 커밋 메시지의 prefix 확인
    - `feat:` → minor bump 필요
    - `fix:` → patch bump 필요

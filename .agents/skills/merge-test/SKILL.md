@@ -84,6 +84,12 @@ plan 헤더에서 다음을 읽는다:
 
 slug, branch명, worktree 경로를 변수로 저장.
 
+**plans 워크트리 도입 프로젝트 (`.worktrees/plans/` 존재 시):**
+- plan 파일 자체는 `.worktrees/plans/docs/plan/` 하위에 있음
+- `반영일시`/`머지커밋` Edit 대상은 plans 워크트리 내 절대경로 사용
+- Edit 후 plans 워크트리에서 `Resolve-DocsCommitRoot` 반환 cwd로 이동하고 `Resolve-DocsCommitCandidates` 반환 파일만 `git add`한 뒤 `git commit -m "chore: {slug} 머지 완료 기록"` + `git push origin plans` 수행
+- `git add -A`는 plans 워크트리에서도 금지한다.
+
 ### 1.1단계: 부모 계획서(owner) 식별
 
 - 현재 파일이 `_todo.md`/`_todo-N.md`이면 `> 계획서:` 링크를 절대경로로 해석하여 `parent_plan_path`로 저장
@@ -96,7 +102,7 @@ slug, branch명, worktree 경로를 변수로 저장.
 - `> worktree-owner:` 필드가 없으면(레거시) `{plan경로}/**/*.md`에서 동일 `> branch:`/`> worktree:`를 검색해 소유 부모를 역추적한다.
 - 역추적 결과 부모가 다르면 즉시 중단한다. (다른 부모 계획서 워크트리 사용 금지)
 - 역추적 결과 부모가 일치하면 현재 파일 헤더에 `> worktree-owner: {parent_plan_path}`를 보강 기록한다.
-- 보강 기록이 발생하면 즉시 `git status`로 변경 여부 확인 후, 변경이 있으면 해당 plan 파일을 `git add`하고 `commit "chore: worktree-owner 기록"`으로 즉시 커밋한다.
+- 보강 기록이 발생하면 즉시 `git status`로 변경 여부 확인 후, 변경이 있으면 해당 plan 파일만 `git add`하고 `commit "chore: worktree-owner 기록"`으로 즉시 커밋한다.
 
 ### 1.5단계: T3 검증 게이트
 

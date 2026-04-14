@@ -34,9 +34,65 @@ function Get-ArchiveRoot {
     if (Test-Path ".worktrees/plans/docs/archive") { return ".worktrees/plans/docs/archive" }
     return "docs/archive"
 }
+
+function Resolve-DocsCommitRoot {
+    param($RepoRoot)
+
+    $planRoot = Get-PlanRoot $RepoRoot
+    if ($planRoot -like "*\.worktrees\plans\*") { return "$RepoRoot\.worktrees\plans" }
+    return $RepoRoot
+}
+
+function Resolve-DocsCommitCandidates {
+    param($RepoRoot, $EditedPaths)
+
+    # 경로 정규화: Windows 백슬래시 → 슬래시로 통일 후 매칭 (혼용 입력 허용)
+    $commitRoot = (Resolve-DocsCommitRoot $RepoRoot).Replace('\','/').TrimEnd('/')
+    if (-not (Test-Path $commitRoot)) { return @() }
+
+    $dirPrefixes = @("docs/plan/", "docs/archive/")
+    $fileExact   = @("TODO.md", "docs/DONE.md")
+
+    $candidates = foreach ($editedPath in $EditedPaths) {
+        $norm = $editedPath.Replace('\','/')
+        $rel = if ($norm.StartsWith("$commitRoot/", [StringComparison]::OrdinalIgnoreCase)) {
+            $norm.Substring($commitRoot.Length + 1)
+        } else { $norm }
+
+        $matched = $false
+        foreach ($prefix in $dirPrefixes) {
+            if ($rel.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)) {
+                $rel; $matched = $true; break
+            }
+        }
+        if (-not $matched) {
+            foreach ($exact in $fileExact) {
+                if ($rel -ieq $exact) { $rel; break }
+            }
+        }
+    }
+
+    return @($candidates | Sort-Object -Unique)
+}
+
+function Test-PlansDirty {
+    param($RepoRoot)
+
+    if (-not (Test-Path "$RepoRoot\.worktrees\plans")) { return $false }
+    $dirty = git -C "$RepoRoot\.worktrees\plans" status --porcelain
+    return [bool]$dirty
+}
 ```
 
 > **주의**: 이것은 Claude가 따라야 할 결정 로직이다. 실제 PowerShell 코드를 실행하는 것이 아니라, "이 규칙에 따라 경로를 결정하라"는 지시이다.
+
+### bash 폴백 (CI/비Windows 환경 한정)
+
+본 레포 운영 환경(Windows + PowerShell)에서는 **PowerShell 함수만 사용**한다. 아래 스니펫은 공통 헬퍼 재사용 목적의 기록용이며, plan 본문 검증/실행 절차에는 사용하지 않는다 (AGENTS 규칙 준수).
+
+```bash
+PLANS_DIRTY=$([ -d .worktrees/plans ] && [ -n "$(git -C .worktrees/plans status --porcelain)" ] && echo 1 || echo 0)
+```
 
 ## impl 워크트리에서 plans 워크트리 접근
 
@@ -66,3 +122,9 @@ git add docs/plan/<파일명>
 git commit -m "chore: <plan slug> 헤더/체크박스 갱신"
 git push origin plans
 ```
+
+### plans 워크트리 커밋 범위
+
+- `Resolve-DocsCommitRoot` 반환 경로에서만 커밋한다.
+- `Resolve-DocsCommitCandidates` 반환 파일만 `git add`한다.
+- `git add -A` / `git add .` / `git add docs/`는 plans 워크트리에서도 금지한다.

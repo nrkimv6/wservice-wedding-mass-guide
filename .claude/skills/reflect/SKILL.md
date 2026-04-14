@@ -146,6 +146,7 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
 - 기본 모드: 3단계에서 수행되는 `/review-plan`의 커밋으로 충족한다.
 - 예외(Fallback): `/review-plan` 단계가 실패/스킵되면, `reflect`가 직접 화이트리스트 커밋(`{plan경로}/*.md`, 필요 시 `TODO.md`)을 수행하고 종료한다.
 - 조사만/조사 모드: 3단계를 스킵하므로 `reflect`가 직접 화이트리스트 커밋을 수행한다.
+- plans 워크트리가 존재하면 `Resolve-DocsCommitRoot` 기준 cwd로 이동하고 `Resolve-DocsCommitCandidates` 반환 파일만 `git add`한다. `git add -A`는 사용하지 않는다.
 - 커밋 메시지 예: `docs: reflect — add follow-up plans`
 - 생성 계획서가 0건이면 커밋하지 않는다.
 

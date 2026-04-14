@@ -182,6 +182,9 @@ git add "docs/archive/YYYY-MM-DD_{주제}_todo.md"
 # Remove-Item -Path "{plan경로}" -Force
 ```
 
+- plans 워크트리에서는 `Resolve-DocsCommitRoot` 기준 cwd로 이동하고 `Resolve-DocsCommitCandidates` 반환 파일만 add한다.
+- `git add -A`는 plans 워크트리에서도 금지한다.
+
 5. 아카이브 헤더 추가 (`git mv` 이동 후 Edit 도구 또는 Set-Content로 파일 상단에 삽입):
 
 ```markdown
@@ -377,6 +380,25 @@ CHANGELOG.md가 없으면 파일 자동 생성 후 추가.
 
 ---
 
+### 7.6단계: plans dirty 사전 점검
+
+세션 종료 전 `Test-PlansDirty $RepoRoot`를 호출한다. true이면 plans 워크트리의 현재 실행 수정분과 기존 잔존 dirty를 분리한다.
+
+- 에이전트 컨텍스트(`$env:CLAUDE_RUNNER_CONTEXT` 또는 auto-impl/auto-done/plan-runner/dev-runner)면 `Resolve-DocsCommitRoot` 기준 cwd로 이동한 뒤 `Resolve-DocsCommitCandidates` 반환 파일만 add하여 자동 커밋을 1회 시도한다.
+- 사람 세션(Opus 채팅)이면 경고만 출력하고 수동 복구를 안내한다.
+- `git add -A`는 사용하지 않는다.
+
+경고 템플릿:
+```powershell
+⚠️ plans 워크트리에 미커밋 변경 N건. main cwd의 git status에서는 보이지 않습니다.
+현재 실행이 수정한 파일만 add하세요. 기존 잔존 dirty와 묶어서 커밋하지 마세요.
+Set-Location "$RepoRoot\.worktrees\plans"
+git status --porcelain
+git add <파일명>   # 이번 실행이 수정한 파일만 개별 add
+& "D:\work\project\tools\common\commit.ps1" "docs: plans manual recovery"
+git push origin plans
+```
+
 ### 8단계: 커밋
 
 **🔴 이 단계를 건너뛰면 문서 변경이 uncommitted 상태로 남습니다. 반드시 실행하세요.**
@@ -394,6 +416,7 @@ commit "feat: {기능명}"
 # ❌ WRONG - 절대 사용 금지!
 git commit -m "..."
 ```
+plans 워크트리에서 문서 변경이 있으면 `Resolve-DocsCommitRoot` 기준 cwd로 이동하고, `Resolve-DocsCommitCandidates` 반환 파일만 add한다. `git add -A`는 사용하지 않는다.
 
 **강제 체크:**
 - [ ] `git commit` 명령어를 사용하려고 하는가? → 즉시 중단

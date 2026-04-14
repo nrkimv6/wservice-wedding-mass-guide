@@ -33,6 +33,8 @@ tools: [Read, Edit, Bash, Glob, Grep]
 - **복수 TODO 판정**: 입력이 `_todo-N.md`이면, 같은 stem의 `{stem}_todo-*.md`를 glob 탐색.
   모든 `_todo-N.md`가 `[x]` 완료(미완료 `[ ]` 없음)일 때만 전체 archive 진행. 일부만 완료면 해당 파일만 `[x]` 확인하고 archive는 하지 않음.
 - 같은 디렉토리에 `YYYY-MM-DD_{주제}.md` (대표 문서 또는 원본 plan)이 있으면 함께 archive
+- plans 워크트리를 쓰는 파이프라인이라면 archive 후 commit은 `Resolve-DocsCommitCandidates` 반환 파일만 대상으로 하고, 전체 clean 여부로 gate하지 않는다.
+- unrelated dirty가 남아 있으면 경고만 출력하고 current-run 후보만 커밋한다.
 
 ## 전제조건 (생략)
 

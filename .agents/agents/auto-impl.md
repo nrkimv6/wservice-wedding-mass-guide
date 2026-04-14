@@ -25,6 +25,9 @@ skills:
    - **[예외] SOURCE 파일이 없거나 존재하지 않는 경우**: 구현 내용을 기반으로 임시 plan 파일을 자동 생성 (Write 도구 활용)
      - 생성 위치: AGENTS.md/CLAUDE.md `문서 위치 규칙`의 plan 경로에 `YYYY-MM-DD_{작업명}_auto.md` (기본: `docs/plan/`, `_auto` 접미사 필수)
      - 생성된 파일을 SOURCE로 삼아 체크박스 관리를 진행한다
+   - **plans 워크트리 도입 프로젝트**: 구현 완료 후 plans 워크트리에서는 `Resolve-DocsCommitCandidates` 반환 파일만 commit한다
+     - `git -C .worktrees/plans status --porcelain` 전체 clean 전제는 사용하지 않는다
+     - unrelated dirty가 남아 있으면 경고만 출력하고 current-run 후보만 스테이징 후 commit + push 수행
    - **plan의 미완료 `[ ]` 항목을 TodoWrite에 등록한다** (각 항목 = 하나의 task)
      - 이렇게 하면 TodoWrite의 in_progress 항목이 곧 plan 체크박스 업데이트 의무가 된다
 2. `/implement` 스킬 로직으로 미완료 항목을 구현한다
