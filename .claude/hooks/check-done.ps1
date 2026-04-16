@@ -5,12 +5,29 @@ if ($input.stop_hook_active -eq $true) {
     exit 0
 }
 
-# CLAUDE.md 문서 위치 규칙에 따라 plan 디렉토리 결정
-if (Test-Path (Join-Path $input.cwd "common\tools")) {
-    $planDir = Join-Path $input.cwd "common\docs\plan"
-} else {
-    $planDir = Join-Path $input.cwd "docs\plan"
+function Resolve-PlanDir {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Root
+    )
+
+    if ($env:PLAN_ROOT) {
+        return $env:PLAN_ROOT
+    }
+
+    $plansWorktreePlan = Join-Path $Root ".worktrees\plans\docs\plan"
+    if (Test-Path $plansWorktreePlan) {
+        return $plansWorktreePlan
+    }
+
+    if (Test-Path (Join-Path $Root "common\tools")) {
+        return Join-Path $Root "common\docs\plan"
+    }
+
+    return Join-Path $Root "docs\plan"
 }
+$planDir = Resolve-PlanDir -Root $input.cwd
+
 $unarchived = @()
 
 if (Test-Path $planDir) {
