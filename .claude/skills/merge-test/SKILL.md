@@ -45,6 +45,16 @@ triggers: ["머지 테스트", "merge-test", "머지후테스트", "통합테스
 - 무시 모드는 "중단 판정 완화"에만 적용되며, 판정 범위를 제외한 동작은 기존 규칙을 유지한다.
 - 단, 루트 브랜치가 `main`인지 확인하는 규칙과 `.git` 보호 규칙은 그대로 유지한다.
 
+## Stash 안전 계약
+
+- stash 생성은 항상 `git stash push --include-untracked -m "{stashTag}"` 형식으로 수행한다.
+- `stashTag`는 `merge-test/{scope}/{timestamp}` 형식으로 만든다. `scope`는 `root` 또는 `target.branch`를 사용한다.
+- stash 생성 여부는 stdout 문자열이 아니라 `git stash list | Select-String ([regex]::Escape($stashTag))` 결과로만 판정한다.
+- 기본형 `git stash pop`은 금지한다. 복원은 명시적 `$stashRef`에 대해서만 `git stash apply $stashRef`를 수행한다.
+- `git stash drop $stashRef`는 `apply` 성공 후에만 수행한다.
+- `push`, `list`, `apply`, `drop` 어느 단계든 실패하면 stash ref와 실패 단계를 로그에 남기고 즉시 중단한다.
+- 2단계 stash hard stop은 **머지 커밋을 보존한 채 후속 테스트/검증 단계만 중단**하는 의미다. stash 복원 실패를 이유로 `git reset`, `git merge --abort`로 머지를 되돌리지 않는다.
+
 ## 실행 단계
 
 ### 0단계: 루트 브랜치 자동 전환 (필요 시)
@@ -53,21 +63,30 @@ triggers: ["머지 테스트", "merge-test", "머지후테스트", "통합테스
 
 - `main`이면 → 1단계 진행
 - `main`이 아니면 → 아래 순서로 자동 전환 시도 (dirty 파일 유형: 문서/코드 구분 없음)
-  1. `git stash push --include-untracked` 실행
-     - 실패 시 즉시 중단
-  2. `git checkout main` 실행
-     - 실패 시 `stash pop` 복구 시도 후 즉시 중단
-  3. stash가 생성된 경우 `git stash pop` 실행
-     - 충돌 시 자동 해결 금지, 즉시 중단
-  4. `git rev-parse --abbrev-ref HEAD` 재확인
+  1. `$timestamp = Get-Date -Format "yyyyMMddHHmmss"` 후 `$stashTag = "merge-test/root/$timestamp"` 생성
+  2. `git stash push --include-untracked -m $stashTag` 실행
+     - 실패 시 즉시 중단 (`ROOT_STASH_PUSH_FAILED`)
+  3. `$stashMatches = @(git stash list | Select-String ([regex]::Escape($stashTag)))`
+     - 0건 → stash 미생성, `$stashRef = $null`
+     - 1건 → `$stashRef = (($stashMatches[0].Line -split ':')[0]).Trim()`
+     - 2건 이상 → 즉시 중단 (`ROOT_STASH_REF_DUPLICATE`)
+  4. `git checkout main` 실행
+     - 실패 시 `$stashRef`가 있으면 `git stash apply $stashRef` → 성공 시 `git stash drop $stashRef`로 복구 시도 후 즉시 중단
+  5. `$stashRef`가 있으면 `git stash apply $stashRef`
+     - 실패/충돌 시 자동 해결 금지, 즉시 중단 (`ROOT_STASH_APPLY_FAILED`)
+  6. `git stash drop $stashRef`
+     - 실패 시 즉시 중단 (`ROOT_STASH_DROP_FAILED`)
+  7. `git rev-parse --abbrev-ref HEAD` 재확인
      - `main`이 아니면 즉시 중단
 
 예시 로그:
 ```
 [merge-test] root branch 감지: feature/foo
-[merge-test] stash push 실행
+[merge-test] stash push 실행: merge-test/root/20260415103000
+[merge-test] stash ref 확인: stash@{2}
 [merge-test] checkout main 성공
-[merge-test] stash pop 완료
+[merge-test] stash apply 완료: stash@{2}
+[merge-test] stash drop 완료: stash@{2}
 [merge-test] root branch 재확인: main
 ```
 
@@ -197,32 +216,57 @@ $collision = $untracked | Where-Object { $branchFiles -contains $_ }
 - `$collision`이 0개면 다음 단계로 진행한다.
 
 **루트(main) dirty 처리 — stash-merge-pop:**
+**루트(main) dirty 처리 — stash-merge-apply:**
 
 머지 전 루트에 staged/unstaged 변경이 있으면 stash로 임시 보관 후 머지한다:
 
 ```powershell
 $rootDirty = git status --porcelain
-$stashCreated = $false
+$stashRef = $null
+$stashTag = $null
 if ($rootDirty) {
-  Write-Host "[merge-test] root dirty 감지 — stash push"
-  git stash push --include-untracked -m "merge-test: $($target.branch) 머지 전 임시 보관"
+  $timestamp = Get-Date -Format "yyyyMMddHHmmss"
+  $stashTag = "merge-test/$($target.branch)/$timestamp"
+  Write-Host "[merge-test] root dirty 감지 — stash push: $stashTag"
+  git stash push --include-untracked -m $stashTag
   if ($LASTEXITCODE -ne 0) {
-    Write-Host "❌ MERGE_FAILED[stash_push_failed]: root stash 실패. 수동으로 정리 후 재시도하세요."
+    Write-Host "❌ STASH_PUSH_FAILED: root stash 실패"
     exit 1
   }
-  $stashCreated = $true
+
+  $stashMatches = @(git stash list | Select-String ([regex]::Escape($stashTag)))
+  if ($stashMatches.Count -gt 1) {
+    Write-Host "❌ STASH_REF_DUPLICATE: 동일 stashTag가 2개 이상 감지되었습니다. ($stashTag)"
+    exit 1
+  }
+  if ($stashMatches.Count -eq 1) {
+    $stashRef = (($stashMatches[0].Line -split ':')[0]).Trim()
+    Write-Host "[merge-test] stash ref 확인: $stashRef"
+  }
 }
 
 # 원본 프로젝트 루트에서 실행
 git merge {target.branch} --no-ff -m "merge: {target.branch}"
 
-if ($stashCreated) {
-  Write-Host "[merge-test] stash pop 실행"
-  git stash pop
+if ($stashRef) {
+  Write-Host "[merge-test] stash apply 실행: $stashRef"
+  git stash apply $stashRef
   if ($LASTEXITCODE -ne 0) {
-    Write-Host "⚠️ STASH_POP_CONFLICT: 충돌 발생. 수동으로 해결하세요. (머지는 이미 완료됨)"
-    # 머지 자체는 성공했으므로 중단하지 않고 경고만 출력
+    Write-Host "❌ STASH_APPLY_FAILED: stash 복원 실패 ($stashRef)"
+    Write-Host "  → 머지 커밋은 보존합니다. git reset / git merge --abort로 롤백하지 마세요."
+    Write-Host "  → 후속 테스트/검증 단계만 중단합니다."
+    exit 1
   }
+
+  git stash drop $stashRef
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host "❌ STASH_DROP_FAILED: stash 정리 실패 ($stashRef)"
+    Write-Host "  → 머지 커밋은 보존합니다. 수동으로 stash 목록을 확인하세요."
+    Write-Host "  → 후속 테스트/검증 단계만 중단합니다."
+    exit 1
+  }
+
+  Write-Host "[merge-test] stash apply/drop 완료: $stashRef"
 }
 ```
 

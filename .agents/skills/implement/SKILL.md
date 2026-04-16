@@ -145,6 +145,7 @@ Codex가 구현 요청 받으면:
 
    **A. plan-runner 환경 감지:**
    - 환경변수 `PLAN_RUNNER_WORKTREE_PATH`가 설정되어 있고 **AND** 해당 경로가 현재 프로젝트의 `.worktrees/` 하위인 경우에만 → 이 단계 전체 **스킵** (이미 격리됨)
+     - 이 경우 루트 stash 로직도 호출하지 않는다.
    - 환경변수는 설정되어 있지만 경로가 다른 프로젝트를 가리키는 경우 → 환경변수를 무시하고 신규 worktree 생성 흐름(Step 1.2.B~D)으로 진행
 
    **B. 잔여 워크트리/브랜치 감지:**
@@ -161,15 +162,27 @@ Codex가 구현 요청 받으면:
    - **필드가 없으면 (신규):**
      0. **메인 레포 main 브랜치 확인**: `git rev-parse --abbrev-ref HEAD` 실행
         - `main`이면 → 다음 단계로
-        - `main`이 아니면 → 자동 전환 실행 (`git stash push --include-untracked` → `git checkout main` → stash 생성된 경우 `git stash pop`)
-        - `stash push` 실패 시 → 사용자에게 실패 단계 보고 후 중단
-        - `checkout main` 실패 시 → `stash pop` 복구 시도 후 중단
-        - `stash pop` 충돌 시 → 자동 해결 금지, 충돌 상태 보고 후 중단
+        - `main`이 아니면 → 아래 안전 절차 실행 (기본형 `git stash pop` 금지)
+          1. `$timestamp = Get-Date -Format "yyyyMMddHHmmss"`
+          2. slug를 즉시 계산할 수 있으면 `$stashTag = "implement/{slug}/$timestamp"`, 아직 확정 전이면 `$stashTag = "implement/root/$timestamp"` 사용
+          3. `git stash push --include-untracked -m $stashTag`
+             - 실패 시 즉시 중단 (`IMPL_STASH_PUSH_FAILED`)
+          4. `$stashMatches = @(git stash list | Select-String ([regex]::Escape($stashTag)))`
+             - 0건 → stash 미생성, `$stashRef = $null`
+             - 1건 → `$stashRef = (($stashMatches[0].Line -split ':')[0]).Trim()`
+             - 2건 이상 → 즉시 중단 (`IMPL_STASH_REF_DUPLICATE`)
+          5. `git checkout main`
+             - 실패 시 `$stashRef`가 있으면 `git stash apply $stashRef` → 성공 시 `git stash drop $stashRef` 복구 시도 후 중단
+          6. checkout 성공 후 `$stashRef`가 있으면 `git stash apply $stashRef`
+             - 실패/충돌 시 즉시 중단 (`IMPL_STASH_APPLY_FAILED`)
+          7. `git stash drop $stashRef`
+             - 실패 시 즉시 중단 (`IMPL_STASH_DROP_FAILED`)
         - 자동 전환 후 `git rev-parse --abbrev-ref HEAD` 재확인 결과가 `main`이 아니면 중단
      1. slug를 plan 파일명에서 추출 (`YYYY-MM-DD_{slug}.md` → `{slug}`)
      2. `git worktree add .worktrees/impl-{slug} -b impl/{slug}` 실행
      3. `git worktree lock .worktrees/impl-{slug} --reason "implement in progress"` 실행
         - 실패해도 경고 출력 후 계속 진행 (`exit 1`로 중단하지 않음)
+        - lock 실패 경고는 stash 실패와 다르다. stash 관련 단계는 모두 hard stop이다.
      4. **워크트리 생성 후 메인 레포 브랜치 재확인**: `git rev-parse --abbrev-ref HEAD`
         - `main`이면 → 정상, 다음 단계로
         - `main`이 아니면 → 생성된 워크트리 제거 (`git worktree remove .worktrees/impl-{slug} --force`) + 사용자에게 "워크트리 생성 후 메인 레포가 main에서 벗어남. 수동 확인 필요." 경고 후 중단
