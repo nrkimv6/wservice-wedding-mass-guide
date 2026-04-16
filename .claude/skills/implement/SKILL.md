@@ -5,6 +5,14 @@ description: "구현 워크플로우 (plan→TODO→DONE). Use when: 구현해, 
 
 # 구현 워크플로우
 
+## PRE-EDIT HARD GATE
+- `/implement`의 첫 액션은 구현 파일 수정이 아니라 workflow 준비다.
+- 대상 파일을 건드리기 전에 plan 상태를 `구현중`으로 맞춘다.
+- 같은 시점에 `TODO.md` 현재 작업 항목을 먼저 동기화한다.
+- plan 상단 `> branch:`, `> worktree:`, `> worktree-owner:`가 모두 채워지기 전에는 구현 파일을 수정하지 않는다.
+- 편집이 먼저 시작됐더라도 메타 누락 상태면 추가 수정 전에 plan/TODO/worktree 메타부터 복구한다.
+- unrelated `main` dirty를 무시할 수는 있어도 이 gate 자체는 생략할 수 없다.
+
 plan → TODO → DONE 흐름으로 작업을 관리합니다.
 
 ## 파일 위치
