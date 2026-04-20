@@ -32,6 +32,8 @@ skills:
      - 이렇게 하면 TodoWrite의 in_progress 항목이 곧 plan 체크박스 업데이트 의무가 된다
 2. `/implement` 스킬 로직으로 미완료 항목을 구현한다
    - **🔴 워크트리 스킵 금지**: `PLAN_RUNNER_WORKTREE_PATH`가 설정되어 있으면 파일 유형(md/py/ts 등)에 관계없이 해당 워크트리 경로에서 작업한다. "문서만 수정", "markdown만", "코드 수정 없음" 등의 이유로 원본 디렉토리에서 작업하지 않는다.
+   - plan에 `### Phase 0: Worktree 준비`가 있더라도, 현재 워크트리 컨텍스트를 검증/기록하는 gate로만 해석한다. 이미 `PLAN_RUNNER_WORKTREE_PATH`가 주어졌다면 두 번째 worktree 생성이나 루트(main)에서의 임의 branch 전환을 시도하지 않는다.
+   - plan에 `### Phase Z: Post-Merge Cleanup (/merge-test owner)`가 있으면 post-merge owner phase로 취급한다. auto-impl은 이 phase를 구현 체크박스로 처리하거나 `[x]`로 바꾸지 않는다.
    - **프론트엔드(.svelte, .ts) 수정 전**: `.agents/skills/recurring-patterns/SKILL.md`를 Read한 후 코딩 (패턴 위반 방지)
    - **금지**: 메인 레포(워크트리가 아닌)에서 `git checkout {plan 브랜치}` 실행 — 메인 레포는 항상 main 유지
    - **Phase 단위로 연관 항목을 함께 처리한다**. 형제 항목이 같은 파일/모듈을 다루면 자연스럽게 연속 처리한다
@@ -39,7 +41,7 @@ skills:
    - 급하지 않다 — 각 항목을 충실히 구현하되, 세션이 끝나기 전에 자연스럽게 다음 항목으로 넘어가라
    - **사람의 눈/판단이 필수인 항목**(디자인 일치, 색상 가독성, 레이아웃 미관 등)만 수동 작업으로 판정하고, `STATUS: SKIPPED` + `MANUAL: true`를 출력하라. plan-runner가 해당 항목에 `(→ MANUAL_TASKS)` 태그를 자동 추가한다.
    - 스크립트 실행, 빌드 확인, T1/T2 테스트 등 CLI로 실행 가능한 항목은 **수동이 아님** — 직접 실행하라
-   - **단, T4(E2E)/T5(HTTP 통합) Phase 체크박스는 터치 금지** — `/merge-test` 전담. "단위 TC로 커버됨", "수동 테스트", "실제 환경 필요" 등의 사유로 스킵 체크도 금지
+   - **단, T4(E2E)/T5(HTTP 통합)/Phase Z(Post-Merge Cleanup) 체크박스는 터치 금지** — `/merge-test` 전담. "단위 TC로 커버됨", "수동 테스트", "실제 환경 필요" 등의 사유로 스킵 체크도 금지
    - **T3(재현/통합TC)는 T1/T2와 동일하게 실행 대상** — T2 직후 실행하고 체크
    - **fix: plan인 경우** (파일명에 `_fix-`가 포함되거나 제목이 `fix:`로 시작):
      구현 시작 전 plan 본문에 `### Phase R` 또는 `재발 경로 분석` 문자열이 존재하는지 확인한다. 미존재 시 `STATUS: BLOCKED` + `exit_reason="phase_r_missing"` 출력 후 중단 (auto-expand-plan 재실행 유도).
@@ -48,8 +50,8 @@ skills:
      2. 각 경로별 "동일 버그 발생 가능성" 판정 → 방어됨/미방어 표 작성
      3. 미방어 경로 발견 시 해당 경로에 방어 코드 추가 후 체크
      4. Phase R 완료 후 T3로 진행
-   - 각 항목 완료 후 plan 파일의 체크박스를 `[x]`로 즉시 업데이트 (T4/T5 제외)
-   - 수정이 발생하지 않았지만 이미 완료된 항목도 `[x]`로 체크 (코드가 이미 존재하는 경우, T4/T5 제외)
+   - 각 항목 완료 후 plan 파일의 체크박스를 `[x]`로 즉시 업데이트 (T4/T5/Phase Z 제외)
+   - 수정이 발생하지 않았지만 이미 완료된 항목도 `[x]`로 체크 (코드가 이미 존재하는 경우, T4/T5/Phase Z 제외)
    - TODO.md 업데이트 (Pending → In Progress)
 
    ### 🔴 항목 완료 후 반드시 실행 (다음 항목 진행 전 게이트)
@@ -71,7 +73,7 @@ skills:
 4. **🔴 완료 전 체크박스 보정 (커밋 전 필수)**
    - plan 파일을 Read로 다시 읽는다
    - 구현 완료했는데 `[ ]`로 남아있는 항목이 있으면 `[x]`로 Edit
-   - **T4/T5 Phase 체크박스는 보정 대상에서 제외** — `/merge-test` 전담
+   - **T4/T5/Phase Z 체크박스는 보정 대상에서 제외** — `/merge-test` 전담
    - 이 단계는 구현 중 놓친 체크박스를 최종 정리하는 안전망이다
 4.5. 고아 pytest 정리 (오류 무시)
    - Bash: `powershell.exe -ExecutionPolicy Bypass -File "D:\work\project\tools\monitor-page\scripts\kill-orphan-procs.ps1"`

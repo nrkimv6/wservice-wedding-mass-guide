@@ -87,6 +87,22 @@ $config = Get-Content $projectConfigPath | ConvertFrom-Json
 
 **실행:** 같은 폴더의 `_template.md`를 **Read 도구로 읽고** 지시에 따른다.
 
+### 3.1단계: `/implement` 대상 plan의 worktree lifecycle 규칙
+
+`/implement`로 실제 실행할 계획서라면, 파일 유형(md/py/ts 등)과 무관하게 아래 규칙을 기본으로 포함한다.
+
+- 메타 헤더에 빈 슬롯이라도 먼저 만든다:
+  - `> branch:`
+  - `> worktree:`
+  - `> worktree-owner:`
+- TODO 앞단에 `### Phase 0: Worktree 준비`를 넣는다.
+  - 이 phase는 **문서 가시성용 gate**다.
+  - 실제 worktree 생성과 메타 기록은 `/implement` 또는 `plan-runner` owner flow가 수행한다.
+  - plan 체크박스를 근거로 루트(main)에서 임의 `git checkout`, `git switch`, 수동 worktree 재생성을 지시하지 않는다.
+- TODO 마지막에 `### Phase Z: Post-Merge Cleanup (/merge-test owner)`를 넣는다.
+  - 이 phase의 체크박스는 `/implement` 완료 판정에 포함하지 않는다.
+  - 실제 정리(`git worktree remove`, branch 삭제, header 메타 제거)는 `/merge-test` owner로 남긴다.
+
 ### 4단계: wtools/TODO.md 동기화 (wtools만 해당)
 
 **wtools 감지 조건**: 현재 디렉토리에 `common/tools/` 폴더가 있는지 확인

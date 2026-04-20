@@ -215,6 +215,14 @@ Codex가 구현 요청 받으면:
 
    **D. 이후 모든 작업의 cwd를 워크트리 경로로 설정한다.**
 
+1.2.1. **Phase 0 / Phase Z owner 규칙**
+
+   - plan에 `### Phase 0: Worktree 준비`가 있으면, 이 phase는 **임의 git 작업 지시**가 아니라 위 1.2 단계에서 생성/재개한 worktree 상태를 문서에 고정하는 gate로 해석한다.
+   - `Phase 0` 체크박스는 `> branch:`, `> worktree:`, `> worktree-owner:`가 채워진 뒤에만 완료할 수 있다.
+   - 이미 현재 세션이 worktree 안에 있으면, 같은 plan에 대해 두 번째 worktree를 만들려고 하지 않는다.
+   - plan에 `### Phase Z: Post-Merge Cleanup (/merge-test owner)`가 있으면, 이 phase는 `/implement`가 아니라 `/merge-test` 소유다.
+   - `/implement`는 `Phase Z` 체크박스를 완료 처리하지 않으며, 해당 phase는 구현 완료 판정과 auto-impl 재진입 판단에서 제외되는 것으로 해석한다.
+
 1.3. **main 기존 수정사항 무시 모드 (사용자 명시 지시 시)**
 
    사용자가 "main의 기존 수정사항을 고려하지 말라"고 명시한 경우:

@@ -104,8 +104,14 @@ impl 워크트리(`.worktrees/impl-{slug}/`)에서 plans 워크트리(`.worktree
 
 ## CLAUDE.md 문서 위치 규칙 표와의 관계
 
-CLAUDE.md의 `## 문서 위치 규칙` 표에 명시된 경로는 현재 프로젝트의 설정을 나타낸다.  
-표의 값이 있으면 참조하되, 표가 없거나 `docs/plan/`을 기본값으로 쓰는 경우에는 위 우선순위 로직을 사용한다.
+**우선순위 로직이 항상 먼저다.** CLAUDE.md 표는 참고용이며, 아래 규칙이 표를 override한다:
+
+1. `.worktrees/plans/docs/plan/`이 존재하면 -> 표 값에 관계없이 이 경로 사용
+2. `.worktrees/plans/docs/plan/`이 없고 표가 `docs/plan/`이면 -> `docs/plan/` 사용
+3. 표가 `.worktrees/plans/docs/plan/`을 명시하면 -> 그 값 사용 (1번과 동일)
+
+**실수 패턴 금지**: CLAUDE.md 표의 `docs/plan/`을 읽고 바로 그 경로에 파일을 생성하지 말 것.
+반드시 `.worktrees/plans/docs/plan/` 존재 여부를 먼저 확인하라.
 
 ## wtools 예외
 

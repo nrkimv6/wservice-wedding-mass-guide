@@ -420,6 +420,11 @@ foreach ($target in $merge_targets) {
 > worktree-owner: {parent_plan_path}
 ```
 
+plan에 `### Phase Z: Post-Merge Cleanup (/merge-test owner)`가 있으면, 이 단계가 그 owner phase다.
+
+- `Phase Z` 체크박스는 worktree unlock/remove, branch 삭제, header 메타 제거가 끝난 뒤에만 `[x]`로 변경한다.
+- `/implement`가 남겨둔 `Phase Z` 미완료는 정상이며, merge-test가 여기서 마무리한다.
+
 ### 6단계: 상태 전이 #2
 
 각 target 헤더 + 푸터를 `구현완료`로 업데이트:
