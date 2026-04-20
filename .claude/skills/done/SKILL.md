@@ -103,10 +103,11 @@ CLAUDE.md 문서 위치 규칙의 plan 경로/*.md
 2. **필드가 있으면** → 중단:
    ```
    ⚠️ plan에 활성 branch/worktree가 있습니다: {branch}
-   먼저 /merge-test를 실행하여 머지 + 통합테스트를 완료하세요.
+   worktree 사용 케이스이므로 먼저 /merge-test를 실행하여 머지 + 통합테스트를 완료하세요.
    done 처리 중단.
    ```
 3. **필드가 없으면** → 계속 진행
+   - 이 직접 경로는 worktree 미사용 구현일 때만 허용한다.
 
 **2.6 fix: plan 재발 경로 검증:**
 
