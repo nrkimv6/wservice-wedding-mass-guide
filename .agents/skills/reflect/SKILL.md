@@ -147,6 +147,11 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
   - Q6에는 `교정작업 제안만 있었고 후속 실행이 없었다`가 기록되어야 한다.
   - 반복 재발 방지를 위해 스킬 문구 또는 workflow 규칙 수정이 필요하면 Q5와 묶어서 하나의 plan으로 생성할 수 있다.
 
+- 사례 3: docs-only 커밋에서 `git reset HEAD {파일}` 후 orphaned delete가 남았는데도 계속 진행하려 한 경우
+  - Q4에는 `staged rename/delete mismatch 미처리`가 기록되어야 한다.
+  - Q5에는 `docs-only exact-match 검증 누락`이 기록되어야 한다.
+  - 같은 원인이 `review-plan`, `plan`, `auto-reflect` 문구 보강으로 막을 수 있으면 follow-up plan 생성 대상이다.
+
 ### 2단계: 계획서 생성
 
 추출 결과를 **의미 단위로 묶어** 계획서를 생성한다.
@@ -191,6 +196,7 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
 - 기본 모드: 3단계에서 수행되는 `/review-plan`의 커밋으로 충족한다.
 - 예외(Fallback): `/review-plan` 단계가 실패/스킵되면, `reflect`가 직접 화이트리스트 커밋(`{plan경로}/*.md`, 필요 시 `TODO.md`)을 수행하고 종료한다.
 - 조사만/조사 모드: 3단계를 스킵하므로 `reflect`가 직접 화이트리스트 커밋을 수행한다.
+- direct fallback 커밋에서 staged mismatch, `D`/`R`/`RM`/`??` 비대칭, 비화이트리스트 파일이 보이면 `git reset`로 정리하고 계속하지 않는다. 실패를 그대로 보고하고 종료한다.
 - 커밋 메시지 예: `docs: reflect — add follow-up plans`
 - 생성 계획서가 0건이면 커밋하지 않는다.
 

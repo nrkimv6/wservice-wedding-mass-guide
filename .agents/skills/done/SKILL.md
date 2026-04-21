@@ -419,6 +419,12 @@ git commit -m "..."
 ```
 plans 워크트리에서 문서 변경이 있으면 `Resolve-DocsCommitRoot` 기준 cwd로 이동하고, `Resolve-DocsCommitCandidates` 반환 파일만 add한다. `git add -A`는 사용하지 않는다.
 
+**docs-only staged exact-match 검증 (문서 화이트리스트만 add하는 경우 필수):**
+- `git diff --cached --name-only` 결과가 이번 실행의 plan/archive/TODO/DONE 화이트리스트와 정확히 일치해야 한다.
+- `git diff --cached --name-status` 또는 `git status --porcelain`에 `D`, `R`, `RM`, `??` 비대칭이 보이면 커밋을 중단한다.
+- 비화이트리스트 파일이나 orphaned delete가 보이면 `git reset HEAD {파일}`로 일부만 제거하고 계속 진행하지 않는다.
+- 복구는 `전체 unstage -> 원하는 파일만 다시 add` 패턴으로 스테이징을 처음부터 다시 구성한다.
+
 **강제 체크:**
 - [ ] `git commit` 명령어를 사용하려고 하는가? → 즉시 중단
 - [ ] `commit "message"` 사용했는가? → 진행
