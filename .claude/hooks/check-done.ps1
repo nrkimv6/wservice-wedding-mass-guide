@@ -20,10 +20,6 @@ function Resolve-PlanDir {
         return $plansWorktreePlan
     }
 
-    if (Test-Path (Join-Path $Root "common\tools")) {
-        return Join-Path $Root "common\docs\plan"
-    }
-
     return Join-Path $Root "docs\plan"
 }
 $planDir = Resolve-PlanDir -Root $input.cwd

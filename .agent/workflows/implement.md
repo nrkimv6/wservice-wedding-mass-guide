@@ -10,7 +10,7 @@ plan → TODO → DONE 흐름으로 작업을 관리합니다.
 
 ```
 wtools/
-├── common/docs/plan/           # 아이디어/계획 (전체 공유)
+├── .worktrees/plans/docs/plan/           # 아이디어/계획 (전체 공유)
 │   └── YYYY-MM-DD_*.md
 └── {project}/                  # 각 프로젝트
     ├── TODO.md                 # 진행할 작업

@@ -39,7 +39,7 @@
 
 ## 모범 사례
 
-`common/docs/archive/2026-02-26_plan-runner-quota-stop_todo.md` Phase 4-6:
+`.worktrees/plans/docs/archive/2026-02-26_plan-runner-quota-stop_todo.md` Phase 4-6:
 - Phase 4: 함수별 RIGHT-BICEP/CORRECT TC 개별 체크박스
 - Phase 5: E2E mock subprocess 통합 테스트
 - Phase 6: 검증 (실행 + 회귀 + 수동)

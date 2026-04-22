@@ -57,8 +57,8 @@ Conventional Commits 형식: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
 
 | 문서 유형 | 위치 |
 |----------|------|
-| 계획 | `common/docs/plan/` |
-| 아카이브 | `common/docs/archive/` |
+| 계획 | `.worktrees/plans/docs/plan/` |
+| 아카이브 | `.worktrees/plans/docs/archive/` |
 | 가이드 | `common/docs/guide/` |
 | 프로젝트 TODO | `{project}/TODO.md` |
 | 프로젝트 완료 | `{project}/docs/DONE.md` |
@@ -127,10 +127,10 @@ plan 파일 → [simple-plan] → [expand-plan] → [impl (worktree)]
 
 ```powershell
 # v1 (기본)
-python -m plan_runner run --plan-file "common/docs/plan/{파일}.md"
+python -m plan_runner run --plan-file ".worktrees/plans/docs/plan/{파일}.md"
 
 # v2
-python -m plan_runner run --plan-file "common/docs/plan/{파일}.md" --pipeline v2
+python -m plan_runner run --plan-file ".worktrees/plans/docs/plan/{파일}.md" --pipeline v2
 
 # 옵션
 python -m plan_runner run --plan-file "..." --max-cycles 5 --until 18:00

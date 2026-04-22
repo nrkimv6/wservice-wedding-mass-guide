@@ -15,10 +15,10 @@ description: "구현 완료 후처리 (plan 체크, archive, TODO→DONE, commit
 
 ### 1단계: 관련 plan 문서 찾기
 
-`common/docs/plan/`에서 현재 작업과 관련된 계획 문서를 찾습니다.
+`.worktrees/plans/docs/plan/`에서 현재 작업과 관련된 계획 문서를 찾습니다.
 
 ```
-common/docs/plan/*.md
+.worktrees/plans/docs/plan/*.md
 ```
 
 ### 2단계: plan 문서 완료 체크
@@ -42,7 +42,7 @@ common/docs/plan/*.md
 
 plan 문서의 모든 체크박스가 `[x]`이면:
 
-1. `common/docs/plan/{파일}.md` → `common/docs/archive/{파일}.md` 이동
+1. `.worktrees/plans/docs/plan/{파일}.md` → `.worktrees/plans/docs/archive/{파일}.md` 이동
 2. 아카이브 헤더 추가:
 
 ```markdown
@@ -138,8 +138,8 @@ plan-runner 스크립트를 주기적으로 실행하는 환경에서는 `auto-d
 
 | 문서 | 경로 |
 |------|------|
-| 계획 문서 | `common/docs/plan/*.md` |
-| 아카이브 | `common/docs/archive/*.md` |
+| 계획 문서 | `.worktrees/plans/docs/plan/*.md` |
+| 아카이브 | `.worktrees/plans/docs/archive/*.md` |
 | 프로젝트 TODO | `{project}/TODO.md` |
 | 프로젝트 DONE | `{project}/docs/DONE.md` |
 

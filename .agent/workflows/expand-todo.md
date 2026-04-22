@@ -10,7 +10,7 @@ description: "TODO 체크리스트를 2단계 원자 작업으로 확장. Use wh
 
 ### 1단계: plan 읽기
 
-- 대상 계획 문서를 찾아서 오픈합니다 (`common/docs/plan/{file}`).
+- 대상 계획 문서를 찾아서 오픈합니다 (`.worktrees/plans/docs/plan/{file}`).
 - 사용자의 지정 혹은 검색 조건과 매칭시켜 기존에 작성된 Phase 및 체크리스트의 깊이/구조를 파악합니다.
 
 ### 2단계: 코드 분석

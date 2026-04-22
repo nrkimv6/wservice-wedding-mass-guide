@@ -163,12 +163,12 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
 후속 규칙:
 - `영향 없음`, `참조만`은 새 plan 생성 금지다. 근거 파일 또는 기존 active plan 링크만 남긴다.
 - `수정필요`만 follow-up plan 또는 기존 active plan 링크 반환 대상이다.
-- `수정필요`를 사용자 승인 없이 `불필요`로 축소하지 않는다. 이 축소 금지 정의 자체는 `D:\work\project\service\wtools\common\docs\plan\2026-04-21_fix-done-reflect-target-fixation-and-git-mutation-serialization.md`가 owner다.
+- `수정필요`를 사용자 승인 없이 `불필요`로 축소하지 않는다. 이 축소 금지 정의 자체는 `D:\work\project\service\wtools\.worktrees\plans\docs\plan\2026-04-21_fix-done-reflect-target-fixation-and-git-mutation-serialization.md`가 owner다.
 - 위 active plan이 아직 live instruction으로 반영되지 않았더라도, 상호 영향 조사에서 발견한 `수정필요`를 단순 참조만으로 닫지 않는다. 현재 세션 결과는 Q5/Q6 finding, `plan candidate`, 또는 active plan 링크 중 하나로 그대로 남긴다.
 
 라우팅 규칙:
-- `.agents` active surface 문구 drift는 `D:\work\project\service\wtools\common\docs\plan\2026-04-21_fix-reflect-agent-plans-worktree-path-policy-drift.md` 계열로 연결한다.
-- `.claude` mirror drift 또는 `runner.py` runtime parity는 `D:\work\project\service\wtools\common\docs\plan\2026-04-21_fix-plan-runner-agent-surface-parity-and-phasez-drift.md` 계열로 연결한다.
+- `.agents` active surface 문구 drift는 `D:\work\project\service\wtools\.worktrees\plans\docs\plan\2026-04-21_fix-reflect-agent-plans-worktree-path-policy-drift.md` 계열로 연결한다.
+- `.claude` mirror drift 또는 `runner.py` runtime parity는 `D:\work\project\service\wtools\.worktrees\plans\docs\plan\2026-04-21_fix-plan-runner-agent-surface-parity-and-phasez-drift.md` 계열로 연결한다.
 - 신규 plan 생성 전에는 항상 기존 active plan 귀속 가능성을 먼저 검토한다.
 - mixed finding이 두 surface에 함께 걸치면 `.agents` 문구 drift와 runtime/`.claude` parity를 각각 분리하지 말고, `runner.py` 소비 방식 또는 `.claude` mirror drift가 포함된 경우 runtime parity plan을 primary owner로 삼는다.
 - mixed finding에 runtime/`.claude` 요소가 없고 `.agents` active-surface 문구 drift만 남으면 reflect active-surface plan을 primary owner로 삼는다.
@@ -210,12 +210,12 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
 - 최소 1개 ~ 최대 N개 (강제 상한 없음)
 
 **생성 절차:**
-1. 프로젝트 문서 위치 규칙(AGENTS.md/CLAUDE.md)과 `_path-rules.md` helper 우선순위(`PLAN_ROOT -> .worktrees/plans/docs/plan -> common/docs/plan -> docs/plan`)를 함께 확인한다.
-   (예: wtools 공통은 `.worktrees/plans/docs/plan` 우선, legacy는 `common/docs/plan`, 일반 프로젝트는 `docs/plan`)
+1. 프로젝트 문서 위치 규칙(AGENTS.md/CLAUDE.md)과 `_path-rules.md` helper 우선순위(`PLAN_ROOT -> .worktrees/plans/docs/plan -> docs/plan`)를 함께 확인한다.
+   (예: wtools 공통은 `.worktrees/plans/docs/plan`, 일반 프로젝트는 `docs/plan`)
    **계획서 생성 위치 분기** — 발견 항목의 수정 대상에 따라 올바른 프로젝트에 생성:
-   - 수정 대상이 `.claude/skills/`, `.claude/agents/`, 공통 스크립트 → **wtools 공통 plan root**(`.worktrees/plans/docs/plan/` 우선, `common/docs/plan/` fallback)에 생성
+   - 수정 대상이 `.claude/skills/`, `.claude/agents/`, 공통 스크립트 → **wtools** `.worktrees/plans/docs/plan/`에 생성
    - 수정 대상이 특정 프로젝트의 `app/`, `frontend/`, `scripts/` 등 → **해당 프로젝트**의 `docs/plan/`에 생성
-   - 복수 프로젝트에 걸친 변경 → **wtools 공통 plan root**(`.worktrees/plans/docs/plan/` 우선, `common/docs/plan/` fallback)에 생성
+   - 복수 프로젝트에 걸친 변경 → **wtools** `.worktrees/plans/docs/plan/`에 생성
 2. `/plan` 스킬의 `_template.md` 형식으로 계획서 작성
 3. 파일명: `{plan경로}/YYYY-MM-DD_{주제}.md`
 4. 헤더에 `> 출처: /review에서 자동 생성` 표기

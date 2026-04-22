@@ -10,7 +10,7 @@ description: "완료된 plan 자동 아카이브. Use when: 아카이브 정리,
 
 ### 1단계: 스캔
 
-전체 기획/문서 구역 (`common/docs/plan/*.md`) 을 모조리 스캔합니다.
+전체 기획/문서 구역 (`.worktrees/plans/docs/plan/*.md`) 을 모조리 스캔합니다.
 문자열 분석 내지는 정규식(Regex)을 기반으로 본문 중의 체크박스인 `[ ]` 및 `[x]` 카운트를 계량화합니다.
 
 ### 2단계: 분류
@@ -22,5 +22,5 @@ description: "완료된 plan 자동 아카이브. Use when: 아카이브 정리,
 
 ### 3단계: 아카이브 처리
 
-- 파악된 **confirmed-done** 단위는 `common/docs/archive/` 로 바로 이동 처리하고 문서 내에 `> 완료일: YYYY-MM-DD` 식의 메타 정보를 새로 추가해 줍니다.
+- 파악된 **confirmed-done** 단위는 `.worktrees/plans/docs/archive/` 로 바로 이동 처리하고 문서 내에 `> 완료일: YYYY-MM-DD` 식의 메타 정보를 새로 추가해 줍니다.
 - 만일 `ambiguous`로 판별된 문서 단위가 전체 스캔된 5개 문서 이상 중에서 2개 이상이라면, LLM(haiku 급 등) 컨텍스트 프롬프팅을 통해 내용 판독을 요청하는 보조수단 옵션을 전개할 수 있습니다.

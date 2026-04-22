@@ -181,7 +181,7 @@ git log --all -p -S "함수명" -- "*.ts" "*.svelte"
 **6-1. 최근 archive 기반 분석**
 ```powershell
 # 최근 7일 archive 파일 확인
-Get-ChildItem "D:\work\project\service\wtools\common\docs\archive" |
+Get-ChildItem "D:\work\project\service\wtools\.worktrees\plans\docs\archive" |
   Where-Object { $_.LastWriteTime -gt (Get-Date).AddDays(-7) } |
   Sort-Object LastWriteTime -Descending
 ```

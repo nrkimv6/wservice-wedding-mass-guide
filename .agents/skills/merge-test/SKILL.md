@@ -115,7 +115,7 @@ plan 헤더에서 다음을 읽는다:
 slug, branch명, worktree 경로를 변수로 저장.
 
 **plans-aware 문서 루트(`Resolve-DocsCommitRoot`/`_path-rules.md` helper 기준):**
-- 공통 plan 파일은 `.worktrees/plans/docs/plan/`을 우선 사용하고, 없을 때만 legacy `common/docs/plan/`을 fallback으로 사용한다.
+- 공통 plan 파일은 `.worktrees/plans/docs/plan/`을 canonical 경로로 사용한다.
 - `반영일시`/`머지커밋` Edit 대상은 plans 워크트리 내 절대경로 사용
 - Edit 후 plans lineage worktree(`.worktrees/plans` 또는 `origin/plans` descendant sync worktree)에서 `Resolve-DocsCommitRoot` 반환 cwd로 이동하고 `Resolve-DocsCommitCandidates` 반환 파일만 `git add`한 뒤 `git commit -m "chore: {slug} 머지 완료 기록"`을 수행한다. push는 literal `origin plans`가 아니라 현재 docs commit root가 추적하는 upstream으로만 진행하고, root `main`/일반 feature branch면 중단한다.
 - `git add -A`는 plans 워크트리에서도 금지한다.

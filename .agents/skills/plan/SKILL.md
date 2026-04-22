@@ -28,17 +28,15 @@ $config = Get-Content $projectConfigPath | ConvertFrom-Json
 # 각 프로젝트의 절대경로: $config.projects[].path
 ```
 
-**경로 규칙**: AGENTS.md `문서 위치 규칙` 테이블을 참조하라. 실제 경로 선택은 [`_path-rules.md`](./_path-rules.md)의 helper 우선순위(`PLAN_ROOT` → `.worktrees/plans/docs/plan` → `common/docs/plan` → `docs/plan`)를 먼저 따른다.
+**경로 규칙**: AGENTS.md `문서 위치 규칙` 테이블을 참조하라. 실제 경로 선택은 [`_path-rules.md`](./_path-rules.md)의 helper 우선순위(`PLAN_ROOT` → `.worktrees/plans/docs/plan` → `docs/plan`)를 먼저 따른다.
 
 **🔴 계획서 생성 위치 분기** — 수정 대상에 따라 올바른 프로젝트에 생성:
 
 | 수정 대상 | 생성 위치 | 예시 |
 |----------|----------|------|
-| `.claude/skills/`, `.claude/agents/`, 공통 스크립트 | **wtools 공통 plan root** (`.worktrees/plans/docs/plan/` 우선, `common/docs/plan/` fallback) | 스킬 개선, 에이전트 수정 |
+| `.claude/skills/`, `.claude/agents/`, 공통 스크립트 | **wtools** `.worktrees/plans/docs/plan/` | 스킬 개선, 에이전트 수정 |
 | 특정 프로젝트의 `app/`, `frontend/`, `scripts/` 등 | **해당 프로젝트**의 `docs/plan/` | monitor-page 버그 수정 |
-| 복수 프로젝트에 걸친 변경 | **wtools 공통 plan root** (`.worktrees/plans/docs/plan/` 우선, `common/docs/plan/` fallback) | 공통 인프라 변경 |
-
-요약: wtools 공통/skill/agent 수정도 `_path-rules.md` helper를 따라 `.worktrees/plans/docs/plan/`을 우선 사용하고, legacy `common/docs/plan/`은 fallback으로만 쓴다.
+| 복수 프로젝트에 걸친 변경 | **wtools** `.worktrees/plans/docs/plan/` | 공통 인프라 변경 |
 
 외부 프로젝트에서 작업 중이더라도 수정 대상이 스킬/에이전트이면, 사용자에게 "이 계획서는 wtools에 생성해야 합니다"라고 안내하고 wtools 경로에 생성한다.
 
@@ -329,7 +327,7 @@ todo-2: docs/plan/YYYY-MM-DD_{주제}_todo-2.md (Phase 4~6, M tasks)
 - 인라인 코드(`` ` ``) 안의 체크박스 패턴
 - 마크다운 테이블 내 예시 코드
 
-**참고**: [2026-02-18_fix-checkbox-in-codeblock.md](../../../common/docs/archive/2026-02-18_fix-checkbox-in-codeblock.md)
+**참고**: [2026-02-18_fix-checkbox-in-codeblock.md](../../../.worktrees/plans/docs/archive/2026-02-18_fix-checkbox-in-codeblock.md)
 
 ## 문서 상태 & 진행률
 

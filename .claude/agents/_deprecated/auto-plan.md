@@ -37,7 +37,7 @@ tools:
 
 전달받은 plan 파일이 존재하지 않는 경우, 아래 규칙에 따라 신규 계획서 파일을 생성합니다.
 
-1. **파일 생성 (Write)**: `common/docs/plan/YYYY-MM-DD_{주제}.md` 경로에 신규 파일 생성
+1. **파일 생성 (Write)**: `.worktrees/plans/docs/plan/YYYY-MM-DD_{주제}.md` 경로에 신규 파일 생성
 2. **파일 내용**: 표준 plan 문서 템플릿을 사용하여 작성 (헤더, 개요, 구체적 Phase/Step, TODO 체크박스 포함)
 3. **상태 설정**: `> 상태: 검토완료`로 설정
 4. **출력 업데이트**: 출력 블록의 `SOURCE: {파일 경로}` 필드에 새로 생성된 파일 경로를 반드시 업데이트
@@ -91,7 +91,7 @@ tools:
 7. **계획서 커밋** (Bash 도구) — 반드시 아래 순서로 실행
    - a. `git status --porcelain` — 변경 파일 목록 확인
    - b. 화이트리스트 파일만 **개별** git add (파일 경로 하나씩):
-     - 허용: `docs/plan/*.md`, `common/docs/plan/*.md`, `docs/archive/*.md`, `common/docs/archive/*.md`, `TODO.md`, `docs/DONE.md`
+     - 허용: `docs/plan/*.md`, `.worktrees/plans/docs/plan/*.md`, `docs/archive/*.md`, `.worktrees/plans/docs/archive/*.md`, `TODO.md`, `docs/DONE.md`
      - **절대 금지**: `git add .` / `git add -A` / 디렉토리명·글로브 패턴
    - c. `git status --porcelain` 재확인 → 비화이트리스트 파일 있으면 `git reset HEAD {파일}` 로 제거
    - d. 화이트리스트 파일 0개이면 커밋 중단, 사용자에게 보고

@@ -16,6 +16,6 @@
 | 프로젝트별 TODO | `{project}/TODO.md` | 미완료 기능, 버그 |
 | 프로젝트별 완료 | `{project}/docs/DONE.md` | 완료된 작업, 해결된 이슈 |
 | 가이드 | `common/docs/guide/` | 새 프로젝트 생성, 설정 가이드 |
-| 미래 계획 | `common/docs/plan/` | 기능 기획, 개선 아이디어 |
+| 미래 계획 | `.worktrees/plans/docs/plan/` (canonical) / `docs/plan/` (orphan 기본값) | 기능 기획, 개선 아이디어 |
 | 전체 이력 | `common/docs/history/` | 마이그레이션, 배포 이력 |
-| 아카이브 | `{project}/docs/archive/` 또는 `common/docs/archive/` | 완료된 계획 보관 |
+| 아카이브 | `.worktrees/plans/docs/archive/` (canonical) / `{project}/docs/archive/` (프로젝트별) | 완료된 계획 보관 |

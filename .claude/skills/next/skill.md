@@ -88,8 +88,7 @@ $config = Get-Content $configPath | ConvertFrom-Json
   - **없으면**: CLAUDE.md 문서 위치 규칙의 plan 경로만 스캔
 - plan 경로는 `_path-rules.md` 동적 폴백 로직으로 결정 (각 프로젝트별):
   - `{proj.path}/.worktrees/plans/docs/plan/` 존재 시 이 경로 스캔 (orphan 도입 프로젝트)
-  - 없으면 `{proj.path}/common/docs/plan/` 존재 여부 확인 (wtools 공통 legacy fallback)
-  - 둘 다 없으면 `{proj.path}/docs/plan/*.md` 스캔 (기본)
+  - 없으면 `{proj.path}/docs/plan/*.md` 스캔 (기본)
 - `[ ]` 또는 `[→TODO]` 상태인 항목 찾기
 - `[→WORKER-ID]` 패턴은 다른 세션이 작업 중이므로 **스킵** (6시간 이상 경과 시 stale로 자동 해제)
 - **상태 필터**: `구현완료`, `보류` 상태의 plan은 스킵. `초안`, `검토대기`, `검토완료`, `구현중`, `수정필요` 상태만 스캔

@@ -126,7 +126,7 @@ N+2. ☐ **스키마 드리프트 검증** — N+1 직후 실행
      - `영향 없음` 근거를 명시적으로 기록한다.
 
 2. **archive 맥락 분석 (의도 해석 전용)**
-   - plan 제목/주제 키워드로 `common/docs/archive/`, `common/docs/history/`에서 후보 문서를 찾는다.
+   - plan 제목/주제 키워드로 `.worktrees/plans/docs/archive/`, `common/docs/history/`에서 후보 문서를 찾는다.
    - 후보 문서의 `반영일시`, `머지커밋`, 변경 배경을 읽어 의도/원인을 파악한다.
    - archive는 판정 보조 입력이며, 최종 반영 여부는 git 근거로 확정한다.
 

@@ -12,15 +12,13 @@
 스킬이 plan 경로를 결정해야 할 때 아래 순서로 확인한다:
 
 1. **환경변수 `PLAN_ROOT`** — 설정되어 있으면 무조건 이 값을 사용 (강제 오버라이드)
-2. **`.worktrees/plans/docs/plan/` 존재 여부** — 해당 디렉토리가 존재하면 이 경로 사용 (orphan 분리 도입 프로젝트)
-3. **`common/docs/plan/` 존재 여부** — wtools 공통 legacy fallback
-4. **`docs/plan/` 존재 여부** — 기본 경로 (orphan 미도입 프로젝트, 하위 호환)
+2. **`.worktrees/plans/docs/plan/` 존재 여부** — 해당 디렉토리가 존재하면 이 경로 사용 (plans 워크트리 도입 프로젝트)
+3. **`docs/plan/` 존재 여부** — 기본 경로 (plans 워크트리 미도입 프로젝트, orphan 기본값)
 
 archive 경로도 동일 우선순위 적용 (`Get-ArchiveRoot`):
 1. `ARCHIVE_ROOT` 환경변수
 2. `.worktrees/plans/docs/archive/`
-3. `common/docs/archive/`
-4. `docs/archive/`
+3. `docs/archive/`
 
 ### PowerShell 의사코드 (스킬이 따를 로직)
 
@@ -28,14 +26,12 @@ archive 경로도 동일 우선순위 적용 (`Get-ArchiveRoot`):
 function Get-PlanRoot {
     if ($env:PLAN_ROOT) { return $env:PLAN_ROOT }
     if (Test-Path ".worktrees/plans/docs/plan") { return ".worktrees/plans/docs/plan" }
-    if (Test-Path "common/docs/plan") { return "common/docs/plan" }
     return "docs/plan"
 }
 
 function Get-ArchiveRoot {
     if ($env:ARCHIVE_ROOT) { return $env:ARCHIVE_ROOT }
     if (Test-Path ".worktrees/plans/docs/archive") { return ".worktrees/plans/docs/archive" }
-    if (Test-Path "common/docs/archive") { return "common/docs/archive" }
     return "docs/archive"
 }
 
@@ -54,7 +50,7 @@ function Resolve-DocsCommitCandidates {
     $commitRoot = (Resolve-DocsCommitRoot $RepoRoot).Replace('\','/').TrimEnd('/')
     if (-not (Test-Path $commitRoot)) { return @() }
 
-    $dirPrefixes = @("docs/plan/", "docs/archive/", "common/docs/plan/", "common/docs/archive/")
+    $dirPrefixes = @("docs/plan/", "docs/archive/")
     $fileExact   = @("TODO.md", "docs/DONE.md")
 
     $candidates = foreach ($editedPath in $EditedPaths) {
@@ -110,10 +106,9 @@ impl 워크트리(`.worktrees/impl-{slug}/`)에서 plans 워크트리(`.worktree
 
 **우선순위 로직이 항상 먼저다.** CLAUDE.md 표는 참고용이며, 아래 규칙이 표를 override한다:
 
-1. `.worktrees/plans/docs/plan/`이 존재하면 -> 표 값에 관계없이 이 경로 사용
-2. `.worktrees/plans/docs/plan/`이 없고 `common/docs/plan/`이 있으면 -> `common/docs/plan/` 사용
-3. 둘 다 없고 표가 `docs/plan/`이면 -> `docs/plan/` 사용
-4. 표가 `.worktrees/plans/docs/plan/`을 명시하면 -> 그 값 사용 (1번과 동일)
+1. `.worktrees/plans/docs/plan/`이 존재하면 -> 표 값에 관계없이 이 경로 사용 (canonical)
+2. `.worktrees/plans/docs/plan/`이 없으면 -> `docs/plan/` 사용 (orphan 기본값)
+3. `common/docs/plan/`은 2026-04-21 cutover로 폐지. 새 문서 작성·참조에서 사용하지 않는다.
 
 **실수 패턴 금지**: CLAUDE.md 표의 `docs/plan/`을 읽고 바로 그 경로에 파일을 생성하지 말 것.
 반드시 `.worktrees/plans/docs/plan/` 존재 여부를 먼저 확인하라.
@@ -121,7 +116,7 @@ impl 워크트리(`.worktrees/impl-{slug}/`)에서 plans 워크트리(`.worktree
 ## wtools 예외
 
 wtools(`common/tools/` 존재) 공통 문서도 별도 예외 하드코딩 없이 같은 helper 우선순위를 따른다.
-`.worktrees/plans/docs/*`가 있으면 그 경로를 먼저 쓰고, 없을 때만 `common/docs/*`로 fallback한다.
+`.worktrees/plans/docs/*`를 canonical로 사용한다. `common/docs/*`는 2026-04-21 cutover로 폐지되었다.
 
 ## plans 워크트리 내부 경로 (orphan 도입 프로젝트)
 
