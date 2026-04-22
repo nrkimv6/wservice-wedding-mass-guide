@@ -172,17 +172,19 @@ Claude가 구현 요청 받으면:
    - 환경변수는 설정되어 있지만 경로가 다른 프로젝트를 가리키는 경우 → 환경변수를 무시하고 신규 worktree 생성 흐름(Step 1.2.B~D)으로 진행
 
    **B. 잔여 워크트리/브랜치 감지:**
-   - `git worktree list`에서 `.worktrees/impl-` 패턴 스캔
-   - `git branch --list "impl/*"` 스캔
+   - `git worktree list`와 `git branch --list "impl/*"` 결과는 **현재 plan의 재개 가능 여부와 신규 slug 충돌 확인용 내부 근거**로만 사용한다.
    - 잔여분이 있으면 소유권을 먼저 판정한다:
      - `{plan경로}/**/*.md`에서 동일 `> branch:`/`> worktree:`를 검색
-     - 검색된 파일이 가리키는 부모 계획서(`> 계획서:` 링크 또는 자기 자신)가 `parent_plan_path`와 같으면 **내 잔여분**
-     - 부모가 다르면 **타 계획서 소유**로 간주하고 절대 자동 삭제/재사용하지 않는다.
-   - 신규 워크트리 생성 시 이름 충돌이 있으면 타 계획서 소유일 가능성이 크므로 `{slug}-2` 같은 우회 생성 대신 즉시 중단하고 사용자에게 보고한다.
+     - 검색된 파일이 가리키는 부모 계획서(`> 계획서:` 링크 또는 자기 자신)가 `parent_plan_path`와 같으면 **내 잔여분**으로 간주하고 재개 후보로 취급한다.
+     - 부모가 다르면 **타 계획서 소유**로 간주하고 자동 삭제/재사용/사용자 노출을 모두 금지한다.
+   - 타 plan 소유 잔여는 `/implement` 책임 밖이며, 목록이나 "정리할까요?" 질문을 사용자 대화에 올리지 않는다.
+   - 신규 워크트리 생성 전 이름 충돌이 있으면 `{slug}`, `{slug}-2`, `{slug}-3` 순으로 내부 재시도한다.
+   - 세 후보가 모두 충돌하면 다른 잔여 목록 대신 `"현재 plan worktree 확보 실패"`만 보고하고 중단한다.
 
    **C. plan 헤더에서 `> branch:` 및 `> worktree:` 필드 확인:**
 
-   - **필드가 없으면 (신규):**
+   - **값이 비어 있거나 필드가 없으면 (신규):**
+     - `plan` 템플릿이 만드는 blank `> branch:` / `> worktree:` / `> worktree-owner:`는 기존 worktree 의미가 아니라 **미할당 초기 상태**로 해석한다.
      0. **메인 레포 main 브랜치 확인**: `git rev-parse --abbrev-ref HEAD` 실행
         - `main`이면 → 다음 단계로
         - `main`이 아니면 → 아래 안전 절차 실행 (기본형 `git stash pop` 금지)
@@ -201,22 +203,23 @@ Claude가 구현 요청 받으면:
           7. `git stash drop $stashRef`
              - 실패 시 즉시 중단 (`IMPL_STASH_DROP_FAILED`)
         - 자동 전환 후 `git rev-parse --abbrev-ref HEAD` 재확인 결과가 `main`이 아니면 중단
-     1. slug를 plan 파일명에서 추출 (`YYYY-MM-DD_{slug}.md` → `{slug}`)
-     2. `git worktree add .worktrees/impl-{slug} -b impl/{slug}` 실행
+     1. base slug를 plan 파일명에서 추출 (`YYYY-MM-DD_{slug}.md` → `{slug}`)
+     2. `{slug}`, `{slug}-2`, `{slug}-3` 후보 중 충돌 없는 첫 값을 `selectedSlug`로 선택
+     3. `git worktree add .worktrees/impl-{selectedSlug} -b impl/{selectedSlug}` 실행
      2.5. **워크트리 생성 직후 lock 실행** (단일 `--force`로 실수 삭제 방지):
         ```bash
-        git worktree lock .worktrees/impl-{slug} --reason "impl/{slug} 구현 진행 중"
+        git worktree lock .worktrees/impl-{selectedSlug} --reason "impl/{selectedSlug} 구현 진행 중"
         ```
         - lock된 워크트리는 `git worktree remove --force` 한 번으로는 삭제 불가 (`--force --force` 필요)
         - lock 실패 시 경고만 출력하고 계속 진행 (lock은 안전장치, 필수 중단 조건 아님)
         - lock 실패 경고는 stash 실패와 다르다. stash 관련 단계는 모두 hard stop이다.
      3. **워크트리 생성 후 메인 레포 브랜치 재확인**: `git rev-parse --abbrev-ref HEAD`
         - `main`이면 → 정상, 다음 단계로
-        - `main`이 아니면 → 생성된 워크트리 제거 (`git worktree remove .worktrees/impl-{slug} --force`) + 사용자에게 "워크트리 생성 후 메인 레포가 main에서 벗어남. 수동 확인 필요." 경고 후 중단
+        - `main`이 아니면 → 생성된 워크트리 제거 (`git worktree remove .worktrees/impl-{selectedSlug} --force`) + 사용자에게 "워크트리 생성 후 메인 레포가 main에서 벗어남. 수동 확인 필요." 경고 후 중단
      4. plan 헤더에 Edit으로 추가:
         ```
-        > branch: impl/{slug}
-        > worktree: .worktrees/impl-{slug}
+        > branch: impl/{selectedSlug}
+        > worktree: .worktrees/impl-{selectedSlug}
         > worktree-owner: {parent_plan_path}
         ```
 
@@ -315,6 +318,9 @@ Claude가 구현 요청 받으면:
 5. **완료 처리**
    - 기본: 구현 체크박스를 마치고 plan 상태를 `머지대기`로 올린 뒤 `/merge-test` 스킬 호출 — 워크트리 머지 + T4/T5 통합테스트 + 완료 처리(archive, TODO→DONE, 커밋)까지 일괄 실행
    - `_todo-N.md` 작업이고 같은 `parent_plan_path`의 다른 `_todo-*`가 이미 `머지대기` 상태면 `/merge-test`를 **부모 묶음 배치 모드**로 1회 실행해 같은 부모의 워크트리를 한 번에 정리한다.
+   - `/merge-test`가 `수정필요`로 종료되면 현재 iteration은 실패로 버려지는 것이 아니라 **다음 iteration continuation anchor를 남긴 상태**로 종료된 것으로 본다.
+   - 다음 iteration 입력은 최소 `충돌 파일 목록 또는 stash ref`, `merge-test failure reason`, `현재 parent_plan_path` 세 가지를 포함해야 한다.
+   - 다음 iteration은 `수정필요 -> 구현중`으로 상태를 되돌린 뒤, 위 입력을 기준으로 수정 -> 재검증 -> `/merge-test` 재시도 순서로 진행한다.
    - 워크트리 미사용 시에는 `/merge-test`를 건너뛰고 `/done`을 직접 호출한다.
 
 ## plan 문서 상태 & 진행률
@@ -330,7 +336,7 @@ Claude가 구현 요청 받으면:
 | `머지대기` | 수동 `/implement` 완료 또는 자동 테스트 통과 후 `/merge-test` 진입 대기 |
 | `통합테스트중` | /merge-test: main 머지 후 T4/T5 실행 중 |
 | `구현완료` | 모든 항목 완료 (/merge-test 이후 또는 직접 구현 완료) |
-| `수정필요` | 검토 후 변경 필요 |
+| `수정필요` | `/merge-test` 또는 검증 실패 후 다음 iteration 입력을 기다리는 continuation anchor |
 | `보류` | 우선순위 밀림 |
 | `완료` | /done으로 archive 처리됨 |
 

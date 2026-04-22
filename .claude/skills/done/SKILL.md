@@ -179,7 +179,8 @@ git add "docs/archive/YYYY-MM-DD_{주제}_todo.md"
 # plans 워크트리에서는 `Resolve-DocsCommitCandidates` 반환 파일만 add한다.
 # `git add -A`는 사용하지 않는다.
 git commit -m "chore: archive {주제}"
-git push origin plans
+# push는 literal `origin plans` 대신 현재 docs commit root가 추적하는 upstream으로만 수행한다.
+git push
 Set-Location -  # 이전 경로로 복귀
 
 # ✅ orphan 미도입 프로젝트 — 기존 방식
@@ -329,6 +330,7 @@ wtools/TODO.md를 열어 해당 프로젝트 섹션을 갱신합니다:
 
 - plan 상태가 `구현완료`가 아니면 → 경고 출력:
   - 상태가 `구현중`이고 `> branch:` 없으면 → 계속 진행 (worktree 미사용 직접 구현)
+  - 상태가 `수정필요`이면 → "현재 상태: 수정필요. merge-test 후속 수정이 끝나지 않았습니다. `/implement`로 continuation 입력을 반영한 뒤 다시 `/merge-test` 또는 `/done`을 진행하세요." + 중단
   - 그 외 상태 → "현재 상태: {상태}. `/merge-test` 또는 `/implement` 먼저 완료하세요." + 중단
 
 커밋 전 실제로 정리가 되었는지 확인합니다:
@@ -410,7 +412,8 @@ Set-Location "$RepoRoot\.worktrees\plans"
 git status --porcelain
 git add <파일명>   # 이번 실행이 수정한 파일만 개별 add
 & "D:\work\project\tools\common\commit.ps1" "docs: plans manual recovery"
-git push origin plans
+# push는 literal `origin plans` 대신 현재 docs commit root가 추적하는 upstream으로만 수행한다.
+git push
 ```
 
 ### 8단계: 커밋

@@ -82,7 +82,7 @@ done SKILL.md 2단계~8단계를 순서대로 실행:
 
 - `_path-rules.md` 동적 폴백으로 plan 루트/archive 루트 결정
 - **orphan 도입 프로젝트** (`.worktrees/plans/` 존재): plans 워크트리 내에서 `git mv` 수행
-  - `Set-Location .worktrees/plans` → `git mv docs/plan/... docs/archive/...` → `git add` → `git commit` → `git push origin plans`
+  - `Set-Location .worktrees/plans` → `git mv docs/plan/... docs/archive/...` → `git add` → `git commit` → `git push`(현재 docs commit root의 upstream) 순으로 진행한다. literal `origin plans` 고정은 금지한다.
   - plans 워크트리에서 archive 후 commit은 `Resolve-DocsCommitCandidates` 반환 파일만 대상으로 하고, 전체 clean 여부로 gate하지 않는다
   - unrelated dirty가 남아 있으면 경고만 출력하고 current-run 후보만 커밋한다
 - **orphan 미도입 프로젝트**: 기존 방식 (`_todo.md` → archive 경로 git mv)

@@ -83,7 +83,10 @@ git diff ${BEFORE_HASH} --name-only
 ```
 
 **plan 문서 필터링:**
-- 결과에서 `docs/plan/*.md` 패턴 매칭
+- 결과에서 `_path-rules.md` helper 우선순위 기준 plan 경로를 매칭
+  - `.worktrees/plans/docs/plan/*.md`
+  - `common/docs/plan/*.md`
+  - `docs/plan/*.md`
 - 변경된 plan 문서 없으면 → 해당 프로젝트 스킵
 - 있으면 → 변경된 plan 문서 목록 수집 (3단계로)
 

@@ -258,6 +258,14 @@ N+2. ☐ **스키마 드리프트 검증** — N+1 직후 실행
 4. **검증 분리**: 테스트 추가, 기존 테스트 수정, 수동 확인 포인트를 따로 적는다
 5. **완료 문장화**: 각 하위 항목을 하나의 작업 지시문처럼 읽어도 바로 실행 가능해야 한다
 
+#### lifecycle phase 확장 규칙
+
+- `Phase 0: Worktree 준비`, `Phase Z: Post-Merge Cleanup (/merge-test owner)`가 이미 있으면, 이 phase는 새 scope를 발명하지 말고 **owner step을 더 잘게 쪼개는 용도**로만 확장한다.
+- `Phase 0`은 보통 `worktree 생성 또는 재개`, `> branch:`/`> worktree:`/`> worktree-owner:` 기록 확인, `worktree cwd 고정`처럼 한 줄 한 동작으로 분해한다.
+- `Phase Z`는 보통 `main merge 시도`, `root dirty stash/apply (if needed)`, `T4/T5`, `worktree remove`, `branch remove`, `header meta 제거`처럼 owner step 단위로 분해한다.
+- `merge resolve`, `stash pop`, `stash-pop resolve`는 충돌/복원 실패 시의 예외 경로이므로 **새 체크박스로 발명하지 않는다**. 필요하면 blockquote 메모나 주석으로만 남긴다.
+- `Phase R`은 재발 경로 분석, `Phase Z`는 post-merge owner cleanup이므로 둘을 합치거나 서로의 하위 항목을 끌어오지 않는다.
+
 #### 분해 판단 기준
 
 상위 작업을 하위로 분해해야 하는 경우:

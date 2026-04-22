@@ -7,6 +7,8 @@ description: "계획 문서 작성. Use when: 계획해, plan, 아이디어, 기
 
 사용자의 아이디어나 요구사항을 계획 문서로 정리하고, **원자 단위 TODO까지 자동 생성**합니다.
 
+`/plan` 또는 `[$plan](...SKILL.md)`가 직접 들어오면, 현재 턴에서 plan 파일 생성/수정까지 진행한다. direct invocation은 설명-only 모드가 아니며, 프로젝트/범위 정보가 실제로 부족할 때만 짧게 확인 질문을 한다.
+
 ## 트리거
 
 - "계획해", "plan", "아이디어", "기획"
@@ -26,21 +28,25 @@ $config = Get-Content $projectConfigPath | ConvertFrom-Json
 # 각 프로젝트의 절대경로: $config.projects[].path
 ```
 
-**경로 규칙**: AGENTS.md `문서 위치 규칙` 테이블을 참조하라. 테이블이 없으면 기본 경로(`docs/plan/`, `docs/archive/`)를 사용. 상세: [`_path-rules.md`](./_path-rules.md)
+**경로 규칙**: AGENTS.md `문서 위치 규칙` 테이블을 참조하라. 실제 경로 선택은 [`_path-rules.md`](./_path-rules.md)의 helper 우선순위(`PLAN_ROOT` → `.worktrees/plans/docs/plan` → `common/docs/plan` → `docs/plan`)를 먼저 따른다.
 
 **🔴 계획서 생성 위치 분기** — 수정 대상에 따라 올바른 프로젝트에 생성:
 
 | 수정 대상 | 생성 위치 | 예시 |
 |----------|----------|------|
-| `.claude/skills/`, `.claude/agents/`, 공통 스크립트 | **wtools** `common/docs/plan/` | 스킬 개선, 에이전트 수정 |
+| `.claude/skills/`, `.claude/agents/`, 공통 스크립트 | **wtools 공통 plan root** (`.worktrees/plans/docs/plan/` 우선, `common/docs/plan/` fallback) | 스킬 개선, 에이전트 수정 |
 | 특정 프로젝트의 `app/`, `frontend/`, `scripts/` 등 | **해당 프로젝트**의 `docs/plan/` | monitor-page 버그 수정 |
-| 복수 프로젝트에 걸친 변경 | **wtools** `common/docs/plan/` | 공통 인프라 변경 |
+| 복수 프로젝트에 걸친 변경 | **wtools 공통 plan root** (`.worktrees/plans/docs/plan/` 우선, `common/docs/plan/` fallback) | 공통 인프라 변경 |
+
+요약: wtools 공통/skill/agent 수정도 `_path-rules.md` helper를 따라 `.worktrees/plans/docs/plan/`을 우선 사용하고, legacy `common/docs/plan/`은 fallback으로만 쓴다.
 
 외부 프로젝트에서 작업 중이더라도 수정 대상이 스킬/에이전트이면, 사용자에게 "이 계획서는 wtools에 생성해야 합니다"라고 안내하고 wtools 경로에 생성한다.
 
 **wtools 감지**: 현재 디렉토리에 `common/tools/` 폴더 존재 여부로 판단
 - **있으면**: wtools 내부 → AGENTS.md의 plan 경로에 공통 계획 저장 + wtools/TODO.md 동기화 **실행**
 - **없으면**: 외부 프로젝트 → AGENTS.md의 plan 경로에 저장 + wtools/TODO.md 동기화 **스킵**
+
+문서 root 판단은 위 감지와 별개로 `_path-rules.md` helper를 따른다.
 
 **TODO는 반드시 프로젝트 단위로 생성한다:**
 
@@ -54,12 +60,14 @@ $config = Get-Content $projectConfigPath | ConvertFrom-Json
 
 ## 실행 단계
 
-### 1단계: 요구사항 파악
+### 1단계: 요구사항 파악 (missing-info일 때만)
 
-사용자에게 다음을 확인:
+프로젝트/범위 정보가 실제로 부족할 때만 사용자에게 다음을 확인:
 - 대상 프로젝트 (없으면 전체 공통)
 - 구현하고 싶은 기능/개선사항
 - 우선순위 (있다면)
+
+`/plan`, exact skill name, `[$plan](...SKILL.md)` 직접 호출 자체를 설명-only 또는 아이디어 토론 모드로 해석하지 않는다. 사용자가 "아이디어만 점검해줘", "문서 쓰지 말고 검토만"처럼 명시한 경우에만 예외로 둔다.
 
 ### 2단계: 코드베이스 분석
 
@@ -95,13 +103,17 @@ $config = Get-Content $projectConfigPath | ConvertFrom-Json
   - `> branch:`
   - `> worktree:`
   - `> worktree-owner:`
+  - 빈 값은 정상 초기 상태다. `/implement`는 이를 기존 worktree 존재나 타 `impl/*` 잔여 신호로 해석하지 않는다.
 - TODO 앞단에 `### Phase 0: Worktree 준비`를 넣는다.
   - 이 phase는 **문서 가시성용 gate**다.
   - 실제 worktree 생성과 메타 기록은 `/implement` 또는 `plan-runner` owner flow가 수행한다.
+  - 기본 owner step은 `worktree 생성 또는 재개`, `> branch:`/`> worktree:`/`> worktree-owner:` 기록 확인, `worktree cwd 고정`처럼 항상 평가되는 단계로 작성한다.
   - plan 체크박스를 근거로 루트(main)에서 임의 `git checkout`, `git switch`, 수동 worktree 재생성을 지시하지 않는다.
 - TODO 마지막에 `### Phase Z: Post-Merge Cleanup (/merge-test owner)`를 넣는다.
   - 이 phase의 체크박스는 `/implement` 완료 판정에 포함하지 않는다.
+  - 기본 owner step은 `main merge 시도`, `root dirty stash/apply (if needed)`, `T4/T5`, `worktree remove`, `branch remove`, `header meta 제거`까지를 포함한다.
   - 실제 정리(`git worktree remove`, branch 삭제, header 메타 제거)는 `/merge-test` owner로 남긴다.
+  - `merge resolve`, `stash pop`, `stash-pop resolve`는 정상 TODO가 아니라 충돌/복원 실패 시의 예외 blockquote로만 남긴다.
 
 ### 4단계: wtools/TODO.md 동기화 (wtools만 해당)
 

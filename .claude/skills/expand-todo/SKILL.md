@@ -209,6 +209,14 @@ N+2. - [ ] **스키마 드리프트 검증** — N+1 직후 실행
 - "~하고 ~한다"처럼 AND로 연결된 작업
 - 중간 검증이 필요한 경우
 
+#### lifecycle phase 확장 규칙
+
+- `Phase 0: Worktree 준비`, `Phase Z: Post-Merge Cleanup (/merge-test owner)`가 이미 있으면, 이 phase는 새 scope를 발명하지 말고 **owner step을 더 잘게 쪼개는 용도**로만 확장한다.
+- `Phase 0`은 보통 `worktree 생성 또는 재개`, `> branch:`/`> worktree:`/`> worktree-owner:` 기록 확인, `worktree cwd 고정`처럼 한 줄 한 동작으로 분해한다.
+- `Phase Z`는 보통 `main merge 시도`, `root dirty stash/apply (if needed)`, `T4/T5`, `worktree remove`, `branch remove`, `header meta 제거`처럼 owner step 단위로 분해한다.
+- `merge resolve`, `stash pop`, `stash-pop resolve`는 충돌/복원 실패 시의 예외 경로이므로 **새 체크박스로 발명하지 않는다**. 필요하면 blockquote 메모나 주석으로만 남긴다.
+- `Phase R`은 재발 경로 분석, `Phase Z`는 post-merge owner cleanup이므로 둘을 합치거나 서로의 하위 항목을 끌어오지 않는다.
+
 #### 승격 규칙
 
 하나의 상위 작업에 하위가 5개 이상이면 별도 Phase로 승격 검토
@@ -339,6 +347,16 @@ Python/백엔드를 수정하는 plan 확장 시, 구현 Phase 뒤에 반드시 
 1. 기존 체크리스트 섹션을 확장된 2레벨 구조로 **Edit**으로 교체
 2. Phase별 작업 수 요약 추가
 3. Read로 반영 확인
+
+### 5.6단계: plans-aware 커밋 (non-blocking)
+
+plans 워크트리 문서를 수정한 경우에만, 확장 완료 후 아래 절차로 docs 변경을 정리한다.
+
+1. `Resolve-DocsCommitRoot`로 docs commit root를 계산하고, 그 경로에서만 git 작업을 수행한다.
+2. `Resolve-DocsCommitCandidates` 반환 파일만 `git add`한다. `git add -A`, `git add .`, 디렉토리 단위 add는 금지한다.
+3. 화이트리스트는 docs commit root 기준 `docs/plan/*.md`, `docs/plan/*_todo-*.md`, `docs/archive/*.md`, `TODO.md`, `docs/DONE.md`로 제한한다.
+4. 커밋은 `commit.ps1`로 수행하고, push는 literal branch명이 아니라 현재 docs commit root가 추적하는 upstream에만 `git push`한다.
+5. raw Edit/헤드리스 경로에서 커밋 또는 push가 실패해도 block하지 않는다. 즉시 경고와 복구 명령만 남기고 다음 단계로 진행한다.
 
 ### 5.5단계: 정합성 검증 (필수)
 

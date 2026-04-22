@@ -22,7 +22,7 @@ plans 워크트리가 dirty인 경우에도 `Test-PlansDirty`는 경고용으로
    - **있으면**: AGENTS.md 문서 위치 규칙의 plan 경로도 스캔 (공통 계획)
    - **없으면**: AGENTS.md 문서 위치 규칙의 plan 경로만 스캔 (기본: `docs/plan/`)
 
-2. **프로젝트별 계획**: `.agents/projects.json`의 각 `{proj.path}/docs/plan/*.md` 파일들 스캔(없을 경우 `.claude/projects.json` fallback) (모든 15개 프로젝트)
+2. **프로젝트별 계획**: `.agents/projects.json`의 각 프로젝트에서 `_path-rules.md` helper 우선순위(`.worktrees/plans/docs/plan/*.md` 우선, 없으면 `docs/plan/*.md`)로 스캔 (없을 경우 `.claude/projects.json` fallback)
 
 ```powershell
 # 프로젝트 목록 읽기
@@ -37,9 +37,11 @@ if (Test-Path "common\") {
     # AGENTS.md 문서 위치 규칙의 plan 경로 스캔
 }
 
-# 각 프로젝트의 docs/plan/*.md 스캔
+# 각 프로젝트의 plan 경로 결정 + 스캔
 foreach ($proj in $config.projects) {
-    # $proj.path\docs\plan\*.md 스캔
+    $plansWt = Join-Path $proj.path ".worktrees\plans\docs\plan"
+    $planDir = if (Test-Path $plansWt) { $plansWt } else { Join-Path $proj.path "docs\plan" }
+    # $planDir\*.md 스캔
 }
 ```
 

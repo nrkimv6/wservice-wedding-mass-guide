@@ -86,7 +86,9 @@ $config = Get-Content $configPath | ConvertFrom-Json
 - wtools 감지 (현재 디렉토리에 `common/` 폴더 존재 여부):
   - **있으면**: AGENTS.md 문서 위치 규칙의 plan 경로도 스캔 (공통 계획)
   - **없으면**: AGENTS.md 문서 위치 규칙의 plan 경로만 스캔 (기본: `docs/plan/`)
-- projects.json의 각 `{proj.path}/docs/plan/*.md` 파일들 스캔 (모든 15개 프로젝트)
+- projects.json의 각 프로젝트에서 `_path-rules.md` helper 우선순위로 plan root를 결정해 스캔
+  - `{proj.path}\.worktrees\plans\docs\plan\` 존재 시 이 경로 우선
+  - 없으면 `{proj.path}\docs\plan\` 사용
 - `[ ]` 또는 `[→TODO]` 상태인 항목 찾기
 - `[→WORKER-ID]` 패턴은 다른 세션이 작업 중이므로 **스킵** (6시간 이상 경과 시 stale로 자동 해제)
 - **상태 필터**: `구현완료`, `보류` 상태의 plan은 스킵. `초안`, `검토대기`, `검토완료`, `구현중`, `수정필요` 상태만 스캔
@@ -139,6 +141,7 @@ $config = Get-Content $configPath | ConvertFrom-Json
 ### 워크트리 크래시 복구 안내
 
 plan 헤더에 `> branch:` 필드가 있으면 `/implement`가 크래시 복구 흐름으로 재개한다. 단, `> worktree-owner:`/`> 계획서:` 기준 부모가 다르면 재개하지 않고 중단한다. (타 계획서 워크트리 오사용 금지)
+타 plan 소유 `impl/*` 잔여는 여기서 별도 경고나 목록 출력 대상으로 다루지 않는다.
 
 ### 3단계: implement 워크플로우 실행
 

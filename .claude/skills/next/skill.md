@@ -88,7 +88,8 @@ $config = Get-Content $configPath | ConvertFrom-Json
   - **없으면**: CLAUDE.md 문서 위치 규칙의 plan 경로만 스캔
 - plan 경로는 `_path-rules.md` 동적 폴백 로직으로 결정 (각 프로젝트별):
   - `{proj.path}/.worktrees/plans/docs/plan/` 존재 시 이 경로 스캔 (orphan 도입 프로젝트)
-  - 없으면 `{proj.path}/docs/plan/*.md` 스캔 (기본)
+  - 없으면 `{proj.path}/common/docs/plan/` 존재 여부 확인 (wtools 공통 legacy fallback)
+  - 둘 다 없으면 `{proj.path}/docs/plan/*.md` 스캔 (기본)
 - `[ ]` 또는 `[→TODO]` 상태인 항목 찾기
 - `[→WORKER-ID]` 패턴은 다른 세션이 작업 중이므로 **스킵** (6시간 이상 경과 시 stale로 자동 해제)
 - **상태 필터**: `구현완료`, `보류` 상태의 plan은 스킵. `초안`, `검토대기`, `검토완료`, `구현중`, `수정필요` 상태만 스캔
@@ -140,7 +141,8 @@ $config = Get-Content $configPath | ConvertFrom-Json
 
 ### 워크트리 크래시 복구 안내
 
-plan 헤더에 `> branch:` 필드가 있으면 해당 워크트리가 이미 존재하는 것이므로, `/implement` 실행 시 크래시 복구 흐름으로 자동 재개된다. 별도 처리 불필요.
+plan 헤더에 `> branch:` 필드가 있으면 `/implement`가 크래시 복구 흐름으로 재개한다. 단, `> worktree-owner:`/`> 계획서:` 기준 부모가 다르면 재개하지 않고 중단한다. (타 계획서 워크트리 오사용 금지)
+타 plan 소유 `impl/*` 잔여는 여기서 별도 경고나 목록 출력 대상으로 다루지 않는다.
 
 ### 3단계: implement 워크플로우 실행
 
