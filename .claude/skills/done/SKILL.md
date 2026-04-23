@@ -45,6 +45,14 @@ $config = Get-Content $configPath | ConvertFrom-Json
 - **있으면**: wtools 내부 → CLAUDE.md 문서 위치 규칙의 plan 경로 확인
 - **없으면**: 외부 프로젝트 → CLAUDE.md 문서 위치 규칙의 plan 경로 확인 (기본: `docs/plan/`)
 
+### 1.1단계: 대상 plan anchor precedence (고정)
+
+- **1순위**: 사용자가 plan 파일 경로를 명시했다면 그 경로만 primary anchor로 사용한다. (예: `/done D:\...\plan\2026-...md`)
+- **2순위**: 직전 `/merge-test` 또는 `/implement` 흐름에서 `worktree-owner`/parent plan 경로가 명시돼 있으면 그 plan을 primary anchor로 고정한다.
+- **3순위**: 위 둘이 없고 현재 대화에서 plan 링크가 **단 1개**면 그 plan을 anchor로 삼는다.
+- **4순위**: 후보가 2개 이상이면 자동 선택하지 말고 **중단**하고 사용자에게 explicit plan 경로를 요청한다. (auto-switch 금지)
+- unrelated active/dirty plan은 primary anchor에서 제외하고, 필요 시 "연관 plan 참고"로만 분류한다.
+
 아래 **모든 경로**에서 현재 작업과 관련된 계획 문서를 찾습니다:
 
 ```
@@ -419,6 +427,9 @@ git push
 ### 8단계: 커밋
 
 **🔴 이 단계를 건너뛰면 문서 변경이 uncommitted 상태로 남습니다. 반드시 실행하세요.**
+
+**git mutation 직렬화 (필수):**
+- `git add`, `git reset`, `git stash`, `commit.ps1` 같은 mutation은 **한 번에 하나씩**만 실행한다. (병렬 실행 금지 — `.git/index.lock` 재발 방지)
 
 **🚨 CRITICAL: 반드시 PowerShell commit 함수 사용**
 

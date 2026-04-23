@@ -386,7 +386,7 @@ target 헤더에 다음 두 줄을 `> 상태:` 줄 바로 아래에 Edit으로 �
    ```powershell
    for ($i = 1; $i -le 24; $i++) {
      try {
-       Invoke-WebRequest -UseBasicParsing "http://localhost:8001/api/v1/dev-runner/runners" | Out-Null
+       Invoke-WebRequest -UseBasicParsing "http://localhost:8001/api/v1/system/liveness" | Out-Null
        break
      }
      catch {
@@ -415,7 +415,7 @@ target 헤더에 다음 두 줄을 `> 상태:` 줄 바로 아래에 Edit으로 �
    ```powershell
    for ($i = 1; $i -le 6; $i++) {
      try {
-       Invoke-WebRequest -UseBasicParsing "http://localhost:8001/api/v1/dev-runner/runners" | Out-Null
+       Invoke-WebRequest -UseBasicParsing "http://localhost:8001/api/v1/system/liveness" | Out-Null
        break
      }
      catch {
