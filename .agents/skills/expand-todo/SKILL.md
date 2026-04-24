@@ -360,6 +360,10 @@ Python/백엔드를 수정하는 plan 확장 시, 구현 Phase 뒤에 반드시 
 - "실제 환경 필요" — 워크트리에서 못 돌리는 건 스킵 사유가 아님, `/merge-test`에서 실행
 - **"CLI 도구라서", "라이브러리라서", "프레임워크 없어서"** — 인상 기반 판단 금지. 반드시 탐색으로 확인
 - **"기존 테스트 없음", "전용 테스트 파일 없음"** — 기존 파일 부재는 신규 작성의 이유이지 스킵 사유가 아님. Glob 결과 프로젝트에 해당 유형 파일이 1개라도 있으면 반드시 신규 TC 작성
+- explicit test file command를 TODO에 적기 전에는 대상 파일의 module-level `pytestmark`를 먼저 읽는다.
+- `pytestmark = pytest.mark.http` 파일이면 plain `pytest {file} -v`를 쓰지 않고 `python -m pytest -o addopts="--capture=sys" {file} -v` 또는 broad `pytest -o addopts=--capture=sys -m http -v`로 쪼갠다.
+- `pytestmark = pytest.mark.http_live` 파일이면 live readiness 전제와 함께 `python -m pytest -o addopts="--capture=sys" {file} -m http_live -v` 또는 broad `pytest -o addopts=--capture=sys -m http_live -v`를 적는다.
+- 명시적 file-path인데 `0 selected`가 날 수 있는 plain 명령은 하위 체크박스로 출력하지 않는다.
 
 **🔴 탐색 없이 스킵 결정 = 규칙 위반**: T4/T5 스킵 전 Glob 탐색을 반드시 실행하고 결과를 근거로 제시할 것
 

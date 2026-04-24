@@ -183,21 +183,22 @@ Codex가 구현 요청 받으면:
    - **값이 비어 있거나 필드가 없으면 (신규):**
      - `plan` 템플릿이 만드는 blank `> branch:` / `> worktree:` / `> worktree-owner:`는 기존 worktree 의미가 아니라 **미할당 초기 상태**로 해석한다.
      0. **메인 레포 main 브랜치 확인**: `git rev-parse --abbrev-ref HEAD` 실행
-        - `main`이면 → 다음 단계로
-        - `main`이 아니면 → 아래 안전 절차 실행 (기본형 `git stash pop` 금지)
-          1. `$timestamp = Get-Date -Format "yyyyMMddHHmmss"`
-          2. slug를 즉시 계산할 수 있으면 `$stashTag = "implement/{slug}/$timestamp"`, 아직 확정 전이면 `$stashTag = "implement/root/$timestamp"` 사용
-          3. `git stash push --include-untracked -m $stashTag`
-             - 실패 시 즉시 중단 (`IMPL_STASH_PUSH_FAILED`)
+         - `main`이면 → 다음 단계로
+         - `main`이 아니면 → 아래 안전 절차 실행 (기본형 `git stash pop` 금지)
+           1. `$timestamp = Get-Date -Format "yyyyMMddHHmmss"`
+           2. slug를 즉시 계산할 수 있으면 `$stashTag = "implement/{slug}/$timestamp"`, 아직 확정 전이면 `$stashTag = "implement/root/$timestamp"` 사용
+           2.5. 수동 대화형 실행에서는 stash 생성(`git stash push`) 전에 **사용자 확인**을 받는다. (`plan-runner/dev-runner` 등 자동 컨텍스트는 예외)
+           3. `git stash push --include-untracked -m $stashTag`
+              - 실패 시 즉시 중단 (`IMPL_STASH_PUSH_FAILED`)
           4. `$stashMatches = @(git stash list | Select-String ([regex]::Escape($stashTag)))`
              - 0건 → stash 미생성, `$stashRef = $null`
              - 1건 → `$stashRef = (($stashMatches[0].Line -split ':')[0]).Trim()`
              - 2건 이상 → 즉시 중단 (`IMPL_STASH_REF_DUPLICATE`)
-          5. `git checkout main`
-             - 실패 시 `$stashRef`가 있으면 `git stash apply $stashRef` → 성공 시 `git stash drop $stashRef` 복구 시도 후 중단
-          6. checkout 성공 후 `$stashRef`가 있으면 `git stash apply $stashRef`
+           5. `git checkout main`
+             - 실패 시 `$stashRef`가 있으면 `git stash apply "$stashRef"` → 성공 시 `git stash drop "$stashRef"` 복구 시도 후 중단
+          6. checkout 성공 후 `$stashRef`가 있으면 `git stash apply "$stashRef"`
              - 실패/충돌 시 즉시 중단 (`IMPL_STASH_APPLY_FAILED`)
-          7. `git stash drop $stashRef`
+          7. `git stash drop "$stashRef"`
              - 실패 시 즉시 중단 (`IMPL_STASH_DROP_FAILED`)
         - 자동 전환 후 `git rev-parse --abbrev-ref HEAD` 재확인 결과가 `main`이 아니면 중단
      1. base slug를 plan 파일명에서 추출 (`YYYY-MM-DD_{slug}.md` → `{slug}`)

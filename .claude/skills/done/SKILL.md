@@ -330,6 +330,24 @@ wtools/TODO.md를 열어 해당 프로젝트 섹션을 갱신합니다:
 3. 해당 프로젝트의 모든 TODO 완료 시 "완료 ✅" 섹션으로 이동
 4. "마지막 업데이트" 날짜를 오늘로 갱신
 
+### 6.5단계: plans/TODO.md 동기화 (plans worktree)
+
+**대상 파일**: `D:\work\project\service\wtools\.worktrees\plans\TODO.md`
+
+plans/TODO.md에서 **동일 제목 key 1건만** 찾아 아래처럼 정규화한다 (0건/2건 이상이면 즉시 중단):
+
+- 완료된 plan이 archive로 이동된 경우: `[x]` + `[archive](docs/archive/...)` + `(N/N, 100%)`
+
+수동 실행 예시 (복사-붙여넣기):
+
+```powershell
+Set-Location "D:\work\project\service\wtools\.worktrees\plans"
+rg -n "{plan title seed}" TODO.md
+# TODO.md 라인 수정(checkbox/link/progress)
+git add TODO.md
+& "D:\work\project\tools\common\commit.ps1" "docs: sync plans TODO — mark {plan title seed} done"
+```
+
 ### 7단계: 완료 검증
 
 **전제 조건 확인 (먼저 실행):**
@@ -346,9 +364,10 @@ wtools/TODO.md를 열어 해당 프로젝트 섹션을 갱신합니다:
 1. **plan 문서 확인**: CLAUDE.md 문서 위치 규칙의 plan 경로에 완료된 작업의 plan이 남아있지 않은지 확인
 2. **프로젝트 TODO 확인**: `{project}/TODO.md`에서 완료 항목이 제거되었는지 확인
 3. **wtools/TODO.md 확인**: 해당 프로젝트 섹션 진행률이 갱신되었는지 확인
-4. **DONE.md 확인**: 완료 항목이 추가되었는지 확인
+4. **plans/TODO.md 확인**: plan 링크가 `docs/archive/...`를 가리키고 진행률이 `100%`인지 확인
+5. **DONE.md 확인**: 완료 항목이 추가되었는지 확인
 
-5. **워크트리/브랜치 정리 확인**: `git worktree list`에 `impl-` 패턴 없음, `git branch --list 'impl/*'`에 현재 plan 관련 브랜치 없음
+6. **워크트리/브랜치 정리 확인**: `git worktree list`에 `impl-` 패턴 없음, `git branch --list 'impl/*'`에 현재 plan 관련 브랜치 없음
 
 누락된 항목이 있으면 돌아가서 처리합니다.
 
@@ -364,7 +383,7 @@ wtools/TODO.md를 열어 해당 프로젝트 섹션을 갱신합니다:
 **plan-runner 워크플로우**에서는 `common/tools/auto-done.ps1 -PlanFile <경로>`로 1~8단계를 자동 처리합니다.
 
 - **사용 시점**: plan-runner가 plan 완료를 감지했을 때 (Phase 3.5)
-- **처리 범위**: plan 상태 갱신, 아카이브 이동, TODO→DONE, wtools/TODO.md 동기화, 커밋
+- **처리 범위**: plan 상태 갱신, 아카이브 이동, TODO→DONE, plans/TODO.md 동기화, wtools/TODO.md 동기화, 커밋
 - **수동 실행**: `powershell -File "common\tools\auto-done.ps1" -PlanFile "path/to/plan.md"`
 
 done 스킬은 **수동 작업 시** 또는 **auto-done.ps1 실패 시** fallback으로 사용합니다.
@@ -466,6 +485,7 @@ plans 워크트리에서 문서 변경이 있으면 `Resolve-DocsCommitRoot` 기
 - [ ] 완료된 plan은 archive로 이동됨
 - [ ] {project}/TODO.md에서 항목 제거됨
 - [ ] {project}/docs/DONE.md에 항목 추가됨
+- [ ] **plans/TODO.md 동기화됨**
 - [ ] **wtools/TODO.md 동기화됨**
 - [ ] **7단계 검증 통과** (누락 없이 모두 정리됨)
 

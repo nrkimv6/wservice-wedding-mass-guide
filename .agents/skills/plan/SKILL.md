@@ -262,6 +262,10 @@ todo-2: docs/plan/YYYY-MM-DD_{주제}_todo-2.md (Phase 4~6, M tasks)
   - "실제 환경 필요" — 워크트리에서 못 돌리는 건 스킵 사유가 아님, `/merge-test`에서 main 머지 후 실행
   - "API 변경 없음" (간접 실행 모듈) — plan-runner처럼 다른 프로젝트 API를 통해 실행되는 모듈은 내부 로직 변경도 API 레벨 결과를 깨뜨릴 수 있음. **반드시 해당 API를 통한 E2E 테스트 포함**
 - T4/T5 실행 시점: 워크트리 머지 후 main에서 (`/merge-test` 스킬)
+- T5에서 **명시적 테스트 파일 경로**를 적기 전에는 대상 파일의 module-level `pytestmark`를 먼저 확인한다.
+- `pytestmark = pytest.mark.http` 파일은 plain `pytest {file} -v` 대신 `python -m pytest -o addopts="--capture=sys" {file} -v` 또는 broad `pytest -o addopts=--capture=sys -m http -v`를 사용한다.
+- `pytestmark = pytest.mark.http_live` 파일은 live readiness 이후 `python -m pytest -o addopts="--capture=sys" {file} -m http_live -v` 또는 broad `pytest -o addopts=--capture=sys -m http_live -v`를 사용한다.
+- `pytest.ini` 기본 `addopts`에 `not http`/`not http_live`가 있는 프로젝트에서는 file-level marker를 무시한 plain file-path 명령을 적지 않는다.
 
 **🔴 간접 실행 모듈의 T5 규칙 (plan-runner 등):**
 - 모듈이 직접 HTTP API를 노출하지 않더라도, **다른 프로젝트의 API를 통해 트리거**되는 경우 T5는 해당 API 레벨 E2E로 작성
