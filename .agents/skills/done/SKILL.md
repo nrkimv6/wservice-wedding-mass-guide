@@ -12,6 +12,16 @@ description: "구현 완료 후처리 (plan 체크, archive, TODO→DONE, commit
 - "완료", "끝", "done", "마무리"
 - 구현이 끝났을 때
 
+## 세션 targets / continue 계약 (필수)
+
+- 사용자가 같은 세션에 plan 경로를 2개 이상 명시하면, 그 목록은 **session targets**로 고정한다.
+- `/done`은 closeout 톤의 "최종 종료"가 아니라 **문서/아카이브 정리 owner**다.
+  - 현재 target의 archive/DONE/TODO 정리를 끝냈더라도 **remaining targets**가 있으면 전체 완료로 말하지 않는다.
+  - 출력은 `현재 target 완료, 남은 target N개` 형태로 남기고, 다음 target 처리(대개 `/implement` 재진입)로 **같은 턴에서 계속** 진행한다.
+- 사용자가 `계속`, `멈추지마`, `끝날 때까지` 등으로 재지시한 경우:
+  - 중간 성공(archive 완료, 커밋 완료)은 종료점이 아니라 **진행 업데이트**다.
+  - 실제 중단은 hard blocker(충돌/커밋 실패/필수 evidence 누락 등)에서만 허용한다.
+
 ## 실행 단계
 
 ### 0단계: 고아 pytest 선제 정리
@@ -153,6 +163,37 @@ plan 또는 archive 본문에 `Phase DB-Direct`가 있으면:
    done 처리 중단.
    ```
 3. 3종이 모두 있으면 → 정상 통과
+
+**2.8 owner set 역할 판정 (attach 모드 크로스 플랜 갱신):**
+
+1. plan 헤더에서 `> worktree-owner:` 필드 읽기 (없으면 일반 단독 plan으로 간주 → 이 단계 스킵)
+2. 값을 쉼표로 split + trim하여 owner set 구성 (빈 토큰 제외, `\`/`/` 정규화)
+3. **역할 판정**:
+   - owner set 첫 항목 경로 == 현재 plan 경로: **primary**
+   - owner set 두 번째+ 항목 중 현재 plan 경로 포함: **attached**
+   - 포함 없음: **일반 단독 plan** → 이 단계 스킵 (하위 호환)
+4. **attached인 경우:**
+   - 자기 plan 헤더에서 `> branch:`, `> worktree:`, `> worktree-owner:` 3필드 제거 (Edit)
+   - primary plan 파일을 Read하여 `> worktree-owner:` 값에서 자기 경로 제거 (Edit)
+   - primary plan 수정 실패 시 → 즉시 중단:
+     ```
+     OWNER_SET_CROSS_UPDATE_FAILED: primary plan worktree-owner 필드 수정 실패 — {error}
+     수동 복구: primary plan의 > worktree-owner: 필드에서 {현재 plan 경로}를 제거하세요.
+     ```
+   - plans 워크트리에서 `chore: detach {slug} from impl/{primary-slug}` 커밋
+   - 이후 나머지 done 단계(체크박스, 아카이브, TODO→DONE 등)는 **자기 plan만** 대상으로 계속 진행
+
+5. **primary이고 owner set 길이 ≥ 2 (attached 잔존)인 경우:**
+   - 즉시 중단:
+     ```
+     ATTACHED_NOT_COMPLETED: {N}개 attached plan이 먼저 /done을 완료해야 합니다.
+     잔존 attached: {경로 목록}
+     각 attached plan의 /done 완료 후 primary plan /done을 다시 실행하세요.
+     ```
+
+6. **primary이고 owner set 길이 = 1 (자기 자신만)인 경우:**
+   - 자기 헤더 3필드 제거 후 정상 완료 처리 (worktree unlock/remove + 브랜치 정리는 /merge-test owner 단계에서 이미 완료됨)
+   - 이후 나머지 done 단계 계속 진행
 
 > 1.5단계를 통과한 경우에만 아래 2단계(구현완료 상태 설정 + 반영일시 기록)로 진행한다.
 

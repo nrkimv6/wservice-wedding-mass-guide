@@ -16,6 +16,21 @@ skills:
 **Input**: plan result object (PROJECT, TASK, SOURCE, PLAN) + env `PLAN_RUNNER_WORKTREE_PATH` (워크트리 경로)
 **Output**: `===AUTO-IMPL-RESULT===` with STATUS(`SUCCESS`/`FAILED`/`SKIPPED`), MANUAL(`true` — 수동 작업 시), PROJECT, TASK, COMMITS
 
+## 🔴 attach 모드 자동 차단 (D6)
+
+**attach 모드는 수동 세션 전용이다.** 자동 컨텍스트(plan-runner, auto-impl)에서는 금지된다.
+
+실행 흐름 시작 전, plan 헤더의 `> worktree-owner:` 필드를 읽어 아래를 확인한다:
+1. `PLAN_RUNNER_WORKTREE_PATH` 환경변수가 설정되어 있는가?
+2. `> worktree-owner:` 값을 쉼표로 split했을 때 토큰 수가 2 이상인가?
+
+**두 조건이 모두 참이면 즉시 중단:**
+```
+STATUS: BLOCKED
+exit_reason="ATTACH_IN_AUTOMATED_CONTEXT_REJECTED"
+이유: attach 모드(owner set ≥ 2)는 수동 /implement 전용입니다. plan-runner/auto-impl에서는 허용되지 않습니다.
+```
+
 ## 실행 흐름
 
 1. 전달받은 계획(PROJECT, TASK, SOURCE, PLAN)을 파악한다

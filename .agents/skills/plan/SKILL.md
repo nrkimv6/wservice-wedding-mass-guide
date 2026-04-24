@@ -100,7 +100,7 @@ $config = Get-Content $projectConfigPath | ConvertFrom-Json
 - 메타 헤더에 빈 슬롯이라도 먼저 만든다:
   - `> branch:`
   - `> worktree:`
-  - `> worktree-owner:`
+  - `> worktree-owner:` — 단일 경로 또는 쉼표 구분 경로 목록 허용. 첫 항목=primary(생성 소유), 나머지=attached(편승). attach 모드: `/implement --attach-worktree <primary-path>`
   - 빈 값은 정상 초기 상태다. `/implement`는 이를 기존 worktree 존재나 타 `impl/*` 잔여 신호로 해석하지 않는다.
 - TODO 앞단에 `### Phase 0: Worktree 준비`를 넣는다.
   - 이 phase는 **문서 가시성용 gate**다.

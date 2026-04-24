@@ -13,6 +13,16 @@ description: "구현 워크플로우 (plan→TODO→DONE). Use when: 구현해, 
 - 편집이 먼저 시작됐더라도 메타 누락 상태면 추가 수정 전에 plan/TODO/worktree 메타부터 복구한다.
 - unrelated `main` dirty를 무시할 수는 있어도 이 gate 자체는 생략할 수 없다.
 
+## 세션 targets / continue 계약 (필수)
+
+- 사용자가 같은 세션에 plan 경로를 2개 이상 명시하면, 그 목록은 **session targets**로 고정한다.
+- 현재 target의 구현이 끝났더라도 **remaining targets**가 있으면 전체 완료로 말하지 않는다.
+  - 출력은 `현재 target 완료, 남은 target N개` 형태로 남기고, 다음 target으로 **같은 턴에서 계속** 진행한다.
+- 사용자가 `계속`, `멈추지마`, `끝날 때까지` 등으로 재지시한 경우:
+  - 중간 성공(leaf 몇 개 완료, T1/T2 통과)은 종료점이 아니라 **진행 업데이트**다.
+  - owner chain의 다음 단계(`/merge-test`, `/done` 등)가 deterministic하게 남아 있으면 설명으로 멈추지 말고 **같은 턴에서 계속 실행**한다.
+  - 실제 중단은 hard blocker(충돌/필수 게이트 실패 등)에서만 허용한다.
+
 plan → TODO → DONE 흐름으로 작업을 관리합니다.
 
 ## 파일 위치
@@ -147,6 +157,7 @@ Codex가 구현 요청 받으면:
    - 작업 대상이 대표 plan/단일 plan이면 현재 파일 절대경로를 `parent_plan_path`로 사용한다.
    - `> 계획서:` 링크가 없거나 깨져서 부모 경로를 확정할 수 없으면 즉시 중단한다. (다른 계획서 워크트리 오사용 방지)
    - 이후 branch/worktree 생성·재개·정리는 모두 `parent_plan_path` 기준으로만 허용한다.
+   - `parent_plan_path`는 **owner set의 primary owner**(첫 항목)다. 단일 plan 작업 시 owner set = `[parent_plan_path]` (길이 1). attach 모드에서는 owner set 길이가 2 이상이 된다.
 
 1.2. **워크트리 준비 (수동 세션 main 오염 방지)**
 
@@ -167,6 +178,7 @@ Codex가 구현 요청 받으면:
    - 환경변수 `PLAN_RUNNER_WORKTREE_PATH`가 설정되어 있고 **AND** 해당 경로가 현재 프로젝트의 `.worktrees/` 하위인 경우에만 → 이 단계 전체 **스킵** (이미 격리됨)
      - 이 경우 루트 stash 로직도 호출하지 않는다.
    - 환경변수는 설정되어 있지만 경로가 다른 프로젝트를 가리키는 경우 → 환경변수를 무시하고 신규 worktree 생성 흐름(Step 1.2.B~D)으로 진행
+   - **자동 컨텍스트 attach 차단 (D6)**: `PLAN_RUNNER_WORKTREE_PATH` 세팅 상태이면서 대상 plan 헤더 `> worktree-owner:` 값이 쉼표를 포함하거나(owner set 길이 ≥ 2) → `ATTACH_IN_AUTOMATED_CONTEXT_REJECTED` 에러 로그 후 즉시 중단. attach 모드는 수동 세션 전용이다.
 
    **B. 잔여 워크트리/브랜치 감지:**
    - `git worktree list`와 `git branch --list "impl/*"` 결과는 **현재 plan의 재개 가능 여부와 신규 slug 충돌 확인용 내부 근거**로만 사용한다.
@@ -174,6 +186,7 @@ Codex가 구현 요청 받으면:
      - `{plan경로}/**/*.md`에서 동일 `> branch:`/`> worktree:`를 검색
      - 검색된 파일이 가리키는 부모 계획서(`> 계획서:` 링크 또는 자기 자신)가 `parent_plan_path`와 같으면 **내 잔여분**으로 간주하고 재개 후보로 취급한다.
      - 부모가 다르면 **타 계획서 소유**로 간주하고 자동 삭제/재사용/사용자 노출을 모두 금지한다.
+     - **attach 예외**: 사용자가 "attach", "attach-worktree", "붙여서" + 대상 워크트리/plan 경로를 명시 요청한 경우, 대상 워크트리의 primary owner plan이 `{plan경로}/**/*.md` 범위 안에 있으면 타 소유로 판정하지 않고 **Step 1.2.E(attach 모드)**로 분기한다.
    - 타 plan 소유 잔여는 `/implement` 책임 밖이며, 목록이나 "정리할까요?" 질문을 사용자 대화에 올리지 않는다.
    - 신규 워크트리 생성 전 이름 충돌이 있으면 `{slug}`, `{slug}-2`, `{slug}-3` 순으로 내부 재시도한다.
    - 세 후보가 모두 충돌하면 다른 잔여 목록 대신 `"현재 plan worktree 확보 실패"`만 보고하고 중단한다.
@@ -219,17 +232,29 @@ Codex가 구현 요청 받으면:
 
    - **필드가 있으면 (크래시 복구):**
      1. 소유권 검증:
-        - `> worktree-owner:` 필드가 있으면 값이 `parent_plan_path`와 정확히 일치해야 한다.
-        - 불일치하면 즉시 중단: "다른 부모 계획서 소유 워크트리이므로 사용 금지"
+        - `> worktree-owner:` 필드가 있으면 값을 **쉼표로 split + trim** 후 `parent_plan_path`가 포함되어 있는지 확인한다 (대소문자 무시, `\`/`/` 정규화). owner set은 쉼표 구분 경로 목록이거나 단일 경로 둘 다 허용한다.
+        - 포함되어 있지 않으면 즉시 중단: "다른 부모 계획서 소유 워크트리이므로 사용 금지"
         - 레거시 파일처럼 `> worktree-owner:`가 없으면 `{plan경로}/**/*.md`에서 동일 `branch/worktree` 사용 파일을 검색해 부모를 역추적한다.
         - 역추적 결과 부모가 다르면 즉시 중단한다.
-        - 역추적 결과가 현재 부모와 일치하면 해당 파일에 `> worktree-owner: {parent_plan_path}`를 보강 기록한다.
+        - 역추적 결과가 현재 부모와 일치하면 해당 파일에 `> worktree-owner: {parent_plan_path}`를 **append 모드로 보강 기록** (기존 값 보존, `parent_plan_path`를 쉼표 뒤에 append).
         - 보강 기록이 발생하면 즉시 `git status`로 변경 여부 확인 후, 변경이 있으면 해당 plan 파일을 `git add`하고 `commit "chore: worktree-owner 기록"`으로 즉시 커밋한다.
      2. 워크트리 경로가 파일시스템에 존재하는지 확인
      3. 존재하면 → 그대로 재개 (cwd를 워크트리로 설정)
      4. 존재하지 않으면 → plan에서 `> branch:` + `> worktree:` + `> worktree-owner:` 필드 제거 후 **신규 생성** 흐름으로
 
    **D. 이후 모든 작업의 cwd를 워크트리 경로로 설정한다.**
+
+   **E. attach 모드 (사용자가 "attach"/"붙여서" + 대상 경로를 명시 요청한 경우만 활성화):**
+   1. 대상 primary plan(`> worktree:`가 채워진 plan)을 Read하여 `> branch:`/`> worktree:` 값을 가져온다.
+   2. 현재 attached plan 헤더에 동일 값 기록:
+      - `> branch: {primary의 branch 값}`
+      - `> worktree: {primary의 worktree 값}`
+      - `> worktree-owner: {primary_plan_path}, {current_plan_path}`
+   3. primary plan의 `> worktree-owner:` 뒤에 현재 plan 경로를 **append** (중복 시 no-op + 경고):
+      - 기존 `> worktree-owner: {primary_plan_path}` → `> worktree-owner: {primary_plan_path}, {current_plan_path}`
+   4. 기록 직후 plans 워크트리에서 `commit "chore: attach {slug} to impl/{primary-slug}"` 실행
+      (archive/2026-04-04_worktree-owner-commit-enforcement 정책 연장)
+   5. 이후 모든 작업의 cwd를 primary 워크트리 경로로 설정한다.
 
 1.2.1. **Phase 0 / Phase Z owner 규칙**
 

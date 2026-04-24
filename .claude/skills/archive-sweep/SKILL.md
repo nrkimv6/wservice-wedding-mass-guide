@@ -25,6 +25,7 @@
 2. **haiku LLM 2차 판정**: 애매한 파일이 2개 이상이고 전체 5개 이상일 때만 호출
 3. **auto-done.ps1 호출**: 완료 판정된 파일을 아카이브 이동
 4. **worktree/branch 존재 시 스킵**: plan 헤더의 `> branch:`/`> worktree:` 필드를 확인하고, 해당 branch/worktree가 실제 git에 존재하면 아카이브 대상에서 제외. 결과 요약에 "worktree/branch 존재 (스킵)" 카운트 표시.
+   > **owner set 각주**: `> worktree-owner:` 필드가 쉼표 구분 목록(attach 모드)인 경우에도 branch/worktree 존재 여부 기준 스킵 규칙은 동일하게 동작한다. owner set 길이와 무관하게, `> branch:`/`> worktree:` 필드가 있고 실제 git에 해당 worktree가 존재하면 스킵.
 5. **LLM Wiki ingest** (archive 이동 성공 건당): 새 archive에 대해 아래 순서로 처리
    1. 태그 추출: 파일명·첫 H1·본문 앞 100자를 `docs/wiki-schema.md`의 화이트리스트(`## 3. 태그 Vocabulary` 섹션)로 소문자 매칭. 매칭 0건이면 `untagged` 단독 부여.
    2. `docs/archive/INDEX.md`의 `<!-- INDEX:BEGIN -->` 직후에 `| YYYY-MM-DD | tag1,tag2 | title | one-liner | path |` 1행 insert (date desc 유지)

@@ -44,9 +44,11 @@ tools:
    - b. 화이트리스트 파일만 **개별** git add (파일 경로 하나씩):
      - 허용: CLAUDE.md `문서 위치 규칙`에 명시된 plan/archive 경로의 `*.md` + `TODO.md`, `docs/DONE.md`
      - **절대 금지**: `git add .` / `git add -A` / 디렉토리명·글로브 패턴
-   - c. `git status --porcelain` 재확인 → 비화이트리스트 파일 있으면 `git reset HEAD {파일}` 로 제거
-   - d. 화이트리스트 파일 0개이면 커밋 중단
-   - e. 커밋 스크립트 실행: `docs: plan 상태 부여 — {주제}`
+   - c. `git diff --cached --name-only` 결과가 이번 실행의 화이트리스트와 정확히 일치하는지 검증
+   - d. `git diff --cached --name-status` 또는 `git status --porcelain`에 비화이트리스트 파일, `D`, `R`, `RM`, `??` 비대칭이 보이면 **커밋 중단**
+     - `git reset HEAD {파일}`로 일부만 걷어내고 계속 진행하지 않는다.
+   - e. 화이트리스트 파일 0개이면 커밋 중단
+   - f. 커밋 스크립트 실행: `docs: plan 상태 부여 — {주제}`
 4. 출력 블록 반환
 
 ## 출력 형식
