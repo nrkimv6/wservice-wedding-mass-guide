@@ -28,10 +28,10 @@
    > **owner set 각주**: `> worktree-owner:` 필드가 쉼표 구분 목록(attach 모드)인 경우에도 branch/worktree 존재 여부 기준 스킵 규칙은 동일하게 동작한다. owner set 길이와 무관하게, `> branch:`/`> worktree:` 필드가 있고 실제 git에 해당 worktree가 존재하면 스킵.
 5. **LLM Wiki ingest** (archive 이동 성공 건당): 새 archive에 대해 아래 순서로 처리
    1. 태그 추출: 파일명·첫 H1·본문 앞 100자를 `docs/wiki-schema.md`의 화이트리스트(`## 3. 태그 Vocabulary` 섹션)로 소문자 매칭. 매칭 0건이면 `untagged` 단독 부여.
-   2. `docs/archive/INDEX.md`의 `<!-- INDEX:BEGIN -->` 직후에 `| YYYY-MM-DD | tag1,tag2 | title | one-liner | path |` 1행 insert (date desc 유지)
+   2. POST http://localhost:8001/api/v1/plans/records/ingest (raw_content 포함) — DB에 archive 단건 등록. 실패 시 Write-Error + 복구 힌트 출력 (archive 파일은 git에 보존됨)
    3. `docs/dev-guide/_meta.yaml`을 읽어 각 가이드의 `owns_archive_tags`와 추출 태그가 교집합이면 해당 가이드의 `<!-- AUTO:BEGIN -->` 직후에 동일 포맷 1행 insert
    4. 매칭된 가이드의 `last_archive_scan`을 오늘 날짜(ISO 8601)로 갱신
-   5. 실패 시(파일 미존재, 마커 미존재 등) 경고만 출력하고 archive 이동 자체는 성공으로 처리
+   5. DB ingest 실패 시 archive 이동 자체는 성공으로 처리. 복구: POST /api/v1/plans/records/import-archived
 
 ## lint 모드 (`archive-sweep --lint`)
 
@@ -42,11 +42,9 @@ drift 점검 전용 서브명령. archive 이동은 수행하지 않음.
 ```
 
 절차:
-1. `docs/archive/INDEX.md`의 `<!-- INDEX:BEGIN -->` ~ `<!-- INDEX:END -->` 범위 파싱 → 각 행의 `path`가 실제 파일인지 확인 → **미존재 행 자동 제거** (dead link)
-2. `docs/dev-guide/*.md`의 `<!-- AUTO:BEGIN -->` ~ `<!-- AUTO:END -->` 블록에 대해 동일 처리
-3. `docs/archive/*.md` 파일 목록 - INDEX.md 등록 목록 = **미등록 archive** → stdout 보고만 (자동 추가 금지)
-4. `_meta.yaml` 각 가이드의 `last_archive_scan`이 30일 이상 미갱신이면 경고 출력
-5. 처리 결과 요약: dead link 제거 N건 / 미등록 archive M건 / 갱신 필요 가이드 K건
+1. `docs/dev-guide/*.md`의 `<!-- AUTO:BEGIN -->` ~ `<!-- AUTO:END -->` 블록 각 행의 `path`가 실제 파일인지 확인 → **미존재 행 자동 제거** (dead link)
+2. `_meta.yaml` 각 가이드의 `last_archive_scan`이 30일 이상 미갱신이면 경고 출력
+3. 처리 결과 요약: dead link 제거 N건 / 갱신 필요 가이드 K건
 
 
 ## archive-sweep vs batch-done 역할 차이

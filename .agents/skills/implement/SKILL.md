@@ -23,6 +23,12 @@ description: "구현 워크플로우 (plan→TODO→DONE). Use when: 구현해, 
   - owner chain의 다음 단계(`/merge-test`, `/done` 등)가 deterministic하게 남아 있으면 설명으로 멈추지 말고 **같은 턴에서 계속 실행**한다.
   - 실제 중단은 hard blocker(충돌/필수 게이트 실패 등)에서만 허용한다.
 
+## 실행 대상 계약 (leaf-only, 필수)
+
+- 실행 대상은 **자식 없는 미완료 체크박스(leaf)** 만 허용한다.
+- 부모 체크박스는 **직접 실행/직접 체크 금지**다. 자식이 모두 끝난 뒤 자동 승격만 허용한다.
+- 각 leaf 완료 후에는 plan을 다시 파싱해 다음 실행 가능한 leaf를 고른다.
+
 plan → TODO → DONE 흐름으로 작업을 관리합니다.
 
 ## 파일 위치

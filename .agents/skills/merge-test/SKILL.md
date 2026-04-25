@@ -67,11 +67,33 @@ triggers: ["머지 테스트", "merge-test", "머지후테스트", "통합테스
 - stash 생성 여부는 stdout 문자열이 아니라 `git stash list | Select-String ([regex]::Escape($stashTag))` 결과로만 판정한다.
 - 수동 대화형 실행에서는 stash 생성(`git stash push`) 전에 **사용자 확인**을 받는다. (`plan-runner/dev-runner` 등 자동 컨텍스트는 예외)
 - 기본형 `git stash pop`은 금지한다. 복원은 명시적 `$stashRef`에 대해서만 `git stash apply "$stashRef"`를 수행한다.
-- `git stash drop "$stashRef"`는 `apply` 성공 후에만 수행한다.
+- `apply 성공` 정의: **`git stash apply "$stashRef"` 직후의** `$LASTEXITCODE -eq 0` AND unmerged(`UU|AA|DD`) 0-hit
+- `git stash drop "$stashRef"`는 위 `apply 성공` 조건을 만족할 때만 수행한다. (partial apply/충돌 시 drop 금지)
 - PowerShell에서 `stash@{n}` literal은 `@{}` 해시 토큰과 충돌하므로, stash ref는 반드시 따옴표로 감싸야 한다 (`"stash@{0}"` 형태).
 - `push`, `list`, `apply`, `drop` 어느 단계든 실패하면 stash ref와 실패 단계를 로그에 남기고 관련 plan/todo를 `수정필요` continuation anchor로 남긴 뒤 즉시 중단한다.
 - 2단계 stash hard stop은 **머지 커밋을 보존한 채 후속 테스트/검증 단계만 중단**하는 의미다. stash 복원 실패를 이유로 `git reset`, `git merge --abort`로 머지를 되돌리지 않는다.
 - `merge --abort`는 merge conflict에만 사용한다. 충돌 마커가 섞인 파일에서 모델이 기계적으로 resolve를 시도하면 정합성이 쉽게 깨지므로, abort 후 clean state + 충돌 파일 목록을 다음 iteration 입력으로 넘기는 방식을 기본 계약으로 둔다.
+
+### (참고) `drop` 실수 시 복구 절차 (stash ref가 없을 때만)
+
+`git stash list`에 해당 stash가 없고, 실수로 `git stash drop`까지 실행된 경우에만 아래 `fsck` 경로를 사용한다.
+
+```powershell
+# 1) drop된 stash 후보 커밋 해시 추출
+$candidates = @(
+  git fsck --unreachable --no-reflogs |
+    Select-String '^unreachable commit ' |
+    ForEach-Object { ($_.Line -split ' ')[2] }
+)
+
+# 2) 메시지 확인 (stashTag/merge-test 키워드로 식별)
+$candidates | ForEach-Object { git show --no-patch $_ }
+
+# 3) 식별한 커밋을 stash처럼 다시 적용 (ref가 이미 drop된 경우에만)
+git stash apply {hash}
+```
+
+> 주의: unreachable 객체는 GC로 제거될 수 있으므로, drop 직후에만 복구 성공 가능성이 높다.
 
 ## 실패 상태 전이 계약
 
@@ -100,10 +122,14 @@ triggers: ["머지 테스트", "merge-test", "머지후테스트", "통합테스
      - 1건 → `$stashRef = (($stashMatches[0].Line -split ':')[0]).Trim()`
      - 2건 이상 → 즉시 중단 (`ROOT_STASH_REF_DUPLICATE`)
   4. `git checkout main` 실행
-     - 실패 시 `$stashRef`가 있으면 `git stash apply "$stashRef"` → 성공 시 `git stash drop "$stashRef"`로 복구 시도 후 즉시 중단
+     - 실패 시 `$stashRef`가 있으면 `git stash apply "$stashRef"` → `apply 성공 + conflicts 0-hit`일 때만 `git stash drop "$stashRef"`로 복구 시도 후 즉시 중단 (partial apply/충돌 시 drop 금지)
   5. `$stashRef`가 있으면 `git stash apply "$stashRef"`
-     - 실패/충돌 시 자동 해결 금지, 즉시 중단 (`ROOT_STASH_APPLY_FAILED`)
+     - `git stash apply "$stashRef"` 직후 `$applyExit = $LASTEXITCODE`로 캡처
+     - `$conflicts = git status --porcelain | Select-String '^(UU|AA|DD) '`
+     - `$applyExit -ne 0`이면 자동 해결 금지, 즉시 중단 (`ROOT_STASH_APPLY_FAILED`) + drop 금지 (stash ref 보존)
+     - `$conflicts` hit면 `ROOT_STASH_APPLY_PARTIAL` 로그 + stash ref 출력 후 즉시 중단 (drop 금지)
   6. `git stash drop "$stashRef"`
+     - `apply 성공 + conflicts 0-hit`일 때만 실행한다.
      - 실패 시 즉시 중단 (`ROOT_STASH_DROP_FAILED`)
   7. `git rev-parse --abbrev-ref HEAD` 재확인
      - `main`이 아니면 즉시 중단
@@ -322,18 +348,36 @@ if ($stashRef) {
 
   foreach ($path in $trackedRestore) {
     git restore --source=$stashRef --worktree -- $path
+    if ($LASTEXITCODE -ne 0) {
+      Write-Host "❌ STASH_APPLY_FAILED: stash selective restore 실패 ($stashRef)"
+      exit 1
+    }
   }
   foreach ($path in $untrackedRestore) {
     git restore --source="$stashRef^3" --worktree -- $path
+    if ($LASTEXITCODE -ne 0) {
+      Write-Host "❌ STASH_APPLY_FAILED: stash selective restore 실패 ($stashRef)"
+      exit 1
+    }
   }
 
   Write-Host "[merge-test] skipped residue는 quarantine diff/log로 기록합니다."
 
-  if ($LASTEXITCODE -ne 0) {
+  $restoreExit = $LASTEXITCODE
+  $conflicts = git status --porcelain | Select-String '^(UU|AA|DD) '
+
+  if ($restoreExit -ne 0) {
     Write-Host "❌ STASH_APPLY_FAILED: stash selective restore 실패 ($stashRef)"
     Write-Host "  → 머지 커밋은 보존합니다. git reset / git merge --abort로 롤백하지 마세요."
     Write-Host "  → 관련 plan/todo는 수정필요 continuation anchor로 남깁니다."
     Write-Host "  → 후속 테스트/검증 단계만 중단합니다."
+    exit 1
+  }
+
+  if ($conflicts) {
+    Write-Host "❌ STASH_APPLY_PARTIAL: stash restore가 partial apply/충돌로 끝났습니다. drop 금지 ($stashRef)"
+    Write-Host "  → 머지 커밋은 보존합니다. git reset / git merge --abort로 롤백하지 마세요."
+    Write-Host "  → stash ref를 유지한 채로 다음 iteration에서 충돌 정리/복구를 진행하세요."
     exit 1
   }
 

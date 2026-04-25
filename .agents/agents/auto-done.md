@@ -97,7 +97,8 @@ done SKILL.md 2단계~8단계를 순서대로 실행:
 
 ### 4. DONE.md 아카이브 (10개 초과 시)
 
-- 10개 초과 시 오래된 항목 → `docs/archive/DONE-YYYY-MM.md`로 이동
+- `.worktrees/plans/`가 있으면 오래된 항목 → `.worktrees/plans/docs/archive/DONE-YYYY-MM.md`로 이동
+- `.worktrees/plans/`가 없으면 오래된 항목 → `docs/archive/DONE-YYYY-MM.md`로 이동
 
 ### 5. wtools/TODO.md 동기화
 

@@ -214,6 +214,11 @@ plan 또는 archive 본문에 `Phase DB-Direct`가 있으면:
 
 plan 문서의 모든 체크박스가 `[x]`이면:
 
+**⚠️ archive 우려점 사장(沈沒) 경고 (blocking 아님)**
+
+- `기술적 고려사항` 섹션에 질문형 bullet, TODO/FIXME, 임시 우회 메모가 남아 있으면 archive 후 활성 추적이 끊긴다.
+- 이런 우려점은 archive 경로에 남아 있어도 **"이미 기록됨"으로 닫지 않는다**. 활성 추적이 필요하면 `/reflect`를 먼저 실행한다.
+
 **🔴 TODO 파일 동반 아카이브 필수**
 
 - `/done` 실행 시 Codex가 선택하는 **primary 파일은 TODO 파일**이다.
@@ -358,8 +363,9 @@ docs/DONE.md 상단에 추가:
 ### 5단계: DONE.md 아카이브 (10개 초과 시)
 
 docs/DONE.md 항목이 10개를 초과하면:
-1. 오래된 항목 → `{project}/docs/archive/DONE-YYYY-MM.md`로 이동
-2. docs/DONE.md는 최근 5개만 유지
+1. `.worktrees/plans/`가 있는 프로젝트는 오래된 항목 → `.worktrees/plans/docs/archive/DONE-YYYY-MM.md`로 이동
+2. `.worktrees/plans/`가 없는 프로젝트는 오래된 항목 → `{project}/docs/archive/DONE-YYYY-MM.md`로 이동
+3. docs/DONE.md는 최근 5개만 유지
 
 ### 6단계: wtools/TODO.md 동기화 (wtools만 해당)
 

@@ -200,6 +200,8 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
 - 신규 생성 전 `{plan경로}`의 미완료 plan을 검색한다.
 - `제목 키워드 + 실패 카테고리 + 최근 N일`이 일치하면 신규 생성 대신 기존 plan 링크를 반환한다.
 - 처리결과는 `plan/new`(신규 생성) 또는 `existing`(기존 링크 반환)로 기록한다.
+- **archive 경로는 중복 검색 대상 외**다. `docs/archive/`, `.worktrees/plans/docs/archive/`에만 남은 우려점은 **"이미 기록됨" 근거가 될 수 없다**.
+- archive에만 기록된 우려점이 다시 발견되면 active plan에 재승격하거나 신규 plan으로 생성한다.
 
 **Q5/Q6 계획서 생성 규칙:**
 - 스킬/에이전트 파일, 공통 스크립트, 문서 규칙 수정으로 재발 방지가 가능한 경우에만 plan 생성
