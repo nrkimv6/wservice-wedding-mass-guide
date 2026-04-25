@@ -34,7 +34,7 @@ skills:
    - **plan의 미완료 `[ ]` 항목을 TodoWrite에 등록한다** (각 항목 = 하나의 task)
 
 2. **모든 미완료 항목을 구현한다** — Phase 구분 없이 전부 처리
-   - **프론트엔드(.svelte, .ts) 수정 전**: `.agents/skills/recurring-patterns/SKILL.md`를 Read한 후 코딩
+   - **프론트엔드(.svelte, .ts) 수정 전**: `.agents/skills/recurring-patterns/SKILL.md`를 Read한 후 코딩 <!-- engine-tune: agent reads from .agents/skills/ (harness-specific root) -->
    - **금지**: 메인 레포에서 `git checkout {plan 브랜치}` 실행
    - 한 항목 완료 후 남은 항목이 있으면 이어서 다음 항목도 진행한다
    - **사람의 눈/판단이 필수인 항목**(디자인 일치, 색상 가독성, 레이아웃 미관 등)만 스킵하고 MANUAL_TASKS로 분리
@@ -83,7 +83,7 @@ plan 문서 없이 진행된 소규모 수정이나 버그 픽스의 경우:
 
 ### 기록 위치
 - **단일 프로젝트**: 해당 `{project}/docs/DONE.md`에 추가 기입
-- **공통/다중 프로젝트**: AGENTS.md/CLAUDE.md `문서 위치 규칙`의 history 경로에 `YYYY-MM-DD_{작업명}-changes.md` 신규 생성 (기본: `docs/history/`)
+- **공통/다중 프로젝트**: CLAUDE.md `문서 위치 규칙`의 history 경로에 `YYYY-MM-DD_{작업명}-changes.md` 신규 생성 (기본: `docs/history/`)
 
 ## 출력 형식 (반드시 이 형식으로)
 

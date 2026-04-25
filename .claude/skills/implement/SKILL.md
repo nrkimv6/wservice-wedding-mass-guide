@@ -327,6 +327,8 @@ Claude가 구현 요청 받으면:
    - T4(E2E), T5(HTTP 통합) Phase의 체크박스는 **implement에서 절대 `[x]`로 변경하지 않는다**
    - T4/T5 실행 및 체크는 `/merge-test` 스킬이 전담한다
    - "단위 TC로 커버됨", "수동 테스트", "실제 환경 필요" 등의 사유로 스킵 체크하는 것도 금지
+   - **T4/T5 실행 금지 조건 3축**: (1) **pre-merge** — impl 워크트리 구현 단계 (아직 main 머지 전), (2) **non-root-worktree** — `.worktrees/*` 경로 (원본 main worktree 아님), (3) **non-main** — impl/* 브랜치 (main 브랜치 아님)
+   - 3축 중 하나라도 해당하면 T4/T5 금지. **post-merge + root-worktree + main** 세 조건이 모두 충족될 때만 `/merge-test`에서 실행 가능.
    - T1(TC 작성), T2(TC 검증)는 implement에서 직접 실행하고 체크한다
    - **T3(재현/통합TC)는 implement에서 T2 직후 실행하고 체크한다** — fix: plan이면 필수
 
@@ -344,10 +346,13 @@ Claude가 구현 요청 받으면:
    - 코드 작성
    - **테스트 파일 네이밍 규칙**: `_e2e` 접미사는 실서버(localhost) 또는 실브라우저(Playwright) 필요 테스트에만 사용. mock/AsyncMock 기반 테스트는 `_integration` 또는 도메인명만 사용 (예: `test_coupang_monitor_integration.py`)
    - **DB 마이그레이션 SQL 파일을 생성한 경우 → 즉시 실행** (커밋 전 필수, 실행 안 하면 API 장애)
+   - **plan 또는 `_todo`에 `Phase DB-Direct`가 있으면 running DB 직접 실행은 아직 미완료로 남긴다** — worktree 단계에서는 `DB-direct 미실행`, `live 검증 미실행`, `직접 실행 대기` 상태를 유지하고 `/merge-test` owner step으로 넘긴다.
    - 기존 테스트 통과 확인
    - **⚠️ 빌드 확인 (webapp-testing 스킬)은 워크트리에서 실행 금지** — 반드시 `/merge-test`에서 main 머지 후 실행
 
 5. **완료 처리**
+   - plan 또는 `_todo`에 `Phase DB-Direct`가 있으면 종료 안내에 아래 잔여 항목을 반드시 남긴다: `main 머지 후 running DB 직접 실행 필요`, `실행 SQL/명령`, `존재 확인 쿼리`, `live API 또는 runtime 결과`
+   - 위 잔여 항목이 남아 있는 상태를 `구현완료`, `마무리`, `닫힘`으로 표현하지 않는다. 이 상태는 `DB-direct 미실행`, `live 검증 미실행`, `직접 실행 대기`로만 보고한다.
    - 기본: 구현 체크박스를 마치고 plan 상태를 `머지대기`로 올린 뒤 `/merge-test` 스킬 호출 — 워크트리 머지 + T4/T5 통합테스트 + 완료 처리(archive, TODO→DONE, 커밋)까지 일괄 실행
    - `_todo-N.md` 작업이고 같은 `parent_plan_path`의 다른 `_todo-*`가 이미 `머지대기` 상태면 `/merge-test`를 **부모 묶음 배치 모드**로 1회 실행해 같은 부모의 워크트리를 한 번에 정리한다.
    - `/merge-test`가 `수정필요`로 종료되면 현재 iteration은 실패로 버려지는 것이 아니라 **다음 iteration continuation anchor를 남긴 상태**로 종료된 것으로 본다.
@@ -365,9 +370,9 @@ Claude가 구현 요청 받으면:
 | `구현중` | 구현 착수됨 |
 | `검증중` | 구현 결과 검증 단계 (auto-verify) |
 | `테스트중` | 테스트 실행 단계 |
-| `머지대기` | 수동 `/implement` 완료 또는 자동 테스트 통과 후 `/merge-test` 진입 대기 |
+| `머지대기` | 수동 `/implement` 완료 또는 자동 테스트 통과 후 `/merge-test` 진입 대기. `Phase DB-Direct`가 있으면 `DB-direct 미실행`/`직접 실행 대기` 상태를 포함 |
 | `통합테스트중` | /merge-test: main 머지 후 T4/T5 실행 중 |
-| `구현완료` | 모든 항목 완료 (/merge-test 이후 또는 직접 구현 완료) |
+| `구현완료` | 모든 항목 완료. 단, `Phase DB-Direct`가 있는 plan은 running DB 직접 실행 + 존재 검증 + live/runtime 검증 evidence 3종 확보 후 (/merge-test 이후) |
 | `수정필요` | `/merge-test` 또는 검증 실패 후 다음 iteration 입력을 기다리는 continuation anchor |
 | `보류` | 우선순위 밀림 |
 | `완료` | /done으로 archive 처리됨 |

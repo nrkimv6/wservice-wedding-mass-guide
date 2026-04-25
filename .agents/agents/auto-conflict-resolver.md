@@ -80,5 +80,3 @@ STATUS 값:
 - `RESOLVED`: 모든 파일 해결 완료
 - `FAILED`: 해결 불가 (구조적 충돌)
 - `PARTIAL`: 일부만 해결됨
-
-

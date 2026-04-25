@@ -71,5 +71,3 @@ CHANGED_FILES: ["app/routes/api.py", "frontend/src/lib/utils.ts"]
 STATUS 값:
 - `FIXED`: 에러 수정 완료
 - `FAILED`: 수정 불가 (원인 파악 불가 또는 구조적 문제)
-
-

@@ -211,12 +211,12 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
 - 사례 4: 사용자가 `[$plan](...SKILL.md)` 또는 `[$review-plan](...SKILL.md)`를 다시 찍어줬는데도 실행 대신 설명을 이어간 경우
   - Q5에는 `explicit skill invocation execute-now 누락`이 기록되어야 한다.
   - Q6에는 `execute-now 교정 방향을 말했지만 가이드/스킬 수정 plan으로 연결하지 않음`이 기록되어야 한다.
-  - 같은 원인이 `common/docs/guide/skills.md`, 해당 SKILL.md 보강으로 막을 수 있으면 same-file follow-up plan으로 묶는다.
+  - 같은 원인이 해당 SKILL.md 보강으로 막을 수 있으면 same-file follow-up plan으로 묶는다.
 
 - 사례 5: 사용자가 `계속`/`멈추지마`/`끝날 때까지`로 교정했는데도 agent가 단계별 closeout 톤으로 멈춘 경우
   - Q5에는 `explicit continue/no-stop 위반(중간 마일스톤을 종료로 오독)`이 기록되어야 한다.
   - Q6에는 `continue 계약을 owner SKILL.md/가이드에 반영하지 않음`이 기록되어야 한다.
-  - 이 유형이 발견되면 `common/docs/guide/skills.md` 및 owner SKILL.md 반영 여부를 확인하고, 미반영이면 follow-up plan 또는 existing active plan 링크로 승격한다.
+  - 이 유형이 발견되면 owner SKILL.md 반영 여부를 확인하고, 미반영이면 follow-up plan 또는 existing active plan 링크로 승격한다.
   - 설명이 맞고 내용이 정확해도 멈춘 타이밍이 틀리면 지시불이행이다 — 단순 커뮤니케이션 문제로 축소하지 않는다.
   - 같은 원인이 `implement`/`merge-test`/`done` 스킬 문구 보강으로 막을 수 있으면 follow-up plan 생성 대상이다.
 

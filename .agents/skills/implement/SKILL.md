@@ -325,6 +325,8 @@ Codex가 구현 요청 받으면:
    - T4(E2E), T5(HTTP 통합) Phase의 체크박스는 **implement에서 절대 `[x]`로 변경하지 않는다**
    - T4/T5 실행 및 체크는 `/merge-test` 스킬이 전담한다
    - "단위 TC로 커버됨", "수동 테스트", "실제 환경 필요" 등의 사유로 스킵 체크하는 것도 금지
+   - **T4/T5 실행 금지 조건 3축**: (1) **pre-merge** — impl 워크트리 구현 단계 (아직 main 머지 전), (2) **non-root-worktree** — `.worktrees/*` 경로 (원본 main worktree 아님), (3) **non-main** — impl/* 브랜치 (main 브랜치 아님)
+   - 3축 중 하나라도 해당하면 T4/T5 금지. **post-merge + root-worktree + main** 세 조건이 모두 충족될 때만 `/merge-test`에서 실행 가능.
    - T1(TC 작성), T2(TC 검증)는 implement에서 직접 실행하고 체크한다
    - **T3(재현/통합TC)는 implement에서 T2 직후 실행하고 체크한다** — fix: plan이면 필수
 

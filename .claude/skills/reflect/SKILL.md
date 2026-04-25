@@ -130,12 +130,14 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
 - AGENTS.md, 프로젝트 규칙, 스킬 규칙의 필수 절차를 누락하거나 우회한 경우
 - "계획서부터", "그 스킬로 해", "하지 마", "왜 안 지켰냐"처럼 사용자가 명시적으로 교정한 경우
 - 사용자가 `[$skill](...SKILL.md)` 링크나 exact skill name을 다시 제시했는데도 실행 대신 설명을 반복한 경우
+- `Phase DB-Direct`가 있는 plan에서 running DB 직접 실행, `존재 확인 쿼리`, `live API 또는 runtime 결과`를 남기지 않은 경우
 
 기록 기준:
 - 단순 말실수나 표현 차이가 아니라, 실제 작업 흐름에 영향을 준 누락만 포함
 - 위반 사실 자체와 그 근거(누락된 절차, 어긴 규칙, 사용자 교정 문장)를 같이 적는다
 
 "해당 없음" 기준: 대화/로그에 명시적 지시 위반 또는 필수 절차 누락이 없고, 사용자 교정이 발생하지 않음.
+사용자가 "직접 실행", "직접 마이그레이션", "live로 다시 검증" 같은 재지시를 남긴 경우, DB-direct/live 누락을 Q5 `해당 없음`으로 축소하지 않는다.
 
 - **축소 금지 (필수):** Q5 또는 Q6 성격의 문제가 발견되면 사용자 승인 없이 `해당 없음`, `불필요`, `과함`, `닫음`으로 종결하지 않는다.
 - 최소 `사용자 보고`로 남기고, 재발 방지 수정(스킬/규칙/코드)이 필요하면 `plan/new` 또는 `plan candidate`로 승격한다. (`조사만`/`조사` 모드도 동일)
@@ -147,6 +149,7 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
 - 반복 재발 방지 액션을 언급했지만 후속 작업으로 연결하지 않음
 - 세션 중 교정 필요성이 드러났는데 plan 생성이나 규칙 수정 없이 종료하려 한 경우
 - explicit skill execute-now 교정안을 말했지만 `skills.md` 또는 관련 SKILL.md 수정 plan으로 연결하지 않은 경우
+- DB-direct/live validation 누락이 반복되는데도 hard gate 교정안을 `plan candidate`로 승격하지 않은 경우
 
 판정 기준:
 - 반복 재발 또는 범위 확장 리스크가 있는 수준만 포함
@@ -167,13 +170,18 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
 - 사례 3: 사용자가 `[$plan](...SKILL.md)` 또는 `[$review-plan](...SKILL.md)`를 다시 찍어줬는데도 실행 대신 설명을 이어간 경우
   - Q5에는 `explicit skill invocation execute-now 누락`이 기록되어야 한다.
   - Q6에는 `execute-now 교정 방향을 말했지만 가이드/스킬 수정 plan으로 연결하지 않음`이 기록되어야 한다.
-  - 같은 원인이 `common/docs/guide/skills.md`, 해당 SKILL.md 보강으로 막을 수 있으면 same-file follow-up plan으로 묶는다.
+  - 같은 원인이 해당 SKILL.md 보강으로 막을 수 있으면 same-file follow-up plan으로 묶는다.
 
 - 사례 4: 사용자가 `계속`/`멈추지마`/`끝날 때까지`로 교정했는데도 agent가 단계별 closeout 톤으로 멈춘 경우
   - Q5에는 `explicit continue/no-stop 위반(중간 마일스톤을 종료로 오독)`이 기록되어야 한다.
   - Q6에는 `continue 계약을 owner SKILL.md/가이드에 반영하지 않음`이 기록되어야 한다.
-  - 이 유형이 발견되면 `common/docs/guide/skills.md` 및 owner SKILL.md 반영 여부를 확인하고, 미반영이면 follow-up plan 또는 existing active plan 링크로 승격한다.
+  - 이 유형이 발견되면 owner SKILL.md 반영 여부를 확인하고, 미반영이면 follow-up plan 또는 existing active plan 링크로 승격한다.
   - 같은 원인이 `implement`/`merge-test`/`done` 스킬 문구 보강으로 막을 수 있으면 follow-up plan 생성 대상이다.
+
+- 사례 5: `Phase DB-Direct`가 있는 plan에서 사용자가 "직접 실행" 또는 동등한 재지시를 남겼는데도 running DB 반영과 live 검증 evidence 없이 거의 완료처럼 보고한 경우
+  - Q5에는 `DB-direct 미실행`, `live 검증 미실행`, `직접 실행 대기` 상태를 숨긴 workflow 누락이 기록되어야 한다.
+  - Q6에는 `DB-direct hard gate 교정안을 plan candidate로 승격하지 않음`이 기록되어야 한다.
+  - 같은 원인이 SKILL.md/workflow 규칙 보강으로 재발 방지 가능하면 follow-up plan 생성 대상이다.
 
 ### 2단계: 계획서 생성
 

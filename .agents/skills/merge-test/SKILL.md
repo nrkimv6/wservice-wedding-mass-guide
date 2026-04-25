@@ -17,6 +17,13 @@ triggers: ["머지 테스트", "merge-test", "머지후테스트", "통합테스
 
 `frontend verify(sync/check/build)`는 `/merge-test`가 sole owner다. implement는 코드 수정과 워크트리 단위 검증까지만 담당하고, 프론트엔드 verify 계열은 main 머지 후 여기서만 실행한다.
 
+**T4/T5 실행 허용 조건 3축 (3가지 모두 충족해야 실행 가능):**
+1. **post-merge** — main에 머지 완료 이후
+2. **root-worktree** — 원본 main worktree (`.worktrees/*` 경로 제외)
+3. **main 브랜치** — `main` 브랜치 체크아웃 상태
+
+3축 중 하나라도 미충족이면 T4/T5 실행 금지. plan-runner의 `run_post_merge_tests`/`run_e2e_with_fix`는 진입 즉시 이 조건을 self-guard로 검증한다.
+
 ## 세션 targets / continue 계약 (필수)
 
 - 사용자가 같은 세션에 plan 경로를 2개 이상 명시하면, 그 목록은 **session targets**로 고정한다.
@@ -212,8 +219,8 @@ expand-todo의 판단을 신뢰하지 않고, 직접 확인한다.
 
 **검증 절차:**
 1. plan에서 T4/T5 `> T4 해당 없음:` 블록쿼트 또는 `[x] 스킵` 항목 탐지 (없으면 이 단계 스킵)
-2. T4 해당 없음인 경우: `Glob tests/**/*http*`, `Glob tests/**/*api*` 실행
-   T3 해당 없음인 경우: `Glob tests/**/*e2e*`, `Glob tests/**/*integration*` 실행
+2. T4 해당 없음인 경우: `Glob tests/**/*e2e*`, `Glob tests/**/*integration*` 실행
+   T5 해당 없음인 경우: `Glob tests/**/*http*`, `Glob tests/**/*api*` 실행
 3. 판정:
    - Glob 결과 1개 이상 존재 → **해당 없음 거부, TC 자동 작성 후 실행**
    - Glob 결과 0개 → 해당 없음 허용, 정상 통과

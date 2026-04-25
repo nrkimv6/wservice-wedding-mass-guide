@@ -120,5 +120,3 @@ FAILED-ENDPOINTS:
 - **PowerShell 버전 (deprecated)**: v2 미지원 — 이 에이전트 사용 불가
 
 출력 형식 (`===AUTO-TEST-E2E-RESULT===`)은 Python plan-runner에서 파싱됩니다.
-
-
