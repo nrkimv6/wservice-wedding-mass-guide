@@ -5,6 +5,8 @@ description: "구현 워크플로우 (plan→TODO→DONE). Use when: 구현해, 
 
 # 구현 워크플로우
 
+> **본문 분리 원칙**: 호출 컨텍스트가 다르면 본문도 다르다. 공유 레시피는 [`_recipes.md`](./_recipes.md)로만.
+
 ## PRE-EDIT HARD GATE
 - `/implement`의 첫 액션은 구현 파일 수정이 아니라 workflow 준비다.
 - 대상 파일을 건드리기 전에 plan 상태를 `구현중`으로 맞춘다.
@@ -16,6 +18,10 @@ description: "구현 워크플로우 (plan→TODO→DONE). Use when: 구현해, 
 ## 세션 targets / continue 계약 (필수)
 
 - 사용자가 같은 세션에 plan 경로를 2개 이상 명시하면, 그 목록은 **session targets**로 고정한다.
+- 사용자가 명시한 경로가 대표 plan(`*_todo-N.md` 아님)이고 `> **실행 TODO:**` 링크 또는 sibling `_todo-*.md`가 있으면, 미완료 `_todo` 전부를 **session targets**에 자동 추가한다.
+  - 출력은 `대표 plan`, `discovered _todo`, `session targets 추가`, `남은 target N개` 형식으로 남긴다.
+  - 현재 작업 대상은 첫 번째 실행 가능한 `_todo` 1개뿐이며, 나머지는 **remaining targets**로 유지한다.
+  - `_todo`가 남아 있는 동안 `대표 plan 전체 완료`, `session 종료` 표현을 금지한다.
 - 현재 target의 구현이 끝났더라도 **remaining targets**가 있으면 전체 완료로 말하지 않는다.
   - 출력은 `현재 target 완료, 남은 target N개` 형태로 남기고, 다음 target으로 **같은 턴에서 계속** 진행한다.
 - 사용자가 `계속`, `멈추지마`, `끝날 때까지` 등으로 재지시한 경우:
@@ -141,8 +147,14 @@ Claude가 구현 요청 받으면:
 **0. 사용자가 구현할 항목을 명시했는가?**
 
 구현 요청의 형태에 따라 task selection 단계를 결정한다:
-- **명시적 입력**: "구현해 Phase 1", "fix: 섹션 A", "test_foo.py 수정" 등 → 해당 항목으로 직진, **Step 1 스킵**
+- **명시적 입력**: "구현해 Phase 1", "fix: 섹션 A", "test_foo.py 수정" 등 → 해당 항목으로 직진. 단, **대표 plan 경로 입력은 아래 0.5 enumeration gate를 먼저 수행**한다.
 - **일반 입력**: "구현해", "다음 작업" 등 → **Step 1로 진행** (plan 확인 필수)
+
+**0.5. explicit 대표 plan _todo enumeration gate**
+   - 사용자가 대표 plan 경로를 직접 넘겼고 `_todo` 분리 plan이면, `> **실행 TODO:**` 링크 또는 sibling `_todo-*.md`를 즉시 enumerate한다.
+   - archive/`완료` 상태가 아닌 `_todo`는 전부 session targets에 추가한다.
+   - 첫 번째 실행 가능한 `_todo`만 현재 작업 대상으로 잡고, 나머지는 remaining targets로 유지한다.
+   - enumeration 결과 없이 대표 plan을 단일 target처럼 처리하거나, child 1개 완료 후 대표 plan 전체 완료로 말하면 안 된다.
 
 ### Phase B: 선택적 plan 스캔 (사용자 미명시 시)
 
@@ -151,7 +163,7 @@ Claude가 구현 요청 받으면:
      - `.worktrees/plans/docs/plan/` 존재 시: 이 경로에서 plan 검색
      - 없으면: CLAUDE.md 문서 위치 규칙의 plan 경로 (기본: `docs/plan/`)
    - plan 파일에 `> **실행 TODO:**` 링크가 있으면 (분리된 대형 계획):
-     각 링크 대상 `_todo-N.md`를 Read하여 미완료(`[ ]`)가 남은 첫 번째 파일을 작업 대상으로 선택
+     각 링크 대상 `_todo-N.md`를 Read하여 미완료(`[ ]`)가 남은 첫 번째 파일을 **현재 작업 대상**으로 선택하고, 나머지는 remaining targets로 유지
    - `> **실행 TODO:**` 링크가 없으면: plan 파일 자체 또는 기존 `_todo.md` 단일 파일에서 체크박스 읽기 (하위 호환)
    - 없으면 사용자 요청을 바로 TODO에 추가
    - **plans 워크트리 도입 프로젝트 — impl 워크트리에서의 plan 접근**:
@@ -189,85 +201,23 @@ Claude가 구현 요청 받으면:
    - 환경변수는 설정되어 있지만 경로가 다른 프로젝트를 가리키는 경우 → 환경변수를 무시하고 신규 worktree 생성 흐름(Step 1.2.B~D)으로 진행
    - **자동 컨텍스트 attach 차단 (D6)**: `PLAN_RUNNER_WORKTREE_PATH` 세팅 상태이면서 대상 plan 헤더 `> worktree-owner:` 값이 쉼표를 포함하거나(owner set 길이 ≥ 2) → `ATTACH_IN_AUTOMATED_CONTEXT_REJECTED` 에러 로그 후 즉시 중단. attach 모드는 수동 세션 전용이다.
 
-   **B. 잔여 워크트리/브랜치 감지:**
-   - `git worktree list`와 `git branch --list "impl/*"` 결과는 **현재 plan의 재개 가능 여부와 신규 slug 충돌 확인용 내부 근거**로만 사용한다.
-   - 잔여분이 있으면 소유권을 먼저 판정한다:
-     - `{plan경로}/**/*.md`에서 동일 `> branch:`/`> worktree:`를 검색
-     - 검색된 파일이 가리키는 부모 계획서(`> 계획서:` 링크 또는 자기 자신)가 `parent_plan_path`와 같으면 **내 잔여분**으로 간주하고 재개 후보로 취급한다.
-     - 부모가 다르면 **타 계획서 소유**로 간주하고 자동 삭제/재사용/사용자 노출을 모두 금지한다.
-     - **attach 예외**: 사용자가 "attach", "attach-worktree", "붙여서" + 대상 워크트리/plan 경로를 명시 요청한 경우, 대상 워크트리의 primary owner plan이 `{plan경로}/**/*.md` 범위 안에 있으면 타 소유로 판정하지 않고 **Step 1.2.E(attach 모드)**로 분기한다.
-   - 타 plan 소유 잔여는 `/implement` 책임 밖이며, 목록이나 "정리할까요?" 질문을 사용자 대화에 올리지 않는다.
-   - 신규 워크트리 생성 전 이름 충돌이 있으면 `{slug}`, `{slug}-2`, `{slug}-3` 순으로 내부 재시도한다.
-   - 세 후보가 모두 충돌하면 다른 잔여 목록 대신 `"현재 plan worktree 확보 실패"`만 보고하고 중단한다.
+   **B~E 분기 요약표** — 상세 절차/PowerShell 의사코드는 [`_recipes.md`](./_recipes.md) 참조:
 
-   **C. plan 헤더에서 `> branch:` 및 `> worktree:` 필드 확인:**
+   | 분기 | 트리거 조건 | 동작 요약 | 실패 시 |
+   |------|------------|---------|--------|
+   | **B** 잔여 감지 | `git worktree list` 결과 잔여 존재 | 소유권 판정 → 내 잔여면 재개 후보, 타 소유면 무시 | 3후보 충돌 → `"현재 plan worktree 확보 실패"` 후 중단 |
+   | **C** 신규 생성 | `> branch:` 비어 있음 | main 확인 → (필요 시 stash) → `git worktree add` → lock → 헤더 기록 | `IMPL_STASH_PUSH_FAILED` / `IMPL_STASH_APPLY_FAILED` / `IMPL_STASH_DROP_FAILED` → 즉시 중단 |
+   | **C** 크래시 복구 | `> branch:` 채워져 있음 | 소유권 검증 → 경로 존재 확인 → 재개 또는 신규 생성 흐름으로 | 소유권 불일치 → 즉시 중단 |
+   | **D** cwd 설정 | 항상 | 이후 모든 작업 cwd를 워크트리 경로로 설정 | — |
+   | **E** attach 모드 | 사용자가 "attach"+"대상 경로" 명시 | primary plan branch/worktree 복사 → 헤더 동기화 → owner append → commit | primary plan 미발견 → 중단 |
 
-   - **값이 비어 있거나 필드가 없으면 (신규):**
-     - `plan` 템플릿이 만드는 blank `> branch:` / `> worktree:` / `> worktree-owner:`는 기존 worktree 의미가 아니라 **미할당 초기 상태**로 해석한다.
-     0. **메인 레포 main 브랜치 확인**: `git rev-parse --abbrev-ref HEAD` 실행
-         - `main`이면 → 다음 단계로
-         - `main`이 아니면 → 아래 안전 절차 실행 (기본형 `git stash pop` 금지)
-           1. `$timestamp = Get-Date -Format "yyyyMMddHHmmss"`
-           2. slug를 즉시 계산할 수 있으면 `$stashTag = "implement/{slug}/$timestamp"`, 아직 확정 전이면 `$stashTag = "implement/root/$timestamp"` 사용
-           2.5. 수동 대화형 실행에서는 stash 생성(`git stash push`) 전에 **사용자 확인**을 받는다. (`plan-runner/dev-runner` 등 자동 컨텍스트는 예외)
-           3. `git stash push --include-untracked -m $stashTag`
-              - 실패 시 즉시 중단 (`IMPL_STASH_PUSH_FAILED`)
-          4. `$stashMatches = @(git stash list | Select-String ([regex]::Escape($stashTag)))`
-             - 0건 → stash 미생성, `$stashRef = $null`
-             - 1건 → `$stashRef = (($stashMatches[0].Line -split ':')[0]).Trim()`
-             - 2건 이상 → 즉시 중단 (`IMPL_STASH_REF_DUPLICATE`)
-           5. `git checkout main`
-             - 실패 시 `$stashRef`가 있으면 `git stash apply "$stashRef"` → 성공 시 `git stash drop "$stashRef"` 복구 시도 후 중단
-          6. checkout 성공 후 `$stashRef`가 있으면 `git stash apply "$stashRef"`
-             - 실패/충돌 시 즉시 중단 (`IMPL_STASH_APPLY_FAILED`)
-          7. `git stash drop "$stashRef"`
-             - 실패 시 즉시 중단 (`IMPL_STASH_DROP_FAILED`)
-        - 자동 전환 후 `git rev-parse --abbrev-ref HEAD` 재확인 결과가 `main`이 아니면 중단
-     1. base slug를 plan 파일명에서 추출 (`YYYY-MM-DD_{slug}.md` → `{slug}`)
-     2. `{slug}`, `{slug}-2`, `{slug}-3` 후보 중 충돌 없는 첫 값을 `selectedSlug`로 선택
-     3. `git worktree add .worktrees/impl-{selectedSlug} -b impl/{selectedSlug}` 실행
-     2.5. **워크트리 생성 직후 lock 실행** (단일 `--force`로 실수 삭제 방지):
-        ```bash
-        git worktree lock .worktrees/impl-{selectedSlug} --reason "impl/{selectedSlug} 구현 진행 중"
-        ```
-        - lock된 워크트리는 `git worktree remove --force` 한 번으로는 삭제 불가 (`--force --force` 필요)
-        - lock 실패 시 경고만 출력하고 계속 진행 (lock은 안전장치, 필수 중단 조건 아님)
-        - lock 실패 경고는 stash 실패와 다르다. stash 관련 단계는 모두 hard stop이다.
-     3. **워크트리 생성 후 메인 레포 브랜치 재확인**: `git rev-parse --abbrev-ref HEAD`
-        - `main`이면 → 정상, 다음 단계로
-        - `main`이 아니면 → 생성된 워크트리 제거 (`git worktree remove .worktrees/impl-{selectedSlug} --force`) + 사용자에게 "워크트리 생성 후 메인 레포가 main에서 벗어남. 수동 확인 필요." 경고 후 중단
-     4. plan 헤더에 Edit으로 추가:
-        ```
-        > branch: impl/{selectedSlug}
-        > worktree: .worktrees/impl-{selectedSlug}
-        > worktree-owner: {parent_plan_path}
-        ```
+**1.2.1. Phase 0 / Phase Z owner 규칙**
 
-   - **필드가 있으면 (크래시 복구):**
-     1. 소유권 검증:
-        - `> worktree-owner:` 필드가 있으면 값을 **쉼표로 split + trim** 후 `parent_plan_path`가 포함되어 있는지 확인한다 (대소문자 무시, `\`/`/` 정규화). owner set은 쉼표 구분 경로 목록이거나 단일 경로 둘 다 허용한다.
-        - 포함되어 있지 않으면 즉시 중단: "다른 부모 계획서 소유 워크트리이므로 사용 금지"
-        - 레거시 파일처럼 `> worktree-owner:`가 없으면 `{plan경로}/**/*.md`에서 동일 `branch/worktree` 사용 파일을 검색해 부모를 역추적한다.
-        - 역추적 결과 부모가 다르면 즉시 중단한다.
-        - 역추적 결과가 현재 부모와 일치하면 해당 파일에 `> worktree-owner: {parent_plan_path}`를 **append 모드로 보강 기록** (기존 값 보존, `parent_plan_path`를 쉼표 뒤에 append).
-        - 보강 기록이 발생하면 즉시 `git status`로 변경 여부 확인 후, 변경이 있으면 해당 plan 파일을 `git add`하고 `commit "chore: worktree-owner 기록"`으로 즉시 커밋한다.
-     2. 워크트리 경로가 파일시스템에 존재하는지 확인
-     3. 존재하면 → 그대로 재개 (cwd를 워크트리로 설정)
-     4. 존재하지 않으면 → plan에서 `> branch:` + `> worktree:` + `> worktree-owner:` 필드 제거 후 **신규 생성** 흐름으로
-
-   **D. 이후 모든 작업의 cwd를 워크트리 경로로 설정한다.**
-
-   **E. attach 모드 (사용자가 "attach"/"붙여서" + 대상 경로를 명시 요청한 경우만 활성화):**
-   1. 대상 primary plan(`> worktree:`가 채워진 plan)을 Read하여 `> branch:`/`> worktree:` 값을 가져온다.
-   2. 현재 attached plan 헤더에 동일 값 기록:
-      - `> branch: {primary의 branch 값}`
-      - `> worktree: {primary의 worktree 값}`
-      - `> worktree-owner: {primary_plan_path}, {current_plan_path}`
-   3. primary plan의 `> worktree-owner:` 뒤에 현재 plan 경로를 **append** (중복 시 no-op + 경고):
-      - 기존 `> worktree-owner: {primary_plan_path}` → `> worktree-owner: {primary_plan_path}, {current_plan_path}`
-   4. 기록 직후 plans 워크트리에서 `commit "chore: attach {slug} to impl/{primary-slug}"` 실행
-      (archive/2026-04-04_worktree-owner-commit-enforcement 정책 연장)
-   5. 이후 모든 작업의 cwd를 primary 워크트리 경로로 설정한다.
+   - plan에 `### Phase 0: Worktree 준비`가 있으면, 이 phase는 **임의 git 작업 지시**가 아니라 위 1.2 단계에서 생성/재개한 worktree 상태를 문서에 고정하는 gate로 해석한다.
+   - `Phase 0` 체크박스는 `> branch:`, `> worktree:`, `> worktree-owner:`가 채워진 뒤에만 완료할 수 있다.
+   - 이미 현재 세션이 worktree 안에 있으면, 같은 plan에 대해 두 번째 worktree를 만들려고 하지 않는다.
+   - plan에 `### Phase Z: Post-Merge Cleanup (/merge-test owner)`가 있으면, 이 phase는 `/implement`가 아니라 `/merge-test` 소유다.
+   - `/implement`는 `Phase Z` 체크박스를 완료 처리하지 않으며, 해당 phase는 구현 완료 판정과 auto-impl 재진입 판단에서 제외되는 것으로 해석한다.
 
 **1.3. main 기존 수정사항 무시 모드 (사용자 명시 지시 시) — 조건부 필수**
 
@@ -281,15 +231,12 @@ Claude가 구현 요청 받으면:
    - 단, `.git` 보호 및 파괴적 명령 금지 규칙은 그대로 적용한다.
 
 **1.5. 수동 작업 필터링 (TODO/plan 스캔 시 공통) — 필수**
-   - 다음 항목은 작업 후보에서 **완전 제외**하고, 사용자에게 **언급하지 않는다**:
-     - `MANUAL_TASKS.md` 파일 내 항목
-     - `(→ MANUAL_TASKS)` 태그가 붙은 항목
-     - 수동 작업 키워드가 포함된 항목 (`육안 확인`, `디자인 일치`, `레이아웃 미관` 등)
-     - 키워드 전체 목록: [manual-tasks-format.md](../../common/docs/guide/project-management/manual-tasks-format.md) 참조
-   - **수동이 아닌 것**: 스크립트 실행, 빌드 확인, T1/T2 테스트 등 CLI로 실행 가능한 것은 **제외하지 않고 직접 실행**
-   - **단, T4(E2E)/T5(HTTP 통합)는 implement에서 실행/체크 금지** — `/merge-test`에서 main 머지 후 실행
-   - **T3(재현/통합TC)는 implement에서 T2 직후 실행** — 서버 불필요, 워크트리에서 실행 가능
-   - 후보 목록 출력 시에도 수동 항목은 표시하지 않는다
+
+   `MANUAL_TASKS.md` 항목 / `(→ MANUAL_TASKS)` 태그 / 수동 키워드 매칭은 작업 후보에서 **완전 제외**하고 사용자에게도 노출하지 않는다.
+   - 키워드 예시: `육안 확인`, `디자인 일치`, `레이아웃 미관` — 전체 목록: [manual-tasks-format.md](../../common/docs/guide/project-management/manual-tasks-format.md) 및 [`_recipes.md`](./_recipes.md) 참조
+   - CLI 실행 가능한 것(스크립트 실행, T1/T2/T3 테스트)은 제외하지 않고 직접 실행
+   - **T4(E2E)/T5(HTTP 통합)는 implement에서 실행/체크 금지** — `/merge-test`에서 main 머지 후 실행
+   - **T3(재현/통합TC)는 implement에서 T2 직후 실행** — fix: plan이면 필수
 
 **1.6. fix: plan Phase R 존재 검증 (하드 게이트) — 조건부 필수**
 
@@ -348,7 +295,8 @@ Claude가 구현 요청 받으면:
    - **DB 마이그레이션 SQL 파일을 생성한 경우 → 즉시 실행** (커밋 전 필수, 실행 안 하면 API 장애)
    - **plan 또는 `_todo`에 `Phase DB-Direct`가 있으면 running DB 직접 실행은 아직 미완료로 남긴다** — worktree 단계에서는 `DB-direct 미실행`, `live 검증 미실행`, `직접 실행 대기` 상태를 유지하고 `/merge-test` owner step으로 넘긴다.
    - 기존 테스트 통과 확인
-   - **⚠️ 빌드 확인 (webapp-testing 스킬)은 워크트리에서 실행 금지** — 반드시 `/merge-test`에서 main 머지 후 실행
+   - **⚠️ frontend verify (webapp-testing / `npm run build` / `npm run check` / `npm run check:watch` / `svelte-kit sync` / `svelte-check` / `vite build` / `node ... svelte-kit.js sync`)는 워크트리에서 실행 금지** — 반드시 `/merge-test`에서 main 머지 후 실행
+   - `_build_worktree.ps1` 같은 helper 예외는 setup 전용이며, implement 중 임의 probe의 근거로 쓰면 안 된다.
 
 5. **완료 처리**
    - plan 또는 `_todo`에 `Phase DB-Direct`가 있으면 종료 안내에 아래 잔여 항목을 반드시 남긴다: `main 머지 후 running DB 직접 실행 필요`, `실행 SQL/명령`, `존재 확인 쿼리`, `live API 또는 runtime 결과`
@@ -362,22 +310,18 @@ Claude가 구현 요청 받으면:
 
 ## plan 문서 상태 & 진행률
 
-| 상태 | 의미 |
-|------|------|
-| `초안` | /plan 스킬로 최초 작성됨 |
-| `검토대기` | 검토 요청 상태 |
-| `검토완료` | auto-plan 보완 완료 |
-| `구현중` | 구현 착수됨 |
-| `검증중` | 구현 결과 검증 단계 (auto-verify) |
-| `테스트중` | 테스트 실행 단계 |
-| `머지대기` | 수동 `/implement` 완료 또는 자동 테스트 통과 후 `/merge-test` 진입 대기. `Phase DB-Direct`가 있으면 `DB-direct 미실행`/`직접 실행 대기` 상태를 포함 |
-| `통합테스트중` | /merge-test: main 머지 후 T4/T5 실행 중 |
-| `구현완료` | 모든 항목 완료. 단, `Phase DB-Direct`가 있는 plan은 running DB 직접 실행 + 존재 검증 + live/runtime 검증 evidence 3종 확보 후 (/merge-test 이후) |
-| `수정필요` | `/merge-test` 또는 검증 실패 후 다음 iteration 입력을 기다리는 continuation anchor |
-| `보류` | 우선순위 밀림 |
-| `완료` | /done으로 archive 처리됨 |
+상세 상태 정의: [plan SKILL.md](../plan/SKILL.md)의 `## 문서 상태 & 진행률` 섹션 참조.
 
-**상태 명명 규칙:** legacy alias(`계획중`, `검토필요`)는 사용 금지. 각각 `초안`, `검토대기`만 사용한다.
+implement 고유 핵심 상태:
+
+| 상태 | implement 의미 |
+|------|---------------|
+| `초안` | /plan 스킬로 최초 작성됨 |
+| `구현중` | 워크트리 준비 + 구현 착수됨 |
+| `머지대기` | /implement 완료, `/merge-test` 대기. `Phase DB-Direct`가 있으면 `DB-direct 미실행` 상태 포함 |
+| `구현완료` | 모든 항목 완료. `Phase DB-Direct` plan은 running DB 직접 실행 + evidence 3종 확보 후 |
+| `수정필요` | `/merge-test` 실패 후 다음 iteration 입력 대기 (continuation anchor) |
+| `완료` | /done으로 archive 처리됨 |
 
 **진행률 계산:** `[x]` 개수 / 전체 체크박스 개수 → 헤더·푸터 동시 업데이트
 
@@ -388,6 +332,7 @@ plan, TODO.md, DONE.md 변경도 함께 커밋:
 commit "feat: 기능 구현"
 ```
 plans 워크트리가 있으면 `Resolve-DocsCommitRoot` 기준 cwd로 이동하고, `Resolve-DocsCommitCandidates` 반환 파일만 `git add`한다. `git add -A`는 사용하지 않는다.
+wtools 공통 plan도 `Resolve-DocsCommitRoot`/`Resolve-DocsCommitCandidates` helper를 따른다. `.worktrees/plans/docs/plan/`을 canonical 경로로 커밋한다.
 
 **워크트리 내에서 커밋 시**: commit.sh의 cwd를 워크트리 경로로 설정해야 한다.
 ```bash
@@ -397,26 +342,13 @@ cd "{worktree_path}" && bash "/d/work/project/tools/common/commit.sh" "feat: ...
 
 ## 반복 패턴 체크
 
-> 상세: @recurring-patterns 스킬 참조
+> 상세 표: @recurring-patterns 스킬 / [`_recipes.md`](./_recipes.md)의 "반복 패턴 체크" 섹션 참조
 
-구현 중 아래 상황이 발생하면 해당 패턴을 반드시 따른다:
-
-### 프론트엔드
-
-| 상황 | 패턴 | 금지 |
-|------|------|------|
-| 체크박스 선택 + 벌크 액션 | `createSelection()` 유틸 사용 | Array 기반 선택 코드 |
-| 사용자 알림/피드백 | `toast.success/error/warning()` | `alert()`, `confirm()` |
-| POST/DELETE 성공 후 목록 갱신 | 로컬 상태 직접 갱신 | `await loadItems()` 전체 재요청 |
-| 인증 에러 (401) 처리 | 토스트 + 쿨다운 가드 | `window.location.reload()` |
-
-### 백엔드 (monitor-page)
-
-| 상황 | 패턴 | 금지 |
-|------|------|------|
-| 5초+ 소요 작업 API | 202 반환 + Redis 큐 + 폴링 엔드포인트 | 동기 응답으로 블로킹 |
-| Session 0에서 subprocess 필요 | Redis 큐로 유저 세션 워커에 위임 | API에서 직접 subprocess |
-| 워커 내 개별 작업 | `_safe_execute()` 예외 격리 | 예외 전파로 워커 사망 |
+구현 중 아래 상황에서는 recurring-patterns 스킬이 지정한 패턴을 반드시 사용한다:
+- 체크박스 선택 + 벌크 액션 → `createSelection()` 유틸 (Array 기반 직접 선언 금지)
+- 사용자 알림 → `toast.success/error/warning()` (`alert()`/`confirm()` 금지)
+- POST/DELETE 성공 후 목록 갱신 → 로컬 상태 직접 갱신 (`loadItems()` 전체 재요청 금지)
+- 5초+ 소요 작업 API → 202 반환 + Redis 큐 + 폴링 엔드포인트
 
 ## 환경
 
