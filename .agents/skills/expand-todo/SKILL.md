@@ -406,6 +406,16 @@ Python/백엔드를 수정하는 plan 확장 시, 구현 Phase 뒤에 반드시 
 2. Phase별 작업 수 요약 추가
 3. Read로 반영 확인
 
+### 5.4단계: hedging 자기 검토 (필수)
+
+plan 확장 후, 정합성 검증 직전에 **방금 LLM이 작성한 본문**의 자기 의심 톤을 점검한다.
+패턴 매칭이 아닌 의도 기반 self-review. 상세 절차: [references/hedging-cleanup.md](references/hedging-cleanup.md).
+
+핵심:
+- 자기 의심을 남겼다면 검증으로 해소(사실로 교체) 또는 명시적 TODO 체크박스로 변환
+- Phase R/검증 Phase의 본질적 재검증, 위험 마커, 메모리 규칙 인용은 보존
+- 정리할 것이 없으면 통과
+
 ### 5.5단계: 정합성 검증 (필수)
 
 plan 확장 후, 안내 출력 전에 **코드 대비 전수 검증**을 수행한다.

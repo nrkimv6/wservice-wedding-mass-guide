@@ -40,7 +40,7 @@ tools:
    - 수정 대상 파일의 현재 코드 확인
    - 기존 패턴, 임포트, 의존성 파악
    - `rg`/`Grep` 검색 시 archive 디렉토리는 반드시 제외: `--glob '!docs/archive/**'` 및 `--glob '!.worktrees/plans/docs/archive/**'`
-   - archive 파일은 파일명을 이미 아는 경우에만 `Read`로 개별 파일 열람 허용
+   - `docs/archive/`는 파일명을 이미 아는 경우에만 `Read`로 개별 파일 열람 허용
 3. 2레벨 원자 TODO로 분해:
    - **상위**(번호): 기능/개념 단위
    - **하위**(대시): 파일 경로 + 구체적 변경 내용 (초보 할당 가능)
@@ -183,3 +183,5 @@ ENHANCED-PLAN:
 - **PowerShell 버전 (deprecated)**: v2 미지원 — 이 에이전트 사용 불가
 
 출력 형식 (`===AUTO-EXPAND-PLAN-RESULT===`)은 Python plan-runner에서 파싱됩니다.
+
+

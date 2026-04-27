@@ -75,7 +75,10 @@ docs/DONE.md 상단에 추가:
 ```
 
 **DONE 문서 아카이브 처리:**
-DONE 문서 내 완료 항목이 10개를 초과할 경우 `docs/archive/DONE-YYYY-MM.md`로 이동하고, 최근 내용은 5개만 남기도록 유지합니다.
+DONE 문서 내 완료 항목이 10개를 초과하면:
+1. `.worktrees/plans/`가 있는 프로젝트: 오래된 항목 → `.worktrees/plans/docs/archive/DONE-YYYY-MM.md`로 이동
+2. `.worktrees/plans/`가 없는 프로젝트: 오래된 항목 → `{project}/docs/archive/DONE-YYYY-MM.md`로 이동
+docs/DONE.md는 최근 5개만 유지합니다.
 
 ### 6단계: wtools/TODO.md 동기화
 

@@ -43,7 +43,10 @@ plan 문서의 모든 체크박스가 `[x]`이면:
 TODO.md에서 완료 항목 제거 → docs/DONE.md 상단에 추가:
 `- [x] YYYY-MM-DD: {작업명}`
 
-DONE 항목이 10개 초과 시 `docs/archive/DONE-YYYY-MM.md`로 이동, 최근 5개만 유지.
+DONE 항목이 10개 초과 시:
+1. `.worktrees/plans/`가 있는 프로젝트 → `.worktrees/plans/docs/archive/DONE-YYYY-MM.md`로 이동
+2. 없는 프로젝트 → `{project}/docs/archive/DONE-YYYY-MM.md`로 이동
+docs/DONE.md는 최근 5개만 유지.
 
 ### 6단계: wtools/TODO.md 동기화
 

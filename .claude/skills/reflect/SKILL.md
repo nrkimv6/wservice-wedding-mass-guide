@@ -190,6 +190,21 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
   - Q6에는 `DB-direct hard gate 교정안을 plan candidate로 승격하지 않음`이 기록되어야 한다.
   - 같은 원인이 SKILL.md/workflow 규칙 보강으로 재발 방지 가능하면 follow-up plan 생성 대상이다.
 
+### plan necessity gate
+
+finding을 plan으로 승격하기 전에 아래 4가지를 판정한다:
+
+| 판정 | 조건 | 후속 동작 |
+|------|------|----------|
+| `must_plan` | 실패 증거 있음 + 구체 owner 있음 + 기존 active plan에 귀속 불가 + 사용자 보고만으로 닫을 수 없는 잔여 리스크 | 즉시 plan 생성 |
+| `attach_existing` | 기존 active plan이 같은 owner/범위를 커버 | 기존 plan에 항목 추가, 신규 생성 스킵 |
+| `user-review` | 증거 약함 / owner 불명확 / expected outcome 추상적 | 사용자검토 후보로 보류 |
+| `report-only` | 관찰만이고 액션 없음 | 출력 텍스트에만 기록, plan 생성 스킵 |
+
+**즉시 승격 예외군** (위 gate를 우선 적용하지 않음):
+- Q4 hard gate: 실패한 build/check/test → `must_plan` 강제
+- Q5/Q6 재발 방지: 수정 후에도 재발 위험이 코드에 남은 경우 → `must_plan` 강제
+
 ### 2단계: 계획서 생성
 
 추출 결과를 **의미 단위로 묶어** 계획서를 생성한다.
@@ -209,7 +224,7 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
    - 복수 프로젝트에 걸친 변경 → **wtools** `.worktrees/plans/docs/plan/`에 생성
 2. `/plan` 스킬의 `_template.md` 형식으로 계획서 작성
 3. 파일명: `{plan경로}/YYYY-MM-DD_{주제}.md`
-4. 헤더에 `> 출처: /review에서 자동 생성` 표기
+4. 헤더에 `> 출처: /reflect에서 자동 생성` 표기
 
 **중복 처리 규칙 (필수):**
 - 신규 생성 전 `{plan경로}`의 미완료 plan을 검색한다.
@@ -227,7 +242,7 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
 **0건 처리:**
 6가지 모두 "해당 없음"이면:
 ```
-리뷰 완료 — 추가 작업 없음
+리뷰 완료.
 ```
 출력 후 3단계 스킵, 종료.
 
@@ -290,6 +305,37 @@ review-plan 실패 시:
 - fallback 커밋: {실행|스킵}
 ```
 
+
+### 사용자검토 후보
+
+`user-review` 판정 finding이 있으면 아래 형식으로 출력한다:
+
+| finding | 판정 사유 | 권장 조치 |
+|---------|---------|---------|
+| {finding 요약} | owner 불명확: {사유} | 필요 시 직접 plan 생성 |
+
+후보가 없으면 이 섹션을 생략한다.
+
+### 마무리 문구 규칙
+
+/reflect 실행이 끝날 때 아래 규칙을 따른다.
+
+**금지 문구 (자기 참조)**:
+> `회고가 필요하면 /reflect를 실행하세요.` 또는 유사 문구 — 출력 금지.
+> 사용자가 방금 `/reflect`를 완료했으므로 자기 호출 안내는 순환 참조다.
+> `/done`·`/merge-test` 완료 안내에서는 적절하지만, `/reflect` 자체 종료 시에는 사용하지 않는다.
+
+**대체 문구**:
+
+| 상황 | 출력 |
+|------|------|
+| 후속 액션 없음 (0건) | `리뷰 완료.` |
+| 계획서 생성됨 (N개) | `리뷰 완료.`<br>`생성된 계획서: N개 ({경로 목록})` |
+| 후속 /implement 권장 | `리뷰 완료.`<br>`생성된 계획서: N개`<br>`다음 단계: /implement {plan경로}` |
+
+- 0건 처리(`리뷰 완료 — 추가 작업 없음`)는 `리뷰 완료.`로 통일한다.
+- `/done`·`/merge-test`의 완료 안내 문구를 그대로 복사하지 않는다.
+
 ## 주의사항
 
 - **코드 직접 수정 금지** — 리뷰는 계획서 생성까지만. 코드 수정은 `/implement`에서
@@ -297,6 +343,7 @@ review-plan 실패 시:
 - **review-plan 새 실패 사유 보존** — `local drift 충돌`, `related-plan 충돌` 같은 재검토 실패도 fallback 출력/종료 메시지에서 생략하지 않는다.
 - **plan-runner 경로** — 수동 `/reflect`는 대화 컨텍스트 기반, 자동 파이프라인은 `auto-reflect` 에이전트(로그+실패표 기반)를 사용
 - **과잉 생성 방지** — 사소한 발견도 계획서로 만들지 않음. 실제 작업이 필요한 수준인지 판단
+- **자기 참조 금지** — `/reflect` 마무리 출력에 "회고가 필요하면 /reflect를 실행하세요." 류 문구 금지. `/done`·`/merge-test` 안내 문구를 그대로 복사하지 말 것
 
 ## 환경
 

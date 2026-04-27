@@ -70,6 +70,20 @@ AGENTS.md 문서 위치 규칙의 plan 경로/*.md
 
 **완료 판단 시 MANUAL_TASKS 항목은 제외합니다.** 코드블럭 내 `[ ]`는 카운트에서 제외.
 
+**Canonical metric 계약 (progress contract):**
+- archive progress의 canonical source는 `Get-PlanMetadata()`(PS) 또는 `PlanParser.get_plan_progress()`(Python)이 계산한 helper-based checkbox count다.
+- archive 헤더(`> 진행률:`), archive 본문 헤더, 푸터(`*상태: ... | 진행률:...*`), `wtools/TODO.md` sync는 모두 같은 `(done, total)` tuple을 출력해야 한다.
+- "기존 헤더 텍스트 복사"는 canonical metric과 대조 후 일치할 때만 유효한 표현 방식이며, 독립 source-of-truth로 사용 금지.
+- leaf 재계산이나 phase별 별도 집계를 독립 source-of-truth로 사용 금지.
+- 선행 계약: `.worktrees/plans/docs/plan/2026-03-04_fix-checkbox-count-consistency.md` "single counting function" 원칙.
+
+**4-surface 대조 read-back 규칙 (archive 완료 직후):**
+1. archive file read-back: `> 진행률:` 헤더값 추출
+2. archive file read-back: `*상태: ... | 진행률:...*` 푸터값 추출
+3. wtools/TODO.md: 해당 plan 진행률 값 추출
+4. 위 3개 값이 canonical metric `(done/total)`과 모두 일치하는지 확인
+5. 불일치가 있으면 경고 출력 후 커밋 전 수동 수정 (auto-done.ps1은 hard stop)
+
 ### 1.5단계: 사전 검증 (구현완료 설정 전 게이트)
 
 > **🔴 이 검증은 상태를 "구현완료"로 변경하기 전에 반드시 통과해야 한다.**
