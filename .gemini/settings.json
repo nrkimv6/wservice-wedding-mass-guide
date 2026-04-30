@@ -1,4 +1,11 @@
 {
+  "experimental": {
+    "enableAgents": true,
+    "adk": {
+      "agentSessionNoninteractiveEnabled": true,
+      "agentSessionInteractiveEnabled": true
+    }
+  },
   "toolPermissions": {
     "alwaysAllow": ["ReadFileTool", "ShellTool(ls)", "ShellTool(cat)", "ShellTool(git *)"],
     "alwaysDeny": ["ShellTool(rm -rf *)"]

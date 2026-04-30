@@ -128,11 +128,14 @@ CHANGELOG.md가 없으면 파일 자동 생성 후 추가.
 
 ---
 
-## plans dirty 사전 점검 경고 템플릿
+## main+plans dirty 사전 점검 경고 템플릿
 
 ```powershell
-⚠️ plans 워크트리에 미커밋 변경 N건. main cwd의 git status에서는 보이지 않습니다.
+⚠️ main/plans 워크트리에 미커밋 변경 N건. 화이트리스트 후보와 블랙리스트 후보를 먼저 분리하세요.
+화이트리스트: docs/plan/**, docs/archive/**, TODO.md, docs/DONE.md, tests/**/fixtures/**
+블랙리스트: .env*, credentials.json, *.key, *.pem, secrets/**
 현재 실행이 수정한 파일만 add하세요. 기존 잔존 dirty와 묶어서 커밋하지 마세요.
+git -C "$RepoRoot" status --porcelain
 Set-Location "$RepoRoot\.worktrees\plans"
 git status --porcelain
 git add <파일명>   # 이번 실행이 수정한 파일만 개별 add

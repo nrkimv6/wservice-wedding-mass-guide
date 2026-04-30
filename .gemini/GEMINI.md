@@ -87,6 +87,17 @@ Conventional Commits 형식: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
 
 ---
 
+## Gemini Runtime Surface
+
+- plan-runner의 Gemini runtime 기본 surface는 `hybrid`다.
+- `hybrid`는 `.gemini/agents/<agent>.md` mirror + `common/tools/plan-runner/gemini-agents/<agent>.md` policy를 동시에 사용한다.
+- selector 우선순위:
+  - `PLAN_RUNNER_GEMINI_SURFACE=direct|hybrid|policy`
+  - `common/tools/plan-runner/engines.json`의 `gemini.agent_surface_mode`
+  - fallback `policy`
+- headless subagent session을 위해 `.gemini/settings.json`의 `experimental.adk.agentSessionNoninteractiveEnabled=true`를 유지한다.
+- direct/hybrid 결과 해석은 single final response보다 `tool_result(invoke_agent).output.result`를 우선한다.
+
 ## Agent 시스템
 
 ### v1 파이프라인 (기본, `--pipeline v1`)

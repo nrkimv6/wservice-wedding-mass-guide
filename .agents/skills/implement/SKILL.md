@@ -8,6 +8,12 @@ description: "구현 워크플로우 (plan→TODO→DONE). Use when: 구현해, 
 > **본문 분리 원칙**: 호출 컨텍스트가 다르면 본문도 다르다. 공유 레시피는 [`_recipes.md`](./_recipes.md)로만.
 > **호출 컨텍스트**: 독립 워커(Codex/plan-runner). 결과는 plan 파일 체크박스 갱신 + artifact 출력 기준으로 구조화.
 
+## Skill Path Precedence
+- 사용자가 `[$implement](...SKILL.md)` 또는 파일시스템 경로로 local/project skill 파일을 명시한 경우, 반드시 그 exact file을 Read 기준으로 삼는다.
+- 같은 name의 global/duplicate skill(`C:\Users\Narang\.codex\skills\implement\SKILL.md` 등)은 대체 사용하지 않는다.
+- 명시 경로가 없거나 읽기 실패한 경우에만 fallback 후보를 검토하며, fallback 사용 전에는 실제로 읽을 경로와 이유를 사용자에게 먼저 보고한다.
+- 예: 입력이 `D:\work\project\tools\monitor-page\.agents\skills\implement\SKILL.md`이면 `C:\Users\Narang\.codex\skills\implement\SKILL.md`를 읽지 않는다.
+
 ## PRE-EDIT HARD GATE
 - `/implement`의 첫 액션은 구현 파일 수정이 아니라 workflow 준비다.
 - 대상 파일을 건드리기 전에 plan 상태를 `구현중`으로 맞춘다.
@@ -15,6 +21,12 @@ description: "구현 워크플로우 (plan→TODO→DONE). Use when: 구현해, 
 - plan 상단 `> branch:`, `> worktree:`, `> worktree-owner:`가 모두 채워지기 전에는 구현 파일을 수정하지 않는다.
 - 편집이 먼저 시작됐더라도 메타 누락 상태면 추가 수정 전에 plan/TODO/worktree 메타부터 복구한다.
 - unrelated `main` dirty를 무시할 수는 있어도 이 gate 자체는 생략할 수 없다.
+
+## Git Guard Session Gate
+- wtools에서 `/implement`를 실행할 때 첫 git mutation 전 `common\tools\enable-git-guard.ps1 -Action enable-session`을 실행한다.
+- 이어서 `common\tools\enable-git-guard.ps1 -Action status`로 현재 세션 PATH가 `common\tools`를 앞세우고 `git`이 `common\tools\git.cmd`를 해석하는지 확인한다.
+- guard entrypoint가 없거나 session 활성화/상태 확인이 실패하면 `GIT_GUARD_NOT_ACTIVE`로 중단한다. linked worktree에서 `git checkout main`/`git switch main`이 가능한 상태로 계속 진행하면 안 된다.
+- `.agents`와 `.claude`는 문구를 맞추는 대상이 아니지만, 이 guard 불변조건은 두 엔진 표면에서 동등해야 한다.
 
 ## 세션 targets / continue 계약 (필수)
 
@@ -156,6 +168,7 @@ Codex가 구현 요청 받으면:
 
 **0.5. explicit 대표 plan _todo enumeration gate**
    - 사용자가 대표 plan 경로를 직접 넘겼고 `_todo` 분리 plan이면, `> **실행 TODO:**` 링크 또는 sibling `_todo-*.md`를 즉시 enumerate한다.
+   - 입력 경로 fallback: review-plan/SKILL.md의 "입력 경로 fallback (키워드 기반)" 섹션과 동일한 절차를 적용한다.
    - archive/`완료` 상태가 아닌 `_todo`는 전부 session targets에 추가한다.
    - 첫 번째 실행 가능한 `_todo`만 현재 작업 대상으로 잡고, 나머지는 remaining targets로 유지한다.
    - enumeration 결과 없이 대표 plan을 단일 target처럼 처리하거나, child 1개 완료 후 대표 plan 전체 완료로 말하면 안 된다.

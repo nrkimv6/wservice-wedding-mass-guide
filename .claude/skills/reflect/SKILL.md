@@ -122,6 +122,7 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
 - 테스트 실패를 관찰했으나 수정하지 않고 넘어간 것
 - 무시한 경고/에러 로그
 - "이건 다른 문제" 라고 언급한 것
+- T1~T5 TC가 plan Phase에서 약속한 필드/계약(예: 응답 키 존재, 반환 타입)을 실제 검증하는지 확인 — TC 제목과 assert 대상이 plan 계약과 일치하지 않으면 기록
 
 "해당 없음" 기준: 실패표 항목 0건 **AND** 대화/로그에 미처리 오류 언급 없음.
 
@@ -133,6 +134,7 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
 - "계획서부터", "그 스킬로 해", "하지 마", "왜 안 지켰냐"처럼 사용자가 명시적으로 교정한 경우
 - 사용자가 `[$skill](...SKILL.md)` 링크나 exact skill name을 다시 제시했는데도 실행 대신 설명을 반복한 경우
 - `Phase DB-Direct`가 있는 plan에서 running DB 직접 실행, `존재 확인 쿼리`, `live API 또는 runtime 결과`를 남기지 않은 경우
+- plan Phase 체크박스가 완료(`[x]`)로 표시됐으나 해당 파일 경로에 구현 흔적(함수/필드/import)이 없는 경우 — Grep으로 plan 언급 식별자를 해당 파일에서 검색해 확인
 
 기록 기준:
 - 단순 말실수나 표현 차이가 아니라, 실제 작업 흐름에 영향을 준 누락만 포함

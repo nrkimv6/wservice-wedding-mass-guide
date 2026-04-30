@@ -51,7 +51,7 @@ function Resolve-DocsCommitRoot {
 }
 
 function Resolve-DocsCommitCandidates {
-    param($RepoRoot, $EditedPaths)
+    param($RepoRoot, $EditedPaths, [switch]$IncludeFixtures)
 
     $commitRoot = (Resolve-DocsCommitRoot $RepoRoot).Replace('\','/').TrimEnd('/')
     if (-not (Test-Path $commitRoot)) { return @() }
@@ -87,6 +87,12 @@ function Resolve-DocsCommitCandidates {
                 }
             }
         }
+        if (-not $matched -and $IncludeFixtures) {
+            if ($rel.StartsWith("tests/", [StringComparison]::OrdinalIgnoreCase) -and
+                ($rel -like "tests/*/fixtures/*" -or $rel.StartsWith("tests/fixtures/", [StringComparison]::OrdinalIgnoreCase))) {
+                $rel
+            }
+        }
     }
 
     return @($candidates | Sort-Object -Unique)
@@ -98,6 +104,16 @@ function Test-PlansDirty {
     if (-not (Test-Path "$RepoRoot\.worktrees\plans")) { return $false }
     $dirty = git -C "$RepoRoot\.worktrees\plans" status --porcelain
     return [bool]$dirty
+}
+
+function Test-WorktreeDirty {
+    param($RepoRoot, [bool]$IncludeMain = $true)
+
+    if ($IncludeMain) {
+        $mainDirty = git -C "$RepoRoot" status --porcelain
+        if ($mainDirty) { return $true }
+    }
+    return (Test-PlansDirty $RepoRoot)
 }
 ```
 
@@ -112,7 +128,8 @@ function Test-PlansDirty {
 - 표는 **후보 경로를 읽는 기준**이고, 실제 선택은 위 helper 우선순위가 먼저다.
 - `.worktrees/plans/docs/plan/`이 있으면 그 경로를 canonical로 사용한다.
 - `.worktrees/plans/docs/plan/`이 없으면 기본값 `docs/plan/` (orphan 프로젝트 기본값)으로 내려간다.
-- `common/docs/plan/`은 2026-04-21 cutover로 폐지. 새 문서 작성·참조에서 사용하지 않는다.
+- `common/docs/plan/`은 2026-04-21 cutover로 폐지. 새 문서 작성·참조 후보로 사용하지 않는다.
+- 같은 literal string이 남아도 되는 경우는 cutover 이전 history 설명 또는 legacy drift detection 규칙뿐이다.
 
 ## plans 워크트리 커밋 범위
 
