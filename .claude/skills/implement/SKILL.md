@@ -19,7 +19,14 @@ description: "구현 워크플로우 (plan→TODO→DONE). Use when: 구현해, 
 - 같은 시점에 `TODO.md` 현재 작업 항목을 먼저 동기화한다.
 - plan 상단 `> branch:`, `> worktree:`, `> worktree-owner:`가 모두 채워지기 전에는 구현 파일을 수정하지 않는다.
 - 편집이 먼저 시작됐더라도 메타 누락 상태면 추가 수정 전에 plan/TODO/worktree 메타부터 복구한다.
+- SSOT 위치와 edit 허용 위치를 혼동하지 않는다. `.agents/skills/`, `.claude/skills/`, `.worktrees/plans/docs/*`가 canonical 원본이어도 현재 impl worktree 밖이면 직접 수정 금지다.
 - unrelated `main` dirty를 무시할 수는 있어도 이 gate 자체는 생략할 수 없다.
+
+## PRE-WRITE SCOPE GATE
+- leaf 체크박스의 backtick 경로를 절대경로로 해석했을 때, 수정 대상은 현재 `> worktree:` 루트 하위여야 한다.
+- 같은 repo의 root/main 경로로 떨어지면 `root_dirty_only`로 판정하고 direct edit 대신 현재 impl worktree 대응 경로로 옮겨서 계속한다.
+- plans lineage, sibling repo, 다른 canonical surface처럼 현재 worktree 밖 경로면 `reroute_required`로 판정하고 soft-stop 후 대상 repo/worktree에서 이어간다.
+- canonical SSOT 경로라는 이유만으로 direct edit 허용으로 승격하지 않는다.
 
 ## Git Guard Session Gate
 - wtools에서 `/implement`를 실행할 때 첫 git mutation 전 `common\tools\enable-git-guard.ps1 -Action enable-session`을 실행한다.
@@ -36,6 +43,8 @@ description: "구현 워크플로우 (plan→TODO→DONE). Use when: 구현해, 
   - `_todo`가 남아 있는 동안 `대표 plan 전체 완료`, `session 종료` 표현을 금지한다.
 - 현재 target의 구현이 끝났더라도 **remaining targets**가 있으면 전체 완료로 말하지 않는다.
   - 출력은 `현재 target 완료, 남은 target N개` 형태로 남기고, 다음 target으로 **같은 턴에서 계속** 진행한다.
+- explicit continue 재지시가 없어도 **current target에 실행 가능한 leaf가 남아 있으면 같은 턴에서 계속 진행**한다.
+- `leaf 몇 개 완료`, `Phase 일부 완료`, `현재 target 일부 완료`는 종료 사유가 아니다.
 - 사용자가 `계속`, `멈추지마`, `끝날 때까지` 등으로 재지시한 경우:
   - 중간 성공(leaf 몇 개 완료, T1/T2 통과)은 종료점이 아니라 **진행 업데이트**다.
   - owner chain의 다음 단계(`/merge-test`, `/done` 등)가 deterministic하게 남아 있으면 설명으로 멈추지 말고 **같은 턴에서 계속 실행**한다.
@@ -46,6 +55,8 @@ description: "구현 워크플로우 (plan→TODO→DONE). Use when: 구현해, 
 - 실행 대상은 **자식 없는 미완료 체크박스(leaf)** 만 허용한다.
 - 부모 체크박스는 **직접 실행/직접 체크 금지**다. 자식이 모두 끝난 뒤 자동 승격만 허용한다.
 - 각 leaf 완료 후에는 plan을 다시 파싱해 다음 실행 가능한 leaf를 고른다.
+- current target에 남은 executable leaf가 있으면 다음 leaf를 같은 턴에서 바로 선택한다. current target을 비우기 전에는 다음 target 또는 다음 owner step으로 넘어가지 않는다.
+- 종료/closeout 직전에는 반드시 `remaining executable leaf`, `remaining targets`, `next owner step`을 다시 계산한다. 셋 중 하나라도 남아 있으면 진행 업데이트 후 계속 실행한다.
 
 plan → TODO → DONE 흐름으로 작업을 관리합니다.
 

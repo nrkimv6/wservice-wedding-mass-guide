@@ -52,6 +52,63 @@ plan 문서에서:
 
 ---
 
+## baseline dirty 기록
+
+스킬 시작 직후 1회 실행:
+
+```powershell
+# root dirty baseline
+$BaseDirty = (git -C $RepoRoot status --short) | ForEach-Object { $_.Substring(3).Trim() }
+# plans worktree dirty baseline
+$PlansRoot = Join-Path $RepoRoot ".worktrees/plans"
+$PlansBaseDirty = (git -C $PlansRoot status --short) | ForEach-Object { $_.Substring(3).Trim() }
+# touched paths 초기화
+$TouchedPaths = [System.Collections.Generic.HashSet[string]]::new()
+```
+
+### touched paths 관리 예시
+
+agent가 파일을 수정/생성/git mv할 때마다 추가:
+
+```powershell
+$TouchedPaths.Add("docs/plan/2026-xx-xx_foo.md")   # plan 신규 생성 후
+$TouchedPaths.Add("TODO.md")                        # TODO.md 수정 후
+$TouchedPaths.Add("docs/DONE.md")                   # DONE.md 수정 후
+$TouchedPaths.Add("docs/archive/2026-xx-xx_foo.md") # archive git mv 후
+```
+
+| 액션 | 추가 대상 path |
+|------|--------------|
+| plan 신규 생성 | 생성된 plan path |
+| TODO.md 수정 | `TODO.md` |
+| docs/DONE.md 수정 | `docs/DONE.md` |
+| git mv (archive) | 원본 path + archive destination path |
+| review-plan 보정 | 보정된 계획서 path |
+
+### self residual dirty 계산 inline snippet
+
+```powershell
+$CurrentDirty = (git -C $RepoRoot status --short) | ForEach-Object { $_.Substring(3).Trim() }
+$SelfResidual = $CurrentDirty | Where-Object { $TouchedPaths.Contains($_) }
+
+# whitelist 분기 처리
+$Whitelist = @("TODO.md", "docs/DONE.md")
+# plans 워크트리 glob 패턴: docs/plan/*.md, docs/archive/*.md
+$InWhitelist  = $SelfResidual | Where-Object { $_ -in $Whitelist -or $_ -like "docs/plan/*.md" -or $_ -like "docs/archive/*.md" }
+$OutWhitelist = $SelfResidual | Where-Object { $_ -notin $InWhitelist }
+
+# whitelist 안: 커밋 시도
+foreach ($f in $InWhitelist) { git -C $RepoRoot add $f }
+if ($InWhitelist) { & commit.ps1 "docs: flush self residual dirty" }
+
+# whitelist 밖: 최종 보고에 기록 (흐름 차단 없음)
+if ($OutWhitelist) { Write-Host "남은 dirty: $($OutWhitelist -join ', ')" }
+```
+
+> mtime/hash 기반 변경 감지는 1차 범위 외. path-level 교집합으로 해결 못 하는 케이스는 후속 plan으로 분리한다.
+
+---
+
 ## archive 이동 (`git mv` 분기)
 
 ### orphan 도입 프로젝트 — plans 워크트리 내에서 git mv

@@ -65,6 +65,9 @@ Conventional Commits 형식: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
 
 ## Slash Commands (`.gemini/commands/`)
 
+> 이 디렉토리는 **interactive convenience surface**다. plan-runner headless runtime은 이 파일들을 읽지 않으며,
+> headless Gemini parity/source-of-truth는 `common/tools/plan-runner/gemini-agents/*.md` 기준으로 관리한다.
+
 아래 명령어를 Gemini CLI에서 `/` 접두사로 사용할 수 있습니다:
 
 | 커맨드 | 트리거 키워드 | 설명 |

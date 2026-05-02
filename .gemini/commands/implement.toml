@@ -33,6 +33,12 @@ plan 문서에서 구현할 항목 선택:
 - 항목 옆에 `(→ MANUAL_TASKS)` 태그가 있는 경우 배제
 - 테스트, 브라우저, UI, 폰트, 디자인 등의 수동 작업 키워드 포함 시
 
+### PRE-WRITE SCOPE GATE
+
+- backtick 경로를 절대경로로 해석했을 때 현재 `> worktree:` 루트 밖이면 direct edit 금지
+- 같은 repo root/main 경로는 `root_dirty_only`, plans/sibling repo는 `reroute_required`로 soft-stop
+- canonical 원본 경로라는 이유만으로 예외를 두지 않는다
+
 ### 2단계: TODO 작업 진행
 
 1. 테스트 작성 (RIGHT-BICEP)

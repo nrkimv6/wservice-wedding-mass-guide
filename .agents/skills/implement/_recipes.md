@@ -88,6 +88,14 @@
    (archive/2026-04-04_worktree-owner-commit-enforcement 정책 연장)
 5. 이후 모든 작업의 cwd를 primary 워크트리 경로로 설정한다.
 
+## soft-stop + auto-reroute
+
+1. 현재 leaf 체크박스의 backtick 경로를 절대경로로 해석한다.
+2. 해석 결과가 현재 impl worktree 밖이면 direct edit를 멈추고 분류한다.
+   - 같은 repo root/main 경로면 `root_dirty_only`로 보고, 현재 impl worktree의 대응 경로에서 계속한다.
+   - `.worktrees/plans`, sibling repo, 다른 canonical surface면 `reroute_required`로 보고 대상 repo/worktree를 확보한 뒤 그 위치로 이동한다.
+3. reroute가 끝나기 전에는 현재 위치에 dirty를 남기지 않는다. "원본 경로라서 여기서 바로 고친다"는 예외를 두지 않는다.
+
 ## 수동 작업 키워드 목록
 
 수동 작업으로 분류되는 키워드 예시 (이 항목들이 포함된 체크박스는 후보에서 제외):
