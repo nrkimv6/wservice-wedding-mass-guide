@@ -71,6 +71,7 @@ bounded `safe-doc semantic merge`도 `/merge-test` owner action이지만, 허용
 | 5 | worktree-owner 일치 | 불일치 시 중단 |
 | 6 | owner set 전원 `머지대기` 이상 | `OWNER_SET_NOT_READY` 중단 |
 | 7 | attached owner면 primary가 `구현완료` 이상 | `PRIMARY_MUST_MERGE_FIRST` 중단 |
+| 8 | 루트 pending merge 없음 (`git rev-parse --git-path MERGE_HEAD`) | 존재하면 `PENDING_MERGE_DETECTED` 즉시 중단 |
 
 ### precondition failure 처리 규칙
 
@@ -128,6 +129,25 @@ merge --abort는 merge conflict에만 사용한다.
 실패 코드: `ROOT_STASH_PUSH_FAILED` / `ROOT_STASH_REF_DUPLICATE` / `ROOT_CHECKOUT_FAILED` / `ROOT_STASH_APPLY_FAILED` / `ROOT_STASH_APPLY_PARTIAL` / `ROOT_STASH_DROP_FAILED`
 apply 성공 + conflicts 0-hit 조건 미충족 시 drop 금지. stash 실패 시 머지 커밋 보존.
 PowerShell 의사코드 및 예시 로그: [`_recipes.md`](./_recipes.md) '0단계 루트 브랜치 자동 전환 의사코드' 참조.
+
+### 0.5단계: pending merge 감지 게이트
+
+0단계에서 원본 프로젝트 루트가 `main`임을 확정한 직후, 1단계 plan 정보 추출 전에 루트의 pending merge 잔류 상태를 확인한다. linked worktree에서는 `.git`이 디렉터리가 아니라 file일 수 있으므로 `MERGE_HEAD` 경로는 문자열로 조립하지 않고 반드시 `git rev-parse --git-path MERGE_HEAD`로 얻는다.
+
+```powershell
+$mergeHead = git rev-parse --git-path MERGE_HEAD
+if (Test-Path $mergeHead) {
+  Write-Error "PENDING_MERGE_DETECTED: root has an unfinished merge. Resolve it with git merge --abort or git commit before /merge-test."
+  exit 1
+}
+
+$stashRef = Join-Path (Get-Location) ".merge_test_stash_ref"
+if (Test-Path $stashRef) {
+  Write-Warning "warning: .merge_test_stash_ref remains from a previous /merge-test. Check whether the stash is still valid before manual cleanup."
+}
+```
+
+`MERGE_HEAD`는 다른 plan의 incomplete merge가 현재 merge commit에 섞일 수 있으므로 hard stop이다. `.merge_test_stash_ref` 잔류는 stash 유효성 확인이 필요한 warning이며, `MERGE_HEAD`처럼 즉시 중단하지 않는다.
 
 ### 1단계: plan 정보 추출
 
