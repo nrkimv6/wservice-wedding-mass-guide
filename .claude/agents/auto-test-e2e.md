@@ -74,9 +74,6 @@ T4/T5 테스트 파일 위치:
 4.5. **체크박스 갱신** (plan_file 인자가 있는 경우)
    - 각 체크박스 실행 성공 시 `Edit`으로 `- [ ]` → `- [x]` 갱신
    - 실패 시 `- [ ]` 유지 (fix 루프에서 재시도)
-4.8. 고아 pytest 정리 (오류 무시)
-   - Bash: `powershell.exe -ExecutionPolicy Bypass -File "D:\work\project\tools\monitor-page\scripts\kill-orphan-procs.ps1"`
-   - 실패해도 결과에 영향 없이 계속 진행
 5. 출력 블록 반환
 
 ## 출력 형식

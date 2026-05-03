@@ -55,9 +55,6 @@ tools:
    - 테스트 코드 또는 구현 코드를 수정
    - 재실행하여 통과 확인
 5. 통과 시 체크박스 `[x]`로 업데이트
-5.5. 고아 pytest 정리 (오류 무시)
-   - Bash: `powershell.exe -ExecutionPolicy Bypass -File "D:\work\project\tools\monitor-page\scripts\kill-orphan-procs.ps1"`
-   - 실패해도 결과에 영향 없이 계속 진행
 6. 출력 블록 반환
 
 ## 출력 형식

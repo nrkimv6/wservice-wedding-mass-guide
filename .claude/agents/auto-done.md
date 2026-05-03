@@ -48,12 +48,7 @@ tools: [Read, Edit, Bash, Glob, Grep]
 
 done SKILL.md 2단계~8단계를 순서대로 실행:
 
-### 0. 고아 pytest 선제 정리
-
-- Bash: `powershell.exe -ExecutionPolicy Bypass -File "D:\work\project\tools\monitor-page\scripts\kill-orphan-procs.ps1"`
-- 실패해도 done 절차 계속 진행
-
-### 0.5. done 사전 검증 (구현완료 설정 전 게이트)
+### 0. done 사전 검증 (구현완료 설정 전 게이트)
 
 > **🔴 이 검증은 Step 1(구현완료 설정) 전에 반드시 통과해야 한다.**
 > branch/worktree 검증은 면제 (plan-runner가 이미 정리).

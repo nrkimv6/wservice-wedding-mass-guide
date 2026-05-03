@@ -94,9 +94,6 @@ exit_reason="ATTACH_IN_AUTOMATED_CONTEXT_REJECTED"
    - 구현 완료했는데 `[ ]`로 남아있는 항목이 있으면 `[x]`로 Edit
    - **T4/T5/Phase Z 체크박스는 보정 대상에서 제외** — `/merge-test` 전담
    - 이 단계는 구현 중 놓친 체크박스를 최종 정리하는 안전망이다
-4.5. 고아 pytest 정리 (오류 무시)
-   - Bash: `powershell.exe -ExecutionPolicy Bypass -File "D:\work\project\tools\monitor-page\scripts\kill-orphan-procs.ps1"`
-   - 실패해도 커밋 진행에 영향 없음
 5. **🔴 모든 변경사항은 커밋으로 마무리 — `/done` 및 `auto-done.ps1` 호출 절대 금지**
    - auto-impl은 아카이브, TODO→DONE 이동, wtools/TODO.md 동기화를 **하지 않는다**
    - 구현 완료 후 할 일은 **커밋 하나뿐**:

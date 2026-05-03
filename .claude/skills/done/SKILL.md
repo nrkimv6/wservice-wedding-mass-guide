@@ -40,10 +40,6 @@ description: "구현 완료 후처리 (plan 체크, archive, TODO→DONE, commit
 2. `$TouchedPaths`를 빈 set으로 초기화한다.
 PowerShell 예시는 [`_recipes.md`](./_recipes.md)의 "baseline dirty 기록" 섹션 참조.
 
-### 0단계: 고아 pytest 선제 정리
-
-done 실행 전 잔여 pytest를 선제 정리한다. `.\scripts\kill-orphan-procs.ps1` 또는 공용 fallback 경로의 스크립트를 실행. 실패해도 무시하고 1단계로 진행.
-
 ### 1단계: 관련 plan 문서 찾기
 
 프로젝트 경로는 `D:\work\project\service\wtools\.claude\projects.json` 참조.

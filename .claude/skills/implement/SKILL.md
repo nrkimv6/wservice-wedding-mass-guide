@@ -79,18 +79,7 @@ $config = Get-Content $configPath | ConvertFrom-Json
 plan (아이디어) → TODO (선택/진행) → DONE (완료)
 ```
 
-### 0. 고아 pytest 선제 정리
-
-구현 시작 전 이전 세션 잔여 pytest를 정리한다.
-
-Bash로 실행:
-```
-powershell.exe -ExecutionPolicy Bypass -File "D:\work\project\tools\monitor-page\scripts\kill-orphan-procs.ps1"
-```
-
-실패하거나 스크립트가 없으면 무시하고 계속 진행.
-
-### 1. plan → TODO 선택
+### 0. plan → TODO 선택
 
 plan 문서에서 구현할 항목 선택 시:
 
