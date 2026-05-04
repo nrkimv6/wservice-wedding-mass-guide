@@ -29,12 +29,6 @@ Deterministic setup, status, and advisory scanning must prefer helper CLI eviden
 - SSOT 위치와 edit 허용 위치를 혼동하지 않는다. `.agents/skills/`, `.claude/skills/`, `.worktrees/plans/docs/*`가 canonical 원본이어도 현재 impl worktree 밖이면 직접 수정 금지다.
 - unrelated `main` dirty를 무시할 수는 있어도 이 gate 자체는 생략할 수 없다.
 
-## PRE-WRITE SCOPE GATE
-- leaf 체크박스의 backtick 경로를 절대경로로 해석했을 때, 수정 대상은 현재 `> worktree:` 루트 하위여야 한다.
-- 같은 repo의 root/main 경로로 떨어지면 `root_dirty_only`로 판정하고 direct edit 대신 현재 impl worktree 대응 경로로 옮겨서 계속한다.
-- plans lineage, sibling repo, 다른 canonical surface처럼 현재 worktree 밖 경로면 `reroute_required`로 판정하고 soft-stop 후 대상 repo/worktree에서 이어간다.
-- canonical SSOT 경로라는 이유만으로 direct edit 허용으로 승격하지 않는다.
-
 ## Git Guard Session Gate
 - wtools에서 `/implement`를 실행할 때 첫 git mutation 전 `common\tools\enable-git-guard.ps1 -Action enable-session`을 실행한다.
 - 이어서 `common\tools\enable-git-guard.ps1 -Action status`로 현재 세션 PATH가 `common\tools`를 앞세우고 `git`이 `common\tools\git.cmd`를 해석하는지 확인한다.

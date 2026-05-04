@@ -149,7 +149,6 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
 대화/작업 로그에서 아래 항목을 확인한다:
 - 사용자 직접 지시를 이행하지 않은 경우
 - AGENTS.md, 프로젝트 규칙, 스킬 규칙의 필수 절차를 누락하거나 우회한 경우
-- 현재 impl worktree 밖 경로(root main, `.worktrees/plans`, sibling repo)를 직접 수정한 경우
 - "계획서부터", "그 스킬로 해", "하지 마", "왜 안 지켰냐"처럼 사용자가 명시적으로 교정한 경우
 - 사용자가 `[$skill](...SKILL.md)` 링크나 exact skill name을 다시 제시했는데도 실행 대신 설명을 반복한 경우
 - `Phase DB-Direct`가 있는 plan에서 running DB 직접 실행, `존재 확인 쿼리`, `live API 또는 runtime 결과`를 남기지 않은 경우
