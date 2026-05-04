@@ -51,6 +51,8 @@ $workerId = "$env:COMPUTERNAME/$((Split-Path -Leaf $PWD))@$(Get-Date -Format 'MM
 
 **정규식**: `\[→([^\]]+)\]`로 진행 중 항목 매칭
 
+이 worker marker와 checkbox scan은 deterministic parser다. 자연어 키워드는 후보 설명을 보조할 수 있지만, 진행 중 해제/선택/스킵의 충분조건으로 쓰지 않는다.
+
 **Stale 판단**: `@MMdd-HHmm` 시작시간이 6시간 이상 경과하면 stale로 판단
 - Stale 항목은 `[→...]` → `[ ]`로 자동 해제
 - 해제된 항목은 선택 가능 (비정상 종료된 세션 자동 정리)

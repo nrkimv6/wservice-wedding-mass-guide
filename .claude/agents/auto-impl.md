@@ -67,8 +67,8 @@ exit_reason="ATTACH_IN_AUTOMATED_CONTEXT_REJECTED"
    - 스크립트 실행, 빌드 확인, T1/T2 테스트 등 CLI로 실행 가능한 항목은 **수동이 아님** — 직접 실행하라
    - **단, T4(E2E)/T5(HTTP 통합)/Phase Z(Post-Merge Cleanup) 체크박스는 터치 금지** — `/merge-test` 전담. "단위 TC로 커버됨", "수동 테스트", "실제 환경 필요" 등의 사유로 스킵 체크도 금지
    - **T3(재현/통합TC)는 T1/T2와 동일하게 실행 대상** — T2 직후 실행하고 체크
-   - **fix: plan인 경우** (파일명에 `_fix-`가 포함되거나 제목이 `fix:`로 시작):
-     구현 시작 전 plan 본문에 `### Phase R` 또는 `재발 경로 분석` 문자열이 존재하는지 확인한다. 미존재 시 `STATUS: BLOCKED` + `exit_reason="phase_r_missing"` 출력 후 중단 (auto-expand-plan 재실행 유도).
+   - **fix evidence가 확인된 plan인 경우** (파일명/헤더의 structured marker와 본문 목적이 결함 수정에 해당. 코드블럭/인용/예시의 `fix:`는 제외):
+     구현 시작 전 plan 본문에 `### Phase R` 또는 `재발 경로 분석` 문자열이 존재하는지 확인한다. 미존재 시 키워드 단독 차단으로 처리하지 말고 `STATUS: BLOCKED` + `exit_reason="phase_r_evidence_missing"`을 출력해 auto-expand-plan이 structured evidence와 AI confirmation으로 재판정하게 한다.
      Phase R 섹션이 존재하면 → T2 완료 후, T3 실행 전에 **"Phase R: 재발 경로 분석"** 체크박스를 실행한다:
      1. Grep으로 이번 구현에서 수정한 함수/변수/키를 참조하는 모든 파일 검색
      2. 각 경로별 "동일 버그 발생 가능성" 판정 → 방어됨/미방어 표 작성

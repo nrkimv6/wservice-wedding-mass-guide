@@ -7,6 +7,13 @@ prompt = """
 
 ## Workflow
 
+### 0단계: Advisory detection contract
+
+- 키워드와 정규식은 자동 삽입/차단의 충분조건이 아닙니다.
+- `migration`, `placeholder`, `workaround`, `삭제`, `fix:` 같은 자연어 seed는 advisory evidence로만 기록합니다.
+- Phase IA, DB-Direct, Phase R 같은 추가 Phase는 structural evidence(실제 파일/경로/SQL/DDL/참조)와 AI confirmation이 함께 있을 때만 만듭니다.
+- 조건이 부족하면 기술적 고려사항 또는 검토 근거에 evidence만 남기고 체크박스를 만들지 않습니다.
+
 ### 1단계: plan 읽기
 
 - 대상 계획 문서를 찾아서 오픈합니다 (`.worktrees/plans/docs/plan/{file}`).

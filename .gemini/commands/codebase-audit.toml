@@ -9,6 +9,12 @@ prompt = """
 
 ## Workflow
 
+### Advisory finding contract
+
+- `audit-patterns.ps1 -Json`의 finding은 `category`, `pattern`, `path`, `line`, `context`, `confidence`, `mutation_ready`, `required_human_or_ai_judgment` 필드를 가진 raw evidence입니다.
+- raw pattern finding만으로 severity, owner, plan 생성 여부를 확정하지 않습니다.
+- severity 판정과 조치 제안은 주변 코드, 호출 경로, 실제 위험도를 함께 검토한 뒤 작성합니다.
+
 점검 절차는 다음의 8개 페이즈(Phase)로 점진적 확장 및 순차 진행됩니다.
 
 - **Phase 0 (범위 선택)**: 점검 대상이 될 프로젝트(혹은 공통 폴더) 구역 스케일 범위를 가늠/설정.

@@ -12,6 +12,10 @@ Raw pattern collection is a helper contract. Use `common\tools\audit-patterns.ps
 
 wtools 전체 프로젝트를 대상으로 코드 품질, 결함, UX, 미구현 요소 등을 점검합니다.
 
+## Advisory Finding Contract
+
+`audit-patterns.ps1`의 JSON finding은 `category`, `pattern`, `path`, `line`, `context`, `confidence`, `mutation_ready`, `required_human_or_ai_judgment` 필드를 가진 raw evidence다. 이 값만으로 severity, owner, plan 생성 여부를 확정하지 않는다.
+
 ## 트리거
 
 - "점검", "audit", "검사", "코드 점검", "정기 점검", "코드 감사"

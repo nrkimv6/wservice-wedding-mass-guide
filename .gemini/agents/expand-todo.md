@@ -16,6 +16,14 @@ For deterministic status, grep, candidate, preflight, or cleanup steps, call the
 
 ## 확장 규칙
 
+### 0. Advisory Detection Contract
+
+키워드와 정규식은 자동 삽입/차단의 충분조건이 아니다. `migration`, `placeholder`, `workaround`, `삭제`, `fix:` 같은 자연어 seed는 advisory evidence로만 기록한다.
+
+- Phase IA, DB-Direct, Phase R 같은 추가 Phase는 keyword-only로 만들지 않는다.
+- structural evidence(실제 파일/경로/SQL/DDL/참조)와 AI confirmation이 함께 있을 때만 Phase를 추가한다.
+- 조건이 부족하면 plan의 기술적 고려사항 또는 검토 근거에 evidence만 남기고 체크박스를 만들지 않는다.
+
 ### 1. 2레벨 구조 (필수)
 
 모든 TODO는 반드시 아래 2레벨 구조로 변환한다. **마크다운 체크박스(`- [ ]`)**를 사용하며, 유니코드(`☐`)는 코드블럭 내 예시에서만 사용한다.

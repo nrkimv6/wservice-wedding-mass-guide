@@ -110,10 +110,10 @@ $config = Get-Content $configPath | ConvertFrom-Json
 
 ### 3.2단계: Downstream Sync Phase 삽입 규칙
 
-wtools 원본 skill/agent/common-doc 변경이 하위 프로젝트 mirror 또는 generated surface를 통해 소비되는 계획서라면, TODO에 `Downstream Sync Phase`를 반드시 넣는다.
+wtools 원본 skill/agent/common-doc 변경이 하위 프로젝트 canonical, mirror, 또는 generated surface를 통해 소비되는 계획서라면, TODO에 `Downstream Sync Phase`를 반드시 넣는다. wtools 내부의 `.agents`, `.claude`, `.gemini` surface를 하나의 mirror 묶음으로 취급하지 않고 각 surface 역할에 맞춰 evidence를 남긴다.
 
-- 트리거: `.agents/skills`, `.claude/skills`, `.agents/agents`, `.claude/agents`, common-doc plan/archive/TODO 계약처럼 wtools 원본 변경이 downstream mirror 또는 generated surface로 복제되어야 하는 경우.
-- downstream 예시: monitor-page `.agents/.claude` mirror, 프로젝트별 local skill mirror, Gemini generated agent surface(`common/tools/plan-runner/gemini-agents/*.md`).
+- 트리거: `.agents/skills`, `.claude/skills`, `.agents/agents`, `.claude/agents`, common-doc plan/archive/TODO 계약처럼 wtools 원본 변경이 downstream canonical, mirror, 또는 generated surface로 반영되어야 하는 경우.
+- downstream 예시: monitor-page가 소비하는 wtools canonical 기반 surface, 프로젝트별 local skill mirror, Gemini runtime-derived agent surface(`common/tools/plan-runner/gemini-agents/*.md`), interactive convenience command(`.gemini/commands/*.toml`).
 - 비대상: product-only app/frontend/scripts 변경처럼 wtools authoring surface를 downstream이 소비하지 않는 plan에는 이 gate를 적용하지 않는다.
 - 위치: `Downstream Sync Phase`는 `Phase Z`보다 앞에 두고, 테스트 phase가 있으면 `Phase T4`/`Phase T5`보다도 앞에 둔다. 즉 sync evidence 확보가 `before T4/T5` 선행조건이어야 한다.
 - evidence: `downstream sync evidence`에는 wtools 원본 commit hash, downstream file read-back 결과, downstream commit hash 또는 generated surface read-back 결과 중 해당 surface에 맞는 근거를 적는다.

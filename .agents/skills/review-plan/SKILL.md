@@ -118,7 +118,7 @@ Regex and keyword detections are advisory evidence unless a helper contract expl
 
 **H. 환경 오염 / 임시 해법 감지:**
 
-계획서 텍스트에서 아래 감지 패턴 또는 키워드 seed를 발견하면 검증을 수행한다.
+계획서 텍스트에서 아래 감지 패턴 또는 키워드 seed를 발견하면 advisory evidence로 기록하고 검증을 수행한다. 키워드 단독으로 bullet 삽입, 차단, 계획서 보정을 하지 않는다.
 
 | 패턴 | 예시 |
 |------|------|
@@ -130,18 +130,18 @@ Regex and keyword detections are advisory evidence unless a helper contract expl
 
 **키워드 seed**: `임시`, `workaround`, `placeholder`, `빌드 통과용`, `TODO: 나중에`, `$env/dynamic`, `?? '`, `|| '`
 
-감지 시 아래 3단계를 검증한다:
+advisory evidence가 있으면 아래 3단계를 검증한다:
 1. **에러 원인 확인**: 이 에러는 프로덕션에서도 발생하는가, 아니면 개발/워크트리 환경에서만 발생하는가?
 2. **변경 방향 검증**: 더 엄격한 방식 → 더 유연한 방식으로 전환할 때, 프로덕션에서 새로운 실패 경로가 열리는가?
 3. **올바른 대안 확인**: 환경 아티팩트 기인 에러라면 코드 변경이 아니라 환경 설정이나 검증 위치 변경으로 해결해야 한다.
 
 판정:
-- `해당 없음`: 감지된 패턴 없음
-- `⚠️ 경고`: 환경 아티팩트 기인 변경 감지 → 아래 deterministic bullet을 입력 계획서에 삽입한다:
+- `해당 없음`: advisory evidence 없음, 또는 검증 결과 환경오염/임시해법 위험이 아님
+- `⚠️ 경고`: 환경 아티팩트 기인 변경이라는 검증 evidence가 있고, production/runtime 검증 TODO가 필요함 → 아래 bullet을 입력 계획서에 삽입할 수 있다:
   - `## 기술적 고려사항` 섹션이 있으면: 섹션 하단에 bullet 1개 추가
   - `## 기술적 고려사항` 섹션이 없으면: `## 기술적 고려사항` 섹션을 새로 생성하고 bullet 추가
   - **삽입 bullet 템플릿**: `- 프로덕션 환경에서 동일 에러 재현 여부를 먼저 확인하고, placeholder/fallback이 런타임 동작을 바꾸지 않는지 검증한다.`
-- `🚫 차단`: 임시 해법이 프로덕션에 반영되는 구조 → expand-todo 수행 전에 종료 (계획서 수정 없이는 확장 진행 불가)
+- `🚫 차단`: 임시 해법이 프로덕션에 반영되는 구조라는 검증 evidence가 있음 → expand-todo 수행 전에 종료 (계획서 수정 없이는 확장 진행 불가)
   - 차단 메시지에 반드시 포함할 3요소: **감지된 패턴** / **왜 위험한지** (프로덕션에서의 새 실패 경로) / **요구 수정 방향** (환경 설정 변경 또는 검증 위치 이동)
 
 **재검토 실패 시:**
@@ -289,7 +289,7 @@ expand-todo의 5.6단계가 expand 결과를 자체 커밋한다. review-plan의
 - **코드 직접 수정 금지** — 계획서 검증과 확장만 수행
 - **다른 active plan/archive 무단 수정 금지** — 다른 문서는 수정하지 않는다. 현재 입력 계획서 보정만 허용한다.
 - **expand-todo는 Skill 호출 SSOT** — Phase R 자동 삽입, 테스트 Phase, V1~V6 정합성 검증 등 expand 규칙은 Skill 호출이 자동 적용한다. review-plan 본문에 이 규칙들을 중복 기재하지 않는다.
-- `.agents` ↔ `.claude` mirror 동시 수정 — review-plan/reflect 변경 시 두 경로 모두 같은 내용으로 적용
+- `.agents`와 `.claude`는 엔진별 canonical surface다. review-plan/reflect 변경 시 동일 문구를 강제하지 말고, Codex(`.agents`)와 Claude(`.claude`) 각각에서 advisory 계약 invariant가 동등하게 유지되는지 확인한다.
 - **환경 아티팩트 예시** — H 체크에서 "개발/워크트리 환경에서만 발생"으로 판정되는 대표 사례:
   - 워크트리 `.svelte-kit/ambient.d.ts` 비어있음 (`node_modules` 없어서 svelte-kit sync 미실행)
   - worktree `node_modules` 없음 → `$env/static/public` 타입 미생성 에러

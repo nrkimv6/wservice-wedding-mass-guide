@@ -50,6 +50,8 @@ AGENTS.md 문서 위치 규칙의 plan 경로/*_todo.md  (모든 프로젝트)
 - 파일 헤더에서 `> 진행률: N/N (100%)` 정규식 매치
 - 또는 파일 전체에서 `- [ ]` 패턴이 0개 + `- [x]` 패턴이 1개 이상
 
+**deterministic parser 허용 범위**: 위 checkbox/header 정규식과 `> branch:`/`> worktree:` 추출은 구조화된 문법을 읽는 deterministic parser다. 자연어 키워드로 완료/스킵/아카이브를 판단하지 않는다.
+
 ### 2단계: 전제조건 검증 (worktree/branch 존재 여부)
 
 각 완료 파일에 대해:

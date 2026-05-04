@@ -106,6 +106,8 @@ CLAUDE.md 문서 위치 규칙의 plan 경로/*.md
 - leaf 재계산이나 phase별 별도 집계를 독립 source-of-truth로 사용 금지.
 - 선행 계약: `.worktrees/plans/docs/plan/2026-03-04_fix-checkbox-count-consistency.md` "single counting function" 원칙.
 
+**deterministic parser 허용 범위**: checkbox count, progress header/footer, `> branch:`/`> worktree:`, `MERGE_HEAD`, unmerged marker, `git status --porcelain`은 구조화된 상태 입력이므로 deterministic parser로 유지한다. 자연어 키워드만으로 완료, archive, 수동 작업 제외, 또는 차단을 확정하지 않는다.
+
 **4-surface 대조 read-back 규칙 (archive 완료 직후):**
 1. archive file read-back: `> 진행률:` 헤더값 추출
 2. archive file read-back: `*상태: ... | 진행률:...*` 푸터값 추출

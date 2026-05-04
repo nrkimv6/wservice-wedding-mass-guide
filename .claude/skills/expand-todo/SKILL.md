@@ -48,7 +48,7 @@ Phase insertion triggers must be treated as advisory evidence first. Use `common
 
 ### 2.3단계: 파일 이동/구조변경 영향 분석
 
-plan/TODO에 **파일 이동·삭제·이름변경·경로변경** 작업이 포함된 경우, 구현 전에 참조처 영향 분석 TODO를 자동 삽입한다.
+plan/TODO에 **파일 이동·삭제·이름변경·경로변경** 작업이 포함될 가능성이 있으면 advisory evidence를 먼저 수집한다. 키워드 단독으로 Phase IA를 자동 삽입하지 않는다.
 
 **트리거 키워드 감지** (plan 제목, 개요, TODO 텍스트에서):
 - 이동: `mv`, `Move-Item`, `git mv`, "이동", "옮기기", "재구성", "reorganize"
@@ -56,7 +56,12 @@ plan/TODO에 **파일 이동·삭제·이름변경·경로변경** 작업이 포
 - 삭제: `rm`, `Remove-Item`, "삭제", "제거"
 - 경로변경: "경로 변경", "디렉토리 구조 변경"
 
-**키워드가 1개 이상 감지되면**, 구현 Phase 직후·테스트 Phase 직전에 아래 Phase를 자동 삽입:
+**삽입 조건**: 키워드는 advisory trigger일 뿐이다. 아래 3가지가 모두 충족될 때만 구현 Phase 직후·테스트 Phase 직전에 Phase IA를 삽입한다.
+1. 이동/삭제/이름변경 대상 파일 또는 경로가 구조적으로 특정된다.
+2. Grep/read 결과 import, source, 설정, 실행 참조 같은 structural evidence가 있다.
+3. AI가 실제 참조처 영향 분석이 필요하다고 확인한다.
+
+조건을 만족하면 아래 Phase를 삽입:
 
 ```
 ### Phase IA: 이동 영향 분석 및 참조처 수정
@@ -77,7 +82,7 @@ N+2. ☐ **참조처 일괄 수정**
    - ☐ 수정 후 전체 참조 재검색으로 잔존 참조 0건 확인
 ```
 
-**Phase IA 미감지 시**: 키워드가 감지되지 않으면 이 단계를 건너뛴다.
+**Phase IA 미삽입 시**: 키워드만 있고 structural evidence 또는 AI confirmation이 없으면 삽입하지 않는다. 필요하면 기술적 고려사항에 advisory evidence만 기록한다.
 
 **검색 예시**:
 - PowerShell 이동: `Grep "old/path" --glob "*.ps1"`, `Grep "Split-Path" {이동된 파일}`
@@ -85,7 +90,7 @@ N+2. ☐ **참조처 일괄 수정**
 
 ### 2.4단계: DB 마이그레이션 감지
 
-plan/TODO에 **DB 스키마 변경(마이그레이션)** 작업이 포함된 경우, "직접 실행" 체크박스를 포함하는 Phase DB-Direct를 자동 삽입한다.
+plan/TODO에 **DB 스키마 변경(마이그레이션)** 작업이 포함될 가능성이 있으면 advisory evidence를 먼저 수집한다. 키워드 단독으로 "직접 실행" 체크박스를 포함하는 Phase DB-Direct를 자동 삽입하지 않는다.
 
 **트리거 키워드 감지** (plan 제목, 개요, TODO 텍스트에서 1개 이상 감지 시 활성화):
 
@@ -98,7 +103,12 @@ plan/TODO에 **DB 스키마 변경(마이그레이션)** 작업이 포함된 경
 
 > **`CREATE TABLE` 단독은 트리거에서 제외**: SQLAlchemy `Base.metadata.create_all()`이 자동 생성하므로 오탐 위험. `CREATE TABLE`은 `_add_col` 또는 `ALTER TABLE`과 함께 등장하는 경우에만 감지.
 
-**키워드가 1개 이상 감지되면**, 구현 Phase 마지막 항목 직후·T1 Phase 직전에 아래 Phase를 자동 삽입 (Phase IA와 동일 위치):
+**삽입 조건**: 키워드는 advisory trigger일 뿐이다. 아래 3가지가 모두 충족될 때만 구현 Phase 마지막 항목 직후·T1 Phase 직전에 Phase DB-Direct를 삽입한다.
+1. 실제 SQL/DDL, migration file, `_add_col`, schema 초기화 코드 같은 structural evidence가 있다.
+2. worktree 구현과 main merge 후 running DB 반영이 분리되는 변경이다.
+3. AI가 DB-direct evidence 3종이 필요한 mutation-ready 후보라고 확인한다.
+
+조건을 만족하면 아래 Phase를 삽입 (Phase IA와 동일 위치):
 
 ```
 ### Phase DB-Direct: DB 스키마 직접 수행 (마이그레이션 필수)
@@ -123,7 +133,7 @@ N+2. - [ ] **스키마 드리프트 검증** — N+1 직후 실행
 
 **중복 삽입 방지**: plan에 이미 `### Phase DB-Direct` 헤더 또는 "직접 실행" + "ALTER TABLE" 체크박스가 존재하면 삽입을 스킵한다.
 
-**Phase DB-Direct 미감지 시**: 키워드가 감지되지 않으면 이 단계를 건너뛴다.
+**Phase DB-Direct 미삽입 시**: 키워드만 있고 DB structural evidence 또는 AI confirmation이 없으면 삽입하지 않는다. advisory evidence만 기록한다.
 
 ### 2.5단계: main 드리프트 점검 (게이트 적용 항목)
 
@@ -229,14 +239,14 @@ N+2. - [ ] **스키마 드리프트 검증** — N+1 직후 실행
 
 하나의 상위 작업에 하위가 5개 이상이면 별도 Phase로 승격 검토
 
-#### 🔴 fix: plan 감지 시 — 재발 경로 분석 Phase 자동 추가
+#### 🔴 fix: plan evidence 확인 시 — 재발 경로 분석 Phase 추가
 
-plan이 아래 조건 중 하나에 해당하면 fix: plan으로 판정:
+아래 structured marker는 fix 후보 evidence다. 코드블럭, archive 인용, 예시 문구 안의 `fix:`는 후보에서 제외한다.
 - 파일명에 `_fix-` 포함 (예: `2026-03-26_fix-visible-runner.md`)
 - 헤더 제목(`# ...`)이 `fix:` 또는 `fix-`로 시작
 - 헤더에 `> 유형: fix` 필드가 있음
 
-fix: plan 감지 시, **T2 직후 T3 직전에** "Phase R: 재발 경로 분석" Phase를 자동 삽입한다:
+삽입 조건: structured marker와 본문 목적이 결함 수정에 해당한다고 AI가 확인하면, **T2 직후 T3 직전에** "Phase R: 재발 경로 분석" Phase를 삽입한다:
 
 **Phase R 템플릿** (코드블럭 내 체크박스는 ☐ 유니코드 사용):
 
@@ -257,7 +267,7 @@ N+1. ☐ **미방어 경로 수정**
 
 **Phase R 삽입 후 검증 (필수):**
 
-fix: plan 감지 시 Phase R 삽입 후, 확장 완료 전에 반드시 재확인한다:
+Phase R 삽입 후, 확장 완료 전에 반드시 재확인한다:
 1. plan 본문에서 `### Phase R` 또는 `재발 경로 분석` 문자열을 검색
 2. 미존재 시: 경고 출력 + Phase R 템플릿 재삽입 (1회)
 3. 재삽입 후에도 미존재 시: `⚠️ Phase R 삽입 실패. 수동으로 추가하세요.` 출력 후 진행 중단
