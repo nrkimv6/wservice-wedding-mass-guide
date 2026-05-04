@@ -28,6 +28,10 @@ npm run check
 npm run build
 ```
 
+### SvelteKit 검증 직렬화
+
+같은 frontend checkout에서 `svelte-kit sync`, `npm run check`, `svelte-check`, `npm run build`, `vite build`를 병렬 실행하지 않는다. 이 명령들은 `.svelte-kit` generated output을 공유하므로 항상 순차 실행한다. `.svelte-kit` 파일의 `EPERM`/`EBUSY`가 나오면 check/build 병렬 실행 여부를 먼저 확인하고 단독 재실행 결과를 기록한다.
+
 ### 3. 로컬 개발 서버
 
 ```powershell

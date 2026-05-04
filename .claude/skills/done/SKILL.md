@@ -88,6 +88,8 @@ CLAUDE.md 문서 위치 규칙의 plan 경로/*.md
 - 루트(main worktree)의 기존 `dirty`/`untracked` 파일은 done 중단 사유로 취급하지 않는다.
 - 루트(main)의 기존 수정 파일은 읽기/수정/복구/스테이징 대상에서 제외한다.
 - plan 완료 판정, TODO→DONE 이동, 커밋 대상 판단은 현재 작업 워크트리(impl/\*) 변경분만 기준으로 수행한다.
+- root dirty는 자동 커밋 대상이나 검증 중단 사유로 쓰지 않고, plans archive exact path set과 현재 owner chain path만 처리한다.
+- ignored dirty는 `ignored_dirty` ledger로 보고하되 읽기/수정/stage 대상에서 계속 제외한다.
 - 무시 모드는 "중단 판정 완화"에만 적용되며, 판정 범위를 제외한 동작은 기존 규칙을 유지한다.
 - 단, `.git` 보호 규칙과 파괴적 명령 금지 규칙은 그대로 유지한다.
 
@@ -156,6 +158,9 @@ CLAUDE.md 문서 위치 규칙의 plan 경로/*.md
 - archive `git mv` 시 원본 plan path와 archive destination path를 `$TouchedPaths`에 추가한다.
 
 plan 문서의 모든 체크박스가 `[x]`이면:
+
+planless branch는 archive 대상이 아니다. batch/done 보고에서는 `plan 없음` row로 분리하고, archive 없음 사유와 worktree/branch cleanup 결과를 별도 상태로 남긴다.
+root guard 차단은 정상 방어다. `/done`은 `.agents/`, `.claude/`, `.gemini/`, `app/`, `frontend/`, `scripts/`, `tests/` 같은 구현성 파일을 root main에서 직접 커밋하지 않는다.
 
 **⚠️ archive 우려점 사장(沈沒) 경고 (blocking 아님)**
 

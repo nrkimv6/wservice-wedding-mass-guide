@@ -39,6 +39,10 @@ Deterministic setup, status, and advisory scanning must prefer helper CLI eviden
 ## 세션 targets / continue 계약 (필수)
 
 - 사용자가 같은 세션에 plan 경로를 2개 이상 명시하면, 그 목록은 **session targets**로 고정한다.
+- 사용자가 여러 plan/branch의 병렬 진행이나 일괄 상태 보고를 요구하면 **batch target ledger**를 유지한다.
+  - ledger 컬럼은 최소 `target`, `plan`, `branch`, `worktree`, `status`, `next owner`를 포함한다.
+  - 각 target의 상태를 `done`, `pending`, `failed`, `unknown`, `planless`, `excluded`, `discarded`로 분리해 기록한다.
+  - 하나라도 `pending/failed/unknown/planless`이면 `전체 완료`, `모두 완료`, `마무리 완료` 표현을 금지한다.
 - 사용자가 명시한 경로가 대표 plan(`*_todo-N.md` 아님)이고 `> **실행 TODO:**` 링크 또는 sibling `_todo-*.md`가 있으면, 미완료 `_todo` 전부를 **session targets**에 자동 추가한다.
   - 출력은 `대표 plan`, `discovered _todo`, `session targets 추가`, `남은 target N개` 형식으로 남긴다.
   - 현재 작업 대상은 첫 번째 실행 가능한 `_todo` 1개뿐이며, 나머지는 **remaining targets**로 유지한다.

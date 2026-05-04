@@ -53,6 +53,9 @@ Preflight and cleanup evidence must come from helper CLI contracts before any me
   - `git status`, branch list, 테스트 파일 목록 등 상태 요약만 반복하고 `merge` 또는 `abort`로 진행하지 않는 행동
 
 `frontend verify(sync/check/build)`는 `/merge-test`가 sole owner다. implement는 코드 수정과 워크트리 단위 검증까지만 담당하고, 프론트엔드 verify 계열은 main 머지 후 여기서만 실행한다.
+같은 frontend checkout에서는 `svelte-kit sync`, `npm run check`, `svelte-check`, `npm run build`, `vite build`를 절대 병렬 실행하지 않는다. 이 명령들은 `.svelte-kit` generated output을 공유하므로 항상 순차 실행한다.
+`.svelte-kit` 파일의 `EPERM`/`EBUSY`가 나오면 제품 실패로 단정하기 전에 같은 checkout의 check/build 병렬 실행 여부를 먼저 확인하고, 단독 재실행 명령과 결과를 target ledger에 남긴다.
+T4/T5 또는 frontend verify가 tool timeout으로 끊겼는데 partial summary가 보이면 성공으로 단정하지 않는다. `timeout-budget`, partial summary, 더 긴 timeout 재실행 명령, 최종 exit code를 target ledger에 함께 기록한다.
 `/merge-test`는 "모든 마무리" owner가 아니라, **실제 merge 결과·merged main tree·main 서비스 상태**를 입력으로 쓰는 단계만 owner다. 실제 merge, restart-api/restart, frontend verify, live T4/T5, Phase Z cleanup이 여기에 포함된다.
 bounded `safe-doc semantic merge`도 `/merge-test` owner action이지만, 허용 범위는 `TODO.md`/Markdown/Text docs-only conflict + dirty-preserve 조건 충족 케이스로 제한한다. mixed/code conflict는 여전히 abort다.
 
@@ -106,6 +109,16 @@ bounded `safe-doc semantic merge`도 `/merge-test` owner action이지만, 허용
 - 루트의 기존 dirty/untracked: 중단 사유로 취급 안 함, 읽기/수정/스테이징 대상 제외
 - 머지/테스트/완료 판정: 현재 impl 워크트리 + 현재 plan 변경분만 기준
 - 루트 브랜치 `main` 확인 규칙과 `.git` 보호 규칙은 유지
+- Phase Z cleanup에서 existing root dirty는 blocker가 아니라 `ignored_dirty` evidence로 기록한다.
+- ignored dirty가 있어도 현재 target의 worktree remove, branch remove, header cleanup, archive owner handoff는 계속한다.
+
+## batch finalization ledger
+
+- batch 완료 선언 전에 target별 `main 포함`, `검증`, `archive`, `worktree removed`, `branch removed`, `next owner`를 표로 read-back한다.
+- 하나라도 `pending/failed/unknown/planless`이면 전체 완료 표현을 금지하고 해당 row의 next owner를 남긴다.
+- planless branch는 archive 대상이 아니므로 `plan 없음`과 cleanup 결과를 별도 row로 보고한다.
+- T4/T5 보강 테스트가 구현성 파일을 수정해야 하면 root main 직접 커밋 대신 target branch 또는 임시 impl branch에서 커밋 후 merge한다.
+- commit-ready pending merge라도 staged 구현성 파일이 `.agents/`, `.claude/`, `.gemini/`, `app/`, `frontend/`, `scripts/`, `tests/`에 있으면 `commit.ps1` guard를 우회하지 않는다. `ROOT_GUARD_BLOCKED_PENDING_SYNC_MERGE` evidence를 남기고 impl/pull-sync worktree reroute 또는 보존/abort로 전환한다.
 
 ## Git Guard Session Gate
 
