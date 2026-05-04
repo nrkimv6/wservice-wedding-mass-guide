@@ -3,6 +3,8 @@ name: implement
 description: "구현 워크플로우 (plan→TODO→DONE). Use when: 구현해, 진행해, 시작해, implement"
 ---
 
+
+> Routing gate: branch/worktree present -> /merge-test; absent -> /done
 # 구현 워크플로우
 
 > **본문 분리 원칙**: 호출 컨텍스트가 다르면 본문도 다르다. 공유 레시피는 [`_recipes.md`](./_recipes.md)로만.
@@ -57,7 +59,11 @@ description: "구현 워크플로우 (plan→TODO→DONE). Use when: 구현해, 
 - 부모 체크박스는 **직접 실행/직접 체크 금지**다. 자식이 모두 끝난 뒤 자동 승격만 허용한다.
 - 각 leaf 완료 후에는 plan을 다시 파싱해 다음 실행 가능한 leaf를 고른다.
 - current target에 남은 executable leaf가 있으면 다음 leaf를 같은 턴에서 바로 선택한다. current target을 비우기 전에는 다음 target 또는 다음 owner step으로 넘어가지 않는다.
-- 종료/closeout 직전에는 반드시 `remaining executable leaf`, `remaining targets`, `next owner step`을 다시 계산한다. 셋 중 하나라도 남아 있으면 진행 업데이트 후 계속 실행한다.
+- 종료/closeout 직전에는 반드시 `remaining executable leaf`, `remaining targets`, `split _todo-* 미완료`, `next owner step`, `remote evidence`를 다시 계산한다.
+  - 셋 이상 중 하나라도 남아 있으면 `구현완료`, `전체 완료`, `마무리` 표현을 금지하고 진행 업데이트 후 계속 실행하거나 hard blocker를 보고한다.
+  - 대표 plan와 split `_todo-N` plan은 parent/child 완료 판정을 분리해 read-back한다.
+  - leaf 본문에 `push`, `origin/main`, `remote`, 외부 repo 목록이 있으면 local commit만으로 체크하지 않고 `git ls-remote origin main`, `git show origin/main:<path>`, 또는 대상 repo의 `origin/main` content read-back evidence를 요구한다.
+  - remote evidence가 없으면 해당 leaf를 `[x]`로 올리지 않고 `remote evidence 대기`로 남긴다.
 
 plan → TODO → DONE 흐름으로 작업을 관리합니다.
 
@@ -158,18 +164,41 @@ plan 문서에서 구현할 항목 선택 시:
 ```
 > 항목 완료 시마다 헤더와 푸터의 진행률을 함께 업데이트한다.
 
-### 4. 완료 → `/done` 스킬
+### 4. 완료 후 owner 선택
 
-구현이 끝나면 `/done` 스킬을 호출합니다. done 스킬이 아래를 모두 처리:
-- TODO→DONE 이동, plan [x] 체크, plan 아카이브
-- DONE.md 5개 초과 시 아카이브
-- wtools/TODO.md 동기화, 완료 검증, 커밋
+구현이 끝나면 plan 헤더의 worktree metadata로 다음 owner를 선택합니다.
+- `> branch:` 또는 `> worktree:`가 있으면 `/merge-test`를 호출한다. `/done`은 이 상태를 차단한다.
+- 두 필드가 모두 없으면 `/done`을 직접 호출한다.
+
+수동 안내 템플릿:
+```text
+Detected: branch={branch|none}, worktree={worktree|none}
+Decision: /merge-test | /done
+Gate: branch/worktree present -> /merge-test; absent -> /done
+```
+
+`/done` owner는 TODO→DONE 이동, plan 체크, archive, DONE.md 정리, wtools/TODO.md 동기화, 완료 검증, 커밋을 처리합니다.
 
 ## 실행 단계
 
 Codex가 구현 요청 받으면:
 
 ### Phase A: 사용자 입력 확인
+
+**-1. 탐색성/상담성 입력은 구현 요청이 아니다.**
+
+아래 입력은 구현 승인으로 간주하지 않는다:
+- "있을까?", "가능할까?", "추천해줘", "어떻게 할까?", "좋겠어"
+- "가능 여부", "현황 확인", "이런 방향 어때?", "이렇게 하면 좋겠어"
+
+이 경우 `/implement`를 시작하지 않는다. 상세 검토, 후보 정리, 계획 확장, 반례 점검까지는 가능하지만 코드/문서 수정, DB/프로세스 변경, `git add`/`git stash`/`git worktree`/커밋 같은 git mutation은 금지한다.
+응답은 현재 상태 요약, 가능한 선택지, 실행 시 필요한 명시 승인 문장까지로 제한한다.
+
+구현 요청으로 볼 수 있는 입력:
+- "구현해", "진행해", "고쳐", "수정해", "적용해", "지금 붙여"
+- "가능하면 바로 고쳐", "문제 맞으면 수정해", "검토 후 적용해"처럼 같은 발화에 조건부 실행 의도가 포함된 경우
+
+단, 실행 의도가 있어도 이후 worktree/precondition gate는 그대로 통과해야 한다. "조사해줘" 계열은 AGENTS.md의 조사 read-only gate가 우선한다.
 
 **0. 사용자가 구현할 항목을 명시했는가?**
 
@@ -328,7 +357,13 @@ Codex가 구현 요청 받으면:
    - `/merge-test`가 `수정필요`로 종료되면 현재 iteration은 실패로 버려지는 것이 아니라 **다음 iteration continuation anchor를 남긴 상태**로 종료된 것으로 본다.
    - 다음 iteration 입력은 최소 `충돌 파일 목록 또는 stash ref`, `merge-test failure reason`, `현재 parent_plan_path` 세 가지를 포함해야 한다.
    - 다음 iteration은 `수정필요 -> 구현중`으로 상태를 되돌린 뒤, 위 입력을 기준으로 수정 -> 재검증 -> `/merge-test` 재시도 순서로 진행한다.
-   - 워크트리 미사용 시에는 `/merge-test`를 건너뛰고 `/done`을 직접 호출한다.
+   - 수동 안내에는 아래 3줄을 포함한다:
+     ```text
+     Detected: branch={branch|none}, worktree={worktree|none}
+     Decision: /merge-test | /done
+     Gate: branch/worktree present -> /merge-test; absent -> /done
+     ```
+   - 워크트리 미사용 시에는 `/merge-test`를 건너뛰고 `/done`을 직접 호출한다. 이 분기는 `/done`의 branch/worktree 차단 게이트와 같은 계약이다.
 
 ## plan 문서 상태 & 진행률
 
@@ -375,3 +410,4 @@ cd "{worktree_path}" && bash "/d/work/project/tools/common/commit.sh" "feat: ...
 ## 환경
 
 - **Windows**: 백슬래시(`\`), 절대경로, PowerShell 전용
+

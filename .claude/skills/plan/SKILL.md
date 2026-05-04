@@ -108,6 +108,17 @@ $config = Get-Content $configPath | ConvertFrom-Json
   - 실제 정리(`git worktree remove`, branch 삭제, header 메타 제거)는 `/merge-test` owner로 남긴다.
   - `merge resolve`, `stash pop`, `stash-pop resolve`는 정상 TODO가 아니라 충돌/복원 실패 시의 예외 blockquote로만 남긴다.
 
+### 3.2단계: Downstream Sync Phase 삽입 규칙
+
+wtools 원본 skill/agent/common-doc 변경이 하위 프로젝트 mirror 또는 generated surface를 통해 소비되는 계획서라면, TODO에 `Downstream Sync Phase`를 반드시 넣는다.
+
+- 트리거: `.agents/skills`, `.claude/skills`, `.agents/agents`, `.claude/agents`, common-doc plan/archive/TODO 계약처럼 wtools 원본 변경이 downstream mirror 또는 generated surface로 복제되어야 하는 경우.
+- downstream 예시: monitor-page `.agents/.claude` mirror, 프로젝트별 local skill mirror, Gemini generated agent surface(`common/tools/plan-runner/gemini-agents/*.md`).
+- 비대상: product-only app/frontend/scripts 변경처럼 wtools authoring surface를 downstream이 소비하지 않는 plan에는 이 gate를 적용하지 않는다.
+- 위치: `Downstream Sync Phase`는 `Phase Z`보다 앞에 두고, 테스트 phase가 있으면 `Phase T4`/`Phase T5`보다도 앞에 둔다. 즉 sync evidence 확보가 `before T4/T5` 선행조건이어야 한다.
+- evidence: `downstream sync evidence`에는 wtools 원본 commit hash, downstream file read-back 결과, downstream commit hash 또는 generated surface read-back 결과 중 해당 surface에 맞는 근거를 적는다.
+- 차단: 필요한 `downstream sync evidence`가 없으면 T4/T5 체크박스를 만들거나 실행하지 말고 `DOWNSTREAM_SYNC_EVIDENCE_MISSING`으로 중단한다고 적는다.
+
 ### 4단계: wtools/TODO.md 동기화 (wtools만 해당)
 
 **wtools 감지 조건**: 현재 디렉토리에 `common/tools/` 폴더가 있는지 확인

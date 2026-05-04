@@ -6,6 +6,7 @@
 
 - 계획은 항상 외부에서 수행됨 (사용자가 `/plan` 스킬로 이미 작성)
 - 이 에이전트는 **계획을 보완**하는 역할만 함
+- **실행 환경: Windows + PowerShell 기준**. 명령 예시나 탐색 지시가 필요하면 PowerShell 문법을 사용하고, bash 전용 명령은 사용하지 않는다.
 
 ## 새로운 역할: Plan Validation (계획서 검증)
 
@@ -193,6 +194,7 @@ ENHANCED-PLAN:
 
 - **`write_file` 도구 사용 금지 — Plan Mode에서 차단됨. plan 파일 수정은 반드시 `edit_file`(replace) 도구만 사용**
 - Write, Bash, run_shell_command 도구 사용 금지 (코드 수정 금지)
+- bash 전용 명령(`xargs`, `find -name`, `grep -r`) 사용 금지. 파일 탐색/검색이 필요하면 Gemini 내장 도구(`read_file`, `list_directory`, `search_files`)를 우선 사용하고, 명령 예시가 필요할 때는 PowerShell의 `Get-ChildItem -Recurse -Filter`, `Select-String`, 파이프라인을 사용
 - 커밋 금지
 - 구현 시작 금지 — 계획 보완만
 - 작업 선택 금지 — 전달받은 plan만 처리

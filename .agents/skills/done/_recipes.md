@@ -91,21 +91,61 @@ $TouchedPaths.Add("docs/archive/2026-xx-xx_foo.md") # archive git mv 후
 $CurrentDirty = (git -C $RepoRoot status --short) | ForEach-Object { $_.Substring(3).Trim() }
 $SelfResidual = $CurrentDirty | Where-Object { $TouchedPaths.Contains($_) }
 
-# whitelist 분기 처리
+# whitelist는 candidate classification 전용이다. stage pathspec에는 broad glob을 쓰지 않는다.
 $Whitelist = @("TODO.md", "docs/DONE.md")
 # plans 워크트리 glob 패턴: docs/plan/*.md, docs/archive/*.md
 $InWhitelist  = $SelfResidual | Where-Object { $_ -in $Whitelist -or $_ -like "docs/plan/*.md" -or $_ -like "docs/archive/*.md" }
 $OutWhitelist = $SelfResidual | Where-Object { $_ -notin $InWhitelist }
 
-# whitelist 안: 커밋 시도
-foreach ($f in $InWhitelist) { git -C $RepoRoot add $f }
-if ($InWhitelist) { & commit.ps1 "docs: flush self residual dirty" }
+# whitelist 안: exact path set만 stage한다.
+$Expected = [string[]]$InWhitelist
+foreach ($f in $Expected) { git -C $RepoRoot add -- $f }
+$Staged = git -C $RepoRoot diff --cached --name-only
+if (@(Compare-Object $Expected $Staged).Count -ne 0) {
+  throw "staged mismatch: expected exact path set과 cached set이 다릅니다."
+}
+if ($Expected) { & commit.ps1 "docs: flush self residual dirty" -Files $Expected }
 
 # whitelist 밖: 최종 보고에 기록 (흐름 차단 없음)
 if ($OutWhitelist) { Write-Host "남은 dirty: $($OutWhitelist -join ', ')" }
 ```
 
+**broad stage 금지 예시:**
+- 금지: `git add -u -- docs/plan`
+- 금지: `git add docs/plan/*.md`
+- 금지: `git add -A`
+- 허용: `$TouchedPaths`와 현재 dirty 교집합에서 계산한 exact path set만 `git add -- <path>` 또는 `commit.ps1 -Files <paths>`로 stage
+
+archive rename pair는 원본 삭제(`docs/plan/foo.md`)와 archive 추가(`docs/archive/foo.md`)를 expected staged set에 함께 넣는다. 기존 dirty plan은 자동 수리 대상이 아니라 baseline dirty로 보존한다.
+
 > mtime/hash 기반 변경 감지는 1차 범위 외. path-level 교집합으로 해결 못 하는 케이스는 후속 plan으로 분리한다.
+
+---
+
+## 세션 plan 목록 추출과 remaining targets 판정
+
+대화 텍스트에서 사용자가 명시한 절대경로/상대 plan 링크만 수집해 session targets를 만든다. sibling `_todo-*`는 대표 plan 본문 링크 또는 같은 stem의 미완료 파일을 확인한 뒤 추가한다.
+
+```powershell
+$Mentioned = Select-String -InputObject $ConversationText -Pattern '([A-Za-z]:\\[^\\r\\n`]*docs\\plan\\[^\\r\\n` ]+\\.md|docs/plan/[^\\r\\n` )]+\\.md)' -AllMatches |
+  ForEach-Object { $_.Matches.Value } |
+  Sort-Object -Unique
+
+$SessionTargets = $Mentioned | Where-Object {
+  Test-Path $_ -and -not (Select-String -Path $_ -Pattern '^> 상태:\\s*(완료|폐기)|docs[\\/]archive' -Quiet)
+}
+```
+
+- `remaining targets = session targets - 완료/폐기/archive`
+- global backlog scan은 session targets 산정 이후 참고용으로만 수행한다.
+- remaining targets가 0건이면 예시처럼 출력한다:
+
+```text
+남은 session target 없음.
+참고 backlog: .worktrees/plans/TODO.md에 남은 항목은 사용자가 명시할 때만 진행합니다.
+```
+
+global backlog를 보여줄 때는 반드시 `참고 backlog` label을 붙이고, 그 항목을 자동 실행 대상으로 승격하지 않는다.
 
 ---
 

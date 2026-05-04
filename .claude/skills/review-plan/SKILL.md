@@ -160,6 +160,66 @@ expand-todo의 5.4단계와 동일 절차: [../expand-todo/references/hedging-cl
 - 1단계에서 보정 자체가 없었다면 통과(no-op)
 - 보정 텍스트에 한해 self-review 수행 — 사용자/이전 author가 작성한 본문은 손대지 않는다
 
+### 1.8단계: skill-edit fence audit (외부 프로젝트 한정)
+
+**발동 조건**: review-plan이 wtools 외 프로젝트(monitor-page 등)에서 호출됐고, plan 본문에 fence 경로 수정 todo가 존재할 때.
+wtools 자체에서 호출된 경우 이 단계를 스킵하고 결과표에 `해당 없음` 표시.
+
+#### fence 대상 경로
+
+| 경로 패턴 | 설명 |
+|---|---|
+| `.claude/skills/**` | Claude 스킬 원본 |
+| `.agents/skills/**` | 에이전트 스킬 원본 |
+| `.claude/agents/**` | Claude 에이전트 원본 |
+| `.gemini/agents/**` | Gemini 에이전트 원본 |
+| `.gemini/commands/**` | Gemini 커맨드 원본 |
+| `.agent/workflows/**` | 에이전트 워크플로우 원본 |
+
+#### detector 규칙
+
+- **매칭 대상**: 체크박스 라인(`- [ ]`, `- [x]`) 또는 파일 경로 헤더 라인
+- **제외**: 코드블록(` ``` `) 내부, 인용(`>`) 라인 — false positive 방지
+- **정규식 예시**: `^\s*-\s*\[[ x]\].*\.(claude/skills|agents/skills|claude/agents|gemini/agents|gemini/commands|agent/workflows)/`
+
+#### 처리 옵션
+
+fence 경로 todo가 감지되면 사용자에게 아래 3가지 옵션을 제시한다.
+
+**옵션 1 — 이관:**
+- 원본 plan에서 해당 fence todo 라인 제거
+- wtools `.worktrees/plans/docs/plan/<date>_<원본-slug>_skill-mirror.md` 신규 생성 (원본 plan cross-reference 포함)
+- 원본 plan에 `> 스킬 갱신은 wtools <plan-path>에서 처리 후 sync 대기` placeholder 삽입
+- 이관 plan 헤더 필수 필드: `> 원본 plan: <project>/<plan-path>`, `> 출처: review-plan fence audit 이관`, `> 요약:` (원본 fence todo 요약)
+- 이관 plan 파일명 규칙:
+  - fence 항목이 기존 주제 연장: `<원본-date>_<원본-slug>_skill-mirror.md`
+  - fence 항목이 새 주제: `<오늘-date>_<주제>_skill-edit.md`
+
+**옵션 2 — monitor-page mirror 정당화:**
+- 사용자 사유를 입력받아 plan 기술적 고려사항에 `프로젝트 한정 mirror modification: <사유>` bullet 추가
+- fence audit 결과: `허용: <사유>` 표시
+- 사용 예: monitor-page worker target restart 분기처럼 단일 프로젝트 한정 룰이 SKILL.md mirror에 들어가야 하는 경우
+
+**옵션 3 — 차단:**
+- review-plan을 `🚫 차단: skill-edit fence` 상태로 종료
+- plan 수정 없이 사용자 결정을 대기
+- expand-todo 진행 금지
+
+#### 결과표 출력
+
+결과표 헤더에 `fence audit` 컬럼 추가:
+
+| fence audit 값 | 의미 |
+|---|---|
+| `해당 없음` | wtools 자체 호출 또는 fence 경로 todo 없음 |
+| `이관: <wtools-plan>` | 이관 완료, 생성된 wtools plan 경로 |
+| `허용: <사유>` | 정당화 완료, 입력된 사유 |
+| `🚫 차단` | 차단 상태로 종료 |
+
+`### 검토 근거 및 상세 내역` 섹션에 fence audit 검출 내역(감지된 todo 라인 목록)과 처리 결과를 기록한다.
+
+---
+
 ### 2단계: expand-todo Skill 호출
 
 재검토 통과한 각 계획서에 대해 **Skill 도구로 `/expand-todo`를 직접 호출**한다.
