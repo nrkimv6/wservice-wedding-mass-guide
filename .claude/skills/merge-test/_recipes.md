@@ -179,6 +179,37 @@ if ($stashRef) {
 }
 ```
 
+## 2.5단계 post-merge protected dirty repair
+
+post-merge 보강 작업이 필요하면 main root에 먼저 쓰지 않고 `impl/post-merge-{slug}` worktree/branch로 선제 라우팅한다. 사후에 main root dirty가 발견되면 아래 repair flow를 자동 수행한다.
+
+```powershell
+$PostMergeBaseline = git status --short
+
+# post-merge 검증/보강 후
+$CurrentDirty = git status --short
+$NewDirty = Compare-Object $PostMergeBaseline $CurrentDirty -PassThru | Where-Object {
+  $_ -match '^\s*(M|A|D|\?\?)\s+(app/|frontend/|scripts/|tests/|\.agents/|\.claude/)'
+}
+
+if ($NewDirty) {
+  Write-Host "ROOT_PROTECTED_DIRTY_CREATED: post-merge protected dirty detected; starting repair flow."
+  $repairBranch = "impl/post-merge-$slug"
+  $repairWorktree = ".worktrees/$repairBranch"
+  git worktree add $repairWorktree -b $repairBranch
+  # $NewDirty의 path만 repair worktree로 이동/적용한다. 기존 unrelated dirty는 건드리지 않는다.
+  # repair worktree에서 exact path set만 commit wrapper로 커밋한다.
+  # main으로 repair branch를 merge한 뒤 Phase Z evidence에 아래 3개를 기록한다.
+  # - post-merge repair branch
+  # - repair commit
+  # - final merge commit
+}
+```
+
+- `ROOT_PROTECTED_DIRTY_CREATED`는 실패 final이 아니라 repair trigger다.
+- repair branch 생성 실패 시 dirty path를 보존 branch 또는 dirty 보고 최종 evidence로 남기고, `/done`이 `related-plan dirty`로 이어받을 수 있게 Phase Z에 기록한다.
+- `main에 먼저 dirty 작성 -> 나중에 impl/post-merge branch 사후 생성` 순서가 감지되면 같은 repair acceptance case로 처리한다.
+
 
 ## 4단계 API readiness / live readiness 폴링
 

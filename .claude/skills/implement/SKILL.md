@@ -4,6 +4,11 @@ description: "구현 워크플로우 (plan→TODO→DONE). Use when: 구현해, 
 ---
 
 
+
+<!-- script-contract-invariant -->
+## Script Contract Invariant
+
+Deterministic setup, status, and advisory scanning must prefer helper CLI evidence over re-implementing long inline procedures. Use `common\tools\plan-advisory-detect.ps1 -PlanFile <plan> -Json` for advisory-only plan triggers and `common\tools\merge-test-preflight.ps1 -PlanFile <plan> -RepoRoot <repo> -Json` when branch/worktree or pending-merge evidence is needed. AI keeps ownership of interpretation and scope decisions; helper output is evidence, not automatic approval to mutate.
 > Routing gate: branch/worktree present -> /merge-test; absent -> /done
 # 구현 워크플로우
 

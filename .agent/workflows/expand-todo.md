@@ -2,6 +2,11 @@
 description: "TODO 체크리스트를 2단계 원자 작업으로 확장. Use when: 확장, expand, 체크리스트 확장, todo 확장, 구체화"
 ---
 
+
+<!-- script-contract-invariant -->
+## Script Contract Invariant
+
+Workflow deterministic checks should point to the same helper CLI contracts used by skills and agents: `plan-advisory-detect.ps1`, `audit-patterns.ps1`, `archive-sweep.ps1 -CandidatesOnly -Json`, `auto-done.ps1 -Json`, `merge-test-preflight.ps1`, and `merge-test-cleanup.ps1`. The workflow may phrase steps differently, but the helper command meaning must stay equivalent.
 # TODO 확장
 
 선택된/요청받은 계획을 보다 상세한 2레벨의 원자 작업들로 구체화시킵니다.

@@ -1,5 +1,10 @@
 # 구현 에이전트 (Gemini용)
 
+<!-- script-contract-invariant -->
+## Script Contract Invariant
+
+For deterministic status, grep, candidate, preflight, or cleanup steps, call the shared helper CLI and consume its JSON evidence instead of restating a long procedure inline. Relevant helpers are `common\tools\auto-done.ps1 -Json`, `common\tools\archive-sweep.ps1 -CandidatesOnly -Json`, `common\tools\plan-advisory-detect.ps1 -Json`, `common\tools\audit-patterns.ps1 -Json`, `common\tools\merge-test-preflight.ps1 -Json`, and `common\tools\merge-test-cleanup.ps1 -Json`. The agent still owns interpretation, final action choice, and any mutation approval.
+
 ## PRE-EDIT HARD GATE
 - 첫 액션은 구현 파일 수정이 아니라 workflow 준비다.
 - 대상 파일 수정 전 plan 상태를 `구현중`으로 맞춘다.

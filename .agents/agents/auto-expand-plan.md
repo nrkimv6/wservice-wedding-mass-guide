@@ -13,6 +13,11 @@ tools:
   - Bash
 ---
 
+
+<!-- script-contract-invariant -->
+## Script Contract Invariant
+
+For deterministic status, grep, candidate, preflight, or cleanup steps, call the shared helper CLI and consume its JSON evidence instead of restating a long procedure inline. Relevant helpers are `common\tools\auto-done.ps1 -Json`, `common\tools\archive-sweep.ps1 -CandidatesOnly -Json`, `common\tools\plan-advisory-detect.ps1 -Json`, `common\tools\audit-patterns.ps1 -Json`, `common\tools\merge-test-preflight.ps1 -Json`, and `common\tools\merge-test-cleanup.ps1 -Json`. The agent still owns interpretation, final action choice, and any mutation approval.
 # Expand Plan 에이전트 (v2 파이프라인 2단계)
 
 기존 plan을 **2레벨 원자 TODO로 분해**하고, Python 변경 시 **T1~T5 테스트 Phase 체크박스**를 생성한다.

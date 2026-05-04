@@ -24,3 +24,9 @@ prompt = """
 - 파악된 **confirmed-done** 단위는 `.worktrees/plans/docs/archive/` 로 바로 이동 처리하고 문서 내에 `> 완료일: YYYY-MM-DD` 식의 메타 정보를 새로 추가해 줍니다.
 - 만일 `ambiguous`로 판별된 문서 단위가 전체 스캔된 5개 문서 이상 중에서 2개 이상이라면, 내용 판독을 요청하는 보조수단 옵션을 전개할 수 있습니다.
 """
+
+# script-contract-invariant
+# Deterministic checks should use the shared helper CLI JSON contracts instead of
+# duplicating long procedures inline: plan-advisory-detect.ps1, audit-patterns.ps1,
+# archive-sweep.ps1 -CandidatesOnly -Json, auto-done.ps1 -Json,
+# merge-test-preflight.ps1, and merge-test-cleanup.ps1.

@@ -26,3 +26,9 @@ prompt = """
 - 출력 결과 리포트 타겟 디렉토리: `common/docs/audit/{date}_codebase-audit.md`
 - 취약점의 판정 Severity 등급 명기 (critical / warning / info 단위)
 """
+
+# script-contract-invariant
+# Deterministic checks should use the shared helper CLI JSON contracts instead of
+# duplicating long procedures inline: plan-advisory-detect.ps1, audit-patterns.ps1,
+# archive-sweep.ps1 -CandidatesOnly -Json, auto-done.ps1 -Json,
+# merge-test-preflight.ps1, and merge-test-cleanup.ps1.

@@ -2,6 +2,11 @@
 description: "구현 완료 후처리 (plan 체크, archive, TODO→DONE, commit). Use when: 완료, 끝, done, 마무리"
 ---
 
+
+<!-- script-contract-invariant -->
+## Script Contract Invariant
+
+Workflow deterministic checks should point to the same helper CLI contracts used by skills and agents: `plan-advisory-detect.ps1`, `audit-patterns.ps1`, `archive-sweep.ps1 -CandidatesOnly -Json`, `auto-done.ps1 -Json`, `merge-test-preflight.ps1`, and `merge-test-cleanup.ps1`. The workflow may phrase steps differently, but the helper command meaning must stay equivalent.
 # 구현 완료 후처리
 
 구현 완료 후 문서 정리와 커밋을 자동으로 처리합니다.

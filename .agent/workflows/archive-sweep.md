@@ -2,6 +2,11 @@
 description: "완료된 plan 자동 아카이브. Use when: 아카이브 정리, archive sweep, plan 정리, 완료 정리"
 ---
 
+
+<!-- script-contract-invariant -->
+## Script Contract Invariant
+
+Workflow deterministic checks should point to the same helper CLI contracts used by skills and agents: `plan-advisory-detect.ps1`, `audit-patterns.ps1`, `archive-sweep.ps1 -CandidatesOnly -Json`, `auto-done.ps1 -Json`, `merge-test-preflight.ps1`, and `merge-test-cleanup.ps1`. The workflow may phrase steps differently, but the helper command meaning must stay equivalent.
 # 아카이브 자동 정리 관리
 
 진행이 전부 완료된 기존 plan 문서를 주기적으로 탐색하여 `archive/` 영역으로 묶어주는 유틸리티 워크플로우입니다.

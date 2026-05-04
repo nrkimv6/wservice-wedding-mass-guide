@@ -5,6 +5,11 @@ triggers: ["머지 테스트", "merge-test", "머지후테스트", "통합테스
 ---
 
 
+
+<!-- script-contract-invariant -->
+## Script Contract Invariant
+
+Preflight and cleanup evidence must come from helper CLI contracts before any merge mutation. Use `common\tools\merge-test-preflight.ps1 -PlanFile <plan> -RepoRoot <repo> -Json` for pending merge, branch/worktree, dirty, and service-lock evidence. Use `common\tools\merge-test-cleanup.ps1 -PlanFile <plan> -RepoRoot <repo> -Json` for post-merge cleanup evidence. AI owns the merge/abort decision.
 > Routing gate: branch/worktree present -> /merge-test; absent -> /done
 # 머지 후 통합테스트 게이트
 
@@ -313,6 +318,14 @@ if (Test-Path $merge_lock_cli) {
 stash 실패 시 머지 커밋은 보존한다. git reset / git merge --abort 금지.
 skipped residue는 quarantine diff/log로 기록한다.
 상세 의사코드: [`_recipes.md`](./_recipes.md) '2단계 stash-merge-selective-restore' 참조.
+
+**post-merge protected dirty repair 계약:**
+- `/merge-test` 진입 시 `git status --short` 스냅샷을 `$PostMergeBaseline`으로 기록한다.
+- post-merge 검증 중 코드/테스트 수정 의도가 감지되면 dirty를 만들기 전에 `impl/post-merge-{slug}` worktree/branch로 선제 라우팅한다. 반응형 repair는 사후 안전망이고 정상 흐름은 선제 라우팅이다.
+- post-merge 단계에서 `current dirty - $PostMergeBaseline` 차집합으로 새로 생긴 dirty를 판정한다.
+- main root의 protected path(`app/`, `frontend/`, `scripts/`, `tests/`, `.agents/`, `.claude`)가 새로 dirty가 되면 `ROOT_PROTECTED_DIRTY_CREATED`를 failure final이 아니라 repair trigger로 취급한다.
+- repair trigger 발생 시 해당 dirty path만 `impl/post-merge-{slug}` worktree/branch로 옮겨 커밋하고, main으로 merge한 뒤 Phase Z evidence에 `post-merge repair branch`, `repair commit`, `final merge commit`을 기록한다.
+- `main에 먼저 dirty 작성 -> 나중에 impl/post-merge branch 사후 생성` 순서는 금지 사례로 설명만 하고 끝내지 않는다. 이 순서가 감지되면 자동 repair acceptance case로 처리한다.
 
 각 머지 성공 직후 `git rev-parse --short HEAD` / `Get-Date "yyyy-MM-dd HH:mm"`로 해시+시각을 추출하여
 target 헤더의 `> 상태:` 바로 아래에 `> 반영일시:` + `> 머지커밋:` 두 줄을 Edit으로 삽입한다.

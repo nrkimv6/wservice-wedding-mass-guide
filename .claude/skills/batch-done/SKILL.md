@@ -3,6 +3,11 @@ name: batch-done
 description: "완료 plan 일괄 done 처리 (full done flow). Use when: 일괄 done, batch done, 전체 완료 처리"
 ---
 
+
+<!-- script-contract-invariant -->
+## Script Contract Invariant
+
+Completed-plan discovery is a helper contract. Use `common\tools\archive-sweep.ps1 -CandidatesOnly -Json` to collect checkbox-complete candidates and branch/worktree skips, then call `common\tools\auto-done.ps1 -PlanFile <plan> -Json` for the full TODO->DONE/archive flow. Do not duplicate candidate tables by ad hoc grep unless the helper is unavailable and the failure is reported.
 # 완료 plan 일괄 done 처리
 
 체크박스 100% 완료된 `_todo.md` 파일을 기계적으로 탐색하여 full done flow(아카이브 이동, TODO→DONE, wtools 동기화, 커밋)를 일괄 처리합니다.

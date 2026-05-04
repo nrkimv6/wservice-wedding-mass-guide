@@ -3,6 +3,11 @@ name: review-plan
 description: "새 계획서 재검토 + expand-todo + 커밋. /reflect 완료 후 자동 호출됨. Use when: 계획서 검토, review-plan, 계획 검토"
 ---
 
+
+<!-- script-contract-invariant -->
+## Script Contract Invariant
+
+Regex and keyword detections are advisory evidence unless a helper contract explicitly marks them mutation-ready. Use `common\tools\plan-advisory-detect.ps1 -PlanFile <plan> -Json` for Phase IA, DB-Direct, Phase R, and environment-contamination candidates. Review conclusions and plan wording corrections remain AI-owned.
 # 계획서 재검토 → 확장 → 커밋
 
 새로 생성된 계획서를 검증하고, Skill 도구로 `/expand-todo`를 호출해 체크리스트를 확장한 뒤 커밋합니다.

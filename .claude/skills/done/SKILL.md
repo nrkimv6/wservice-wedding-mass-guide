@@ -4,6 +4,11 @@ description: "구현 완료 후처리 (plan 체크, archive, TODO→DONE, commit
 ---
 
 
+
+<!-- script-contract-invariant -->
+## Script Contract Invariant
+
+The deterministic completion flow is owned by `common\tools\auto-done.ps1`. Use `-DryRun -Json` for preflight evidence and `-Json` for structured result reporting when possible. AI remains responsible for routing (`/merge-test` vs `/done`), conflict classification, and deciding whether helper failure requires owner intervention.
 > Routing gate: branch/worktree present -> /merge-test; absent -> /done
 # 구현 완료 후처리
 
@@ -24,6 +29,8 @@ description: "구현 완료 후처리 (plan 체크, archive, TODO→DONE, commit
 - **touched paths**: 이 스킬 실행 중 agent가 직접 Edit/생성/git mv한 파일의 path 집합. 세션 내에서 점진적으로 추가된다.
 - **self residual dirty**: 세션 종료 전 `current dirty ∩ $TouchedPaths`. agent가 만들었지만 아직 커밋하지 않은 dirty.
 - **touched preexisting dirty**: baseline에 이미 있었으나 `$TouchedPaths`에도 포함된 path. agent가 같은 컨텍스트에서 수정했으면 whitelist 안에서는 커밋 책임이 agent에게 있다.
+- **related-plan dirty**: `$TouchedPaths`에는 없더라도 현재 plan/Phase Z/검증 로그/직전 `/merge-test` 출력/직전 `impl/post-merge-*` branch나 merge evidence에 등장한 코드·테스트 path가 현재 dirty로 남은 상태. 특히 `tests/*.py` 일반 테스트, `app/*`, `frontend/*`, `scripts/*`는 whitelist에 직접 추가하지 않고 이 관련성 근거로만 승격한다.
+- **post-merge-owned dirty**: `/merge-test`의 post-merge repair branch, repair commit, final merge commit evidence에 포함된 path가 `/done` 진입 시 아직 dirty인 상태. 이는 self residual이 아니어도 현재 owner chain의 커밋 책임이다.
 
 ## 트리거
 
@@ -323,10 +330,15 @@ bump 필요 시 실행 명령 + CHANGELOG 형식 → [_recipes.md](./_recipes.md
 2. `$SelfResidual = $CurrentDirty ∩ $TouchedPaths`를 계산한다.
 3. baseline에 없던 path가 `$TouchedPaths`에 있으면 → self dirty 분류.
 4. baseline에 있었으나 `$TouchedPaths`에도 있으면 → touched preexisting dirty — 커밋 대상에 포함한다.
+5. `$CurrentDirty - $SelfResidual` 중 현재 plan 본문, Phase Z evidence, 검증 로그, 직전 merge-test 출력, 직전 `impl/post-merge-*` branch/repair commit/final merge commit에 등장한 path는 `related-plan dirty` 또는 `post-merge-owned dirty`로 승격한다.
+6. 성공 종료 조건은 dirty 0이다. 다만 preexisting-unrelated/protected-secret/unknown-protected는 제품 커밋에 섞지 않고 보존 branch, 별도 명시 커밋, 또는 최종 evidence 표로 남겨야 한다.
 
 **처리 분기:**
 - whitelist(`TODO.md`, `docs/DONE.md`, plans `docs/plan/*.md`, plans `docs/archive/*.md`)는 candidate classification에만 사용한다.
 - self residual 커밋은 `TouchedPaths ∩ current dirty`에서 나온 **exact path set**만 개별 stage한다. `docs/plan/*.md` glob, `git add -u -- docs/plan`, `git add -A`를 stage pathspec으로 직접 쓰지 않는다.
+- `related-plan dirty`/`post-merge-owned dirty`는 whitelist 확장이 아니다. exact path set과 관련성 evidence를 함께 기록한 뒤 commit wrapper로 커밋한다.
+- negative requirement: 일반 코드 path(`tests/*.py`, `app/*`, `frontend/*`, `scripts/*`)를 done 자동 커밋 whitelist에 직접 추가하지 않는다. 반드시 `related-plan dirty` 또는 `post-merge-owned dirty` 판정 경로를 통해서만 커밋 후보가 된다.
+- skill source 변경이 포함된 owner chain에서는 `python common/tools/plan-runner/scripts/sync_gemini_surfaces.py --check`가 marker drift를 보고하면 `/done` 성공 종료를 차단한다. sync 적용 또는 보존 evidence 없이 `dirty 0`으로 보고하지 않는다.
 - archive 이동은 source deletion과 destination add를 expected staged set에 함께 넣는다.
 - commit.ps1 호출 전 `git diff --cached --name-status`가 expected staged set과 정확히 일치하지 않으면 **staged mismatch** hard stop으로 중단하고 커밋하지 않는다.
 - whitelist 밖 touched dirty → 흐름을 중단하지 않고 최종 보고의 "남은 dirty" 목록에 기록한다.

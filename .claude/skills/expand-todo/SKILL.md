@@ -3,6 +3,11 @@ name: expand-todo
 description: "계획 문서의 TODO 체크리스트를 2단계 원자 작업으로 확장. Use when: 확장, expand, 체크리스트 확장, todo 확장, 구체화"
 ---
 
+
+<!-- script-contract-invariant -->
+## Script Contract Invariant
+
+Phase insertion triggers must be treated as advisory evidence first. Use `common\tools\plan-advisory-detect.ps1 -PlanFile <plan> -Json` to collect candidate evidence, then let the skill decide whether a deterministic checklist mutation is warranted. Keyword-only matches are not sufficient grounds for automatic mutation.
 # TODO 체크리스트 2단계 확장
 
 기존 계획 문서의 빈약한 체크리스트를 **2레벨 원자 작업**으로 확장합니다.

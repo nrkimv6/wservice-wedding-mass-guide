@@ -110,6 +110,19 @@ if ($Expected) { & commit.ps1 "docs: flush self residual dirty" -Files $Expected
 if ($OutWhitelist) { Write-Host "남은 dirty: $($OutWhitelist -join ', ')" }
 ```
 
+### related-plan dirty 분류 표
+
+| 분류 | 조건 | 자동 처리 |
+|------|------|----------|
+| `self` | `current dirty ∩ $TouchedPaths` | exact path set만 commit wrapper로 커밋 |
+| `related-plan` | 현재 plan 본문, Phase Z, 검증 로그, 직전 `/merge-test` 출력에 등장한 path가 현재 dirty | 관련성 evidence와 exact path set을 기록하고 커밋 |
+| `post-merge-owned` | 직전 `impl/post-merge-*` branch, repair commit, final merge commit evidence에 포함된 path가 현재 dirty | repair evidence를 남기고 커밋 |
+| `preexisting-unrelated` | baseline dirty였고 현재 plan/검증 evidence와 무관 | 커밋하지 않고 보존 evidence로 보고 |
+| `protected-secret` | `.env*`, `credentials.json`, `*.key`, `*.pem`, `secrets/**` | 제품 커밋 금지, fail-fast 또는 별도 보존 보고 |
+| `unknown-protected` | protected path인데 owner/evidence 불명 | 보존 branch 또는 명시 보고. 성공 종료 시 dirty 0 또는 보존 evidence 필수 |
+
+`tests/*.py`, `app/*`, `frontend/*`, `scripts/*`는 whitelist에 추가하지 않는다. 이 경로들은 `related-plan dirty` 또는 `post-merge-owned dirty`로 분류될 때만 커밋 대상이 된다.
+
 **broad stage 금지 예시:**
 - 금지: `git add -u -- docs/plan`
 - 금지: `git add docs/plan/*.md`

@@ -2,6 +2,11 @@
 description: "⚠️ 명시적 호출 전용. 사용자가 /codebase-audit 또는 '점검' 명시 요청 시만 실행"
 ---
 
+
+<!-- script-contract-invariant -->
+## Script Contract Invariant
+
+Workflow deterministic checks should point to the same helper CLI contracts used by skills and agents: `plan-advisory-detect.ps1`, `audit-patterns.ps1`, `archive-sweep.ps1 -CandidatesOnly -Json`, `auto-done.ps1 -Json`, `merge-test-preflight.ps1`, and `merge-test-cleanup.ps1`. The workflow may phrase steps differently, but the helper command meaning must stay equivalent.
 # 전체 코드베이스 점검 (Audit)
 
 전체 작업을 총괄하여 대규모 수정 소요나 결함을 정밀 분석할 때 가동하는 전용 코드 점검기입니다.
