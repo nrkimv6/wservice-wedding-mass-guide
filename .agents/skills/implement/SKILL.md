@@ -239,6 +239,7 @@ Codex가 구현 요청 받으면:
    - `> 계획서:` 링크가 없거나 깨져서 부모 경로를 확정할 수 없으면 즉시 중단한다. (다른 계획서 워크트리 오사용 방지)
    - 이후 branch/worktree 생성·재개·정리는 모두 `parent_plan_path` 기준으로만 허용한다.
    - `parent_plan_path`는 **owner set의 primary owner**(첫 항목)다. 단일 plan 작업 시 owner set = `[parent_plan_path]` (길이 1). attach 모드에서는 owner set 길이가 2 이상이 된다.
+   - 계획 대상이 downstream child repo `.agents`/`.claude`/`.gemini` mirror 직접 수정이면 worktree 생성/커밋 전에 wtools owner plan, downstream sync evidence, 또는 `/pull-sync` 수신 검증 flow로 reroute한다. `git pull` 수신/검증 계획과 conflict resolution 계획은 차단 대상에서 제외한다.
 
 1.2. **워크트리 준비 (수동 세션 main 오염 방지)**
 

@@ -46,7 +46,7 @@ BEFORE_HASH=$(git rev-parse HEAD)
 
 # 4. pull 실행 (1+2 모두 통과 시에만)
 git pull origin main
-# → 실패/충돌 시 → 스킵 + 보고
+# → 실패/충돌 시 → 1.7단계 conflict 분류로 전환
 ```
 
 **병렬 실행:**
@@ -57,6 +57,26 @@ git pull origin main
 - 각 프로젝트: (상태, 변경 파일 수, 이전 해시)
 - clean + pull 성공 → 2단계로 진행
 - dirty/비main/실패 → 스킵 (보고 목록에 추가)
+
+### 1.7단계: conflict 분류
+
+`git pull`이 conflict로 멈춘 경우 방치하거나 무조건 스킵하지 않고 파일 성격별로 분류한다.
+
+| 분류 | 대상 | 처리 |
+|---|---|---|
+| 일반 코드/문서 | `app/`, `frontend/`, `scripts/`, `docs/plan`, `TODO.md` 등 | 해당 repo owner flow에서 resolve/test/commit한다. |
+| 운영 긴급 | 서비스 복구에 필요한 설정/운영 파일 | 복구 우선으로 resolve하고 사유와 검증 evidence를 남긴다. |
+| mirror surface | `.agents/`, `.claude/`, `.gemini/` | divergent commit evidence를 먼저 남기고 merge resolution으로 처리한다. |
+| unknown | 파일 성격을 판정할 수 없음 | 사용자에게 conflict 파일과 상태를 보고하고 결정 대기한다. |
+
+mirror surface conflict는 수동 sync 구현이 아니다. 아래 evidence를 확보한 뒤 현재 위에 쌓인 커밋을 보존하는 merge resolution으로 처리한다.
+- `MERGE_HEAD`
+- `git merge-base ours theirs`
+- `git log --oneline ours..theirs`
+- divergent child-local commit hash
+- conflict 파일 surface 종류
+
+mirror conflict resolution은 `git checkout --theirs -- <path>` 또는 `git merge --strategy-option=theirs` 같은 merge resolution으로 표현하고, child repo mirror 파일을 직접 edit/commit해서 wtools 원본과 맞추는 구현 계획으로 승격하지 않는다.
 
 ### 1.5단계: Redis 잔존 상태 정리 (monitor-page 전용)
 

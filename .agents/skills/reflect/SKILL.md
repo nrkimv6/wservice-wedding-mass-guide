@@ -156,6 +156,7 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
 - "계획서부터", "그 스킬로 해", "하지 마", "왜 안 지켰냐"처럼 사용자가 명시적으로 교정한 경우
 - 사용자가 `[$skill](...SKILL.md)` 링크나 exact skill name을 다시 제시했는데도 실행 대신 설명을 반복한 경우
 - `Phase DB-Direct`가 있는 plan에서 running DB 직접 실행, `존재 확인 쿼리`, `live API 또는 runtime 결과`를 남기지 않은 경우
+- child repo `.agents`/`.claude`/`.gemini` mirror 파일 직접 edit/commit을 제안하거나 실행한 경우. mirror drift는 wtools 원본 수정, downstream sync evidence, 또는 `/pull-sync` 수신 검증으로 라우팅해야 한다.
 
 기록 기준:
 - 단순 말실수나 표현 차이가 아니라, 실제 작업 흐름에 영향을 준 누락만 포함
@@ -175,6 +176,7 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
 - 세션 중 교정 필요성이 드러났는데 plan 생성이나 규칙 수정 없이 종료하려 한 경우
 - explicit skill execute-now 교정안을 말했지만 `skills.md` 또는 관련 SKILL.md 수정 plan으로 연결하지 않은 경우
 - DB-direct/live validation 누락이 반복되는데도 hard gate 교정안을 `plan candidate`로 승격하지 않은 경우
+- child repo mirror direct edit를 wtools 원본 수정 또는 sync evidence flow로 reroute하지 않은 경우
 
 판정 기준:
 - 반복 재발 또는 범위 확장 리스크가 있는 수준만 포함
@@ -213,6 +215,7 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
 - mixed finding이 두 surface에 함께 걸치면 `.agents` 문구 drift와 runtime/`.claude` parity를 각각 분리하지 말고, `runner.py` 소비 방식 또는 `.claude` mirror drift가 포함된 경우 runtime parity plan을 primary owner로 삼는다.
 - mixed finding에 runtime/`.claude` 요소가 없고 `.agents` active-surface 문구 drift만 남으면 reflect active-surface plan을 primary owner로 삼는다.
 - primary owner가 정해진 뒤 다른 surface는 `참조 plan`으로만 같이 남긴다. 하나의 finding을 동일 레벨 신규 plan 2개로 쪼개지 않는다.
+- downstream mirror drift는 child repo 구현 plan이 아니라 wtools 원본 owner plan 또는 `/pull-sync` 수신 검증 plan으로 라우팅한다.
 
 ### 수동 검토 시나리오
 
@@ -289,6 +292,12 @@ finding을 plan으로 승격하기 전에 아래 4가지를 판정한다:
    (예: wtools 공통은 `.worktrees/plans/docs/plan`, 일반 프로젝트는 `docs/plan`)
    **계획서 생성 위치 분기** — 발견 항목의 수정 대상에 따라 올바른 프로젝트에 생성:
    - 수정 대상이 `.claude/skills/`, `.claude/agents/`, 공통 스크립트 → **wtools** `.worktrees/plans/docs/plan/`에 생성
+   - 수정 대상이 child repo `.agents`, `.claude`, `.gemini` mirror 파일이면 wtools 원본 수정 plan, downstream sync evidence task, 또는 `/pull-sync` 수신 검증 task로 분류하고 child repo impl plan은 생성 금지
+     - 허용: wtools 원본 수정 + GitHub Actions sync commit 대기
+     - 허용: child repo `git pull` 또는 `/pull-sync`로 sync commit 수신
+     - 허용: child repo에서 sync commit 수신 후 downstream file read-back 검증
+     - 금지: child repo `.agents`/`.claude`/`.gemini` mirror 파일을 직접 edit/commit해 wtools 원본과 수동 정렬 — Q5 위반
+     - conflict 발생 시 방치하지 말고 `/pull-sync` conflict 분류 정책으로 위임한다.
    - 수정 대상이 특정 프로젝트의 `app/`, `frontend/`, `scripts/` 등 → **해당 프로젝트**의 `docs/plan/`에 생성
    - 복수 프로젝트에 걸친 변경 → **wtools** `.worktrees/plans/docs/plan/`에 생성
 2. `/plan` 스킬의 `_template.md` 형식으로 계획서 작성
