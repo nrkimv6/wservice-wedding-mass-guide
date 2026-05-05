@@ -350,9 +350,10 @@ Claude가 구현 요청 받으면:
    - 위 잔여 항목이 남아 있는 상태를 `구현완료`, `마무리`, `닫힘`으로 표현하지 않는다. 이 상태는 `DB-direct 미실행`, `live 검증 미실행`, `직접 실행 대기`로만 보고한다.
    - 기본: 구현 체크박스를 마치고 plan 상태를 `머지대기`로 올린 뒤 `/merge-test` 스킬 호출 — 워크트리 머지 + T4/T5 통합테스트 + 완료 처리(archive, TODO→DONE, 커밋)까지 일괄 실행
    - `_todo-N.md` 작업이고 같은 `parent_plan_path`의 다른 `_todo-*`가 이미 `머지대기` 상태면 `/merge-test`를 **부모 묶음 배치 모드**로 1회 실행해 같은 부모의 워크트리를 한 번에 정리한다.
-   - `/merge-test`가 `수정필요`로 종료되면 현재 iteration은 실패로 버려지는 것이 아니라 **다음 iteration continuation anchor를 남긴 상태**로 종료된 것으로 본다.
-   - 다음 iteration 입력은 최소 `충돌 파일 목록 또는 stash ref`, `merge-test failure reason`, `현재 parent_plan_path` 세 가지를 포함해야 한다.
-   - 다음 iteration은 `수정필요 -> 구현중`으로 상태를 되돌린 뒤, 위 입력을 기준으로 수정 -> 재검증 -> `/merge-test` 재시도 순서로 진행한다.
+   - `/merge-test`가 `수정필요`로 종료되는 경우는 merge conflict, stash/apply/drop 실패, merge lock timeout처럼 구현 재진입이 필요한 hard failure로 제한한다.
+   - frontend build/check 또는 T4/T5 post-merge 검증 실패는 plan 상태를 `머지대기`로 유지/복구하고, 실패 명령/로그/재시도 대상만 continuation anchor로 남긴다.
+   - `수정필요` 다음 iteration 입력은 최소 `충돌 파일 목록 또는 stash ref`, `merge-test failure reason`, `현재 parent_plan_path` 세 가지를 포함해야 한다.
+   - `수정필요` 다음 iteration은 `수정필요 -> 구현중`으로 상태를 되돌린 뒤, 위 입력을 기준으로 수정 -> 재검증 -> `/merge-test` 재시도 순서로 진행한다.
    - 수동 안내에는 아래 3줄을 포함한다:
      ```text
      Detected: branch={branch|none}, worktree={worktree|none}
@@ -373,7 +374,7 @@ implement 고유 핵심 상태:
 | `구현중` | 워크트리 준비 + 구현 착수됨 |
 | `머지대기` | /implement 완료, `/merge-test` 대기. `Phase DB-Direct`가 있으면 `DB-direct 미실행` 상태 포함 |
 | `구현완료` | 모든 항목 완료. `Phase DB-Direct` plan은 running DB 직접 실행 + evidence 3종 확보 후 |
-| `수정필요` | `/merge-test` 실패 후 다음 iteration 입력 대기 (continuation anchor) |
+| `수정필요` | merge conflict, stash/apply/drop 실패, lock timeout처럼 구현 재진입이 필요한 hard failure 후 다음 iteration 입력 대기 |
 | `완료` | /done으로 archive 처리됨 |
 
 **진행률 계산:** `[x]` 개수 / 전체 체크박스 개수 → 헤더·푸터 동시 업데이트

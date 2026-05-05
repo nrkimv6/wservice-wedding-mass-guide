@@ -141,12 +141,12 @@ merge --abort는 merge conflict에만 사용한다.
 |----------|----------------------|----------------|---------------------|
 | `merge conflict` | `git merge --abort`로 clean state 복귀 | `수정필요` | 충돌 파일 목록, 실패 단계, 부모 plan 경로 |
 | `ROOT_STASH_APPLY_FAILED`, `STASH_APPLY_FAILED`, `STASH_DROP_FAILED` | 머지 커밋 보존 + stash ref 유지 가능 | `수정필요` | stash ref, 실패 단계, 부모 plan 경로 |
-| `frontend build/check`, `T4/T5` 실패 | 머지 커밋 롤백 후 워크트리 보존 | `수정필요` | 실패 명령, 로그 근거, 재시도 대상 테스트 |
-| `frontend build lock/permission` | 머지 커밋 롤백 후 워크트리 보존 | `수정필요` | 실패 명령, 잠금/권한 로그(`EPERM`, `Access is denied`), 잠긴 경로, `restart-frontend --public` 재현 여부 |
-| `frontend dependency failure` | 머지 커밋 롤백 후 워크트리 보존 | `수정필요` | 실패 명령, 누락 의존성 로그(`vite.cmd`, module/package not found), `Test-Path frontend\\node_modules\\.bin\\vite.cmd` 결과 |
+| `frontend build/check`, `T4/T5` 실패 | 머지 커밋 롤백 후 워크트리 보존 | `머지대기` 유지/복구 | 실패 명령, 로그 근거, 재시도 대상 테스트 |
+| `frontend build lock/permission` | 머지 커밋 롤백 후 워크트리 보존 | `머지대기` 유지/복구 | 실패 명령, 잠금/권한 로그(`EPERM`, `Access is denied`), 잠긴 경로, `restart-frontend --public` 재현 여부 |
+| `frontend dependency failure` | 머지 커밋 롤백 후 워크트리 보존 | `머지대기` 유지/복구 | 실패 명령, 누락 의존성 로그(`vite.cmd`, module/package not found), `Test-Path frontend\\node_modules\\.bin\\vite.cmd` 결과 |
 | `MERGE_LOCK_TIMEOUT` | 머지 커밋 미발생 (acquire 단계에서 중단) | `수정필요` | lock holder runner_id, 대기 시간, 부모 plan 경로 |
 
-`수정필요`는 수동 종료 딱지가 아니라 `/implement`가 다음 iteration에서 읽을 continuation anchor다. 이 스킬은 실패 시 충돌 파일 목록, stash ref, 실패 단계 같은 재진입 입력을 plan/todo에 남기고 중단한다.
+`수정필요`는 수동 종료 딱지가 아니라 `/implement`가 다음 iteration에서 읽을 continuation anchor다. 다만 frontend build/check와 T4/T5처럼 post-merge 검증 단계에서 실패한 경우는 구현 후보 자체를 `수정필요`로 낮추지 않는다. plan/todo 상태는 `머지대기`로 유지하거나 복구하고, 실패 명령/로그/재시도 대상만 continuation anchor로 남긴다.
 
 ## 실행 단계
 
