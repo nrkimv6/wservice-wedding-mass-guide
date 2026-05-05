@@ -166,6 +166,10 @@ Decision: /merge-test | /done
 Gate: branch/worktree present -> /merge-test; absent -> /done
 ```
 
+위 템플릿은 실행 전 read-back 근거다. `Decision: /merge-test`를 출력하는 것만으로 턴을 종료하지 않는다.
+
+**Hard handoff contract:** current target의 `remaining executable leaf = 0`, session `remaining targets = 0`, `next owner step = /merge-test`이고 plan/todo 헤더에 `> branch:` 또는 `> worktree:`가 있으면 `/merge-test`가 current target의 다음 실행 step이다. 이 상태에서는 final closeout을 금지하고, 사용자가 명시한 local/project skill path precedence를 유지한 채 같은 턴에서 exact local `/merge-test` skill을 읽고 실행한다.
+
 `/done` owner는 TODO→DONE 이동, plan 체크, archive, DONE.md 정리, wtools/TODO.md 동기화, 완료 검증, 커밋을 처리합니다.
 
 ## 실행 단계
@@ -349,6 +353,7 @@ Claude가 구현 요청 받으면:
    - plan 또는 `_todo`에 `Phase DB-Direct`가 있으면 종료 안내에 아래 잔여 항목을 반드시 남긴다: `main 머지 후 running DB 직접 실행 필요`, `실행 SQL/명령`, `존재 확인 쿼리`, `live API 또는 runtime 결과`
    - 위 잔여 항목이 남아 있는 상태를 `구현완료`, `마무리`, `닫힘`으로 표현하지 않는다. 이 상태는 `DB-direct 미실행`, `live 검증 미실행`, `직접 실행 대기`로만 보고한다.
    - 기본: 구현 체크박스를 마치고 plan 상태를 `머지대기`로 올린 뒤 `/merge-test` 스킬 호출 — 워크트리 머지 + T4/T5 통합테스트 + 완료 처리(archive, TODO→DONE, 커밋)까지 일괄 실행
+   - `머지대기` + `> branch:`/`> worktree:` 상태는 closeout 가능 상태가 아니라 hard handoff 상태다. `/merge-test` read-back 및 실행 없이 수동 안내 템플릿만 출력하고 턴을 닫지 않는다.
    - `_todo-N.md` 작업이고 같은 `parent_plan_path`의 다른 `_todo-*`가 이미 `머지대기` 상태면 `/merge-test`를 **부모 묶음 배치 모드**로 1회 실행해 같은 부모의 워크트리를 한 번에 정리한다.
    - `/merge-test`가 `수정필요`로 종료되는 경우는 merge conflict, stash/apply/drop 실패, merge lock timeout처럼 구현 재진입이 필요한 hard failure로 제한한다.
    - frontend build/check 또는 T4/T5 post-merge 검증 실패는 plan 상태를 `머지대기`로 유지/복구하고, 실패 명령/로그/재시도 대상만 continuation anchor로 남긴다.

@@ -18,6 +18,12 @@ Preflight and cleanup evidence must come from helper CLI contracts before any me
 
 `/implement`로 worktree에서 구현 완료 후, main에 머지하고 T4/T5 통합테스트를 실행하고 완료처리(archive + 문서정리 + 커밋)까지 일괄 실행합니다.
 
+## Skill Path Precedence
+
+- 사용자가 `[$merge-test](...SKILL.md)` 또는 파일시스템 경로로 local/project skill 파일을 명시한 경우, 반드시 그 exact file을 Read 기준으로 삼는다.
+- 같은 name의 global/duplicate skill(`C:\Users\Narang\.codex\skills\merge-test\SKILL.md` 등)은 대체 사용하지 않는다.
+- 명시 경로가 없거나 읽기 실패한 경우에만 fallback 후보를 검토하며, fallback 사용 전에는 실제로 읽을 경로와 이유를 사용자에게 먼저 보고한다.
+
 ## Routing Gate Summary
 
 - Gate: `branch/worktree present -> /merge-test; absent -> /done`
@@ -143,9 +149,11 @@ merge --abort는 merge conflict에만 사용한다.
 | `merge conflict` | `git merge --abort`로 clean state 복귀 | `수정필요` | 충돌 파일 목록, 실패 단계, 부모 plan 경로 |
 | `ROOT_STASH_APPLY_FAILED`, `STASH_APPLY_FAILED`, `STASH_DROP_FAILED` | 머지 커밋 보존 + stash ref 유지 가능 | `수정필요` | stash ref, 실패 단계, 부모 plan 경로 |
 | `frontend build/check`, `T4/T5` 실패 | 머지 커밋 롤백 후 워크트리 보존 | `머지대기` 유지/복구 | 실패 명령, 로그 근거, 재시도 대상 테스트 |
-| `MERGE_LOCK_TIMEOUT` | 머지 커밋 미발생 (acquire 단계에서 중단) | `수정필요` | lock holder runner_id, 대기 시간, 부모 plan 경로 |
+| `MERGE_LOCK_TIMEOUT` | 머지 커밋 미발생 (acquire 단계에서 중단) | `머지대기` 유지 또는 구성/인터럽트 evidence 기록 | lock holder runner_id, 대기 시간, configured timeout, 부모 plan 경로 |
+| `MERGE_LOCK_UNAVAILABLE` | 머지 커밋 미발생 (Redis/lock service unavailable) | `머지대기` 유지 + hard stop | Redis 연결 오류, lock service 상태, 부모 plan 경로 |
 
 `수정필요`는 수동 종료 딱지가 아니라 `/implement`가 다음 iteration에서 읽을 continuation anchor다. 다만 frontend build/check와 T4/T5처럼 post-merge 검증 단계에서 실패한 경우는 구현 후보 자체를 `수정필요`로 낮추지 않는다. plan/todo 상태는 `머지대기`로 유지하거나 복구하고, 실패 명령/로그/재시도 대상만 continuation anchor로 남긴다.
+`MERGE_LOCK_TIMEOUT`은 정상 실패 상태가 아니다. 기본 timeout은 24시간이며, WAITING 로그가 이어지는 동안은 정상 대기 업데이트로 취급한다. exit 2는 비정상 인터럽트, 잘못된 timeout 구성, lock runner 오류 evidence가 있을 때만 continuation anchor로 남긴다.
 
 ## 실행 단계
 
@@ -260,23 +268,25 @@ $lock_acquired = $false
 
 if (Test-Path $merge_lock_cli) {
   Write-Host "[merge-test] merge turn lock 획득 시도: $runner_id"
-  python "{project_root}/scripts/plan_runner/merge_lock_cli.py" acquire $runner_id
+  if (-not $env:MERGE_TEST_LOCK_TIMEOUT) { $env:MERGE_TEST_LOCK_TIMEOUT = "86400" }
+  python "{project_root}/scripts/plan_runner/merge_lock_cli.py" acquire $runner_id --timeout $env:MERGE_TEST_LOCK_TIMEOUT
   $lockExitCode = $LASTEXITCODE
 
   if ($lockExitCode -eq 0) {
     $lock_acquired = $true
   } elseif ($lockExitCode -eq 2) {
-    Write-Host "MERGE_LOCK_TIMEOUT: acquire timeout — plan을 수정필요로 전이합니다."
+    Write-Host "MERGE_LOCK_TIMEOUT: acquire timeout after configured 24h wait or abnormal interruption — do not classify normal WAITING as failure."
     exit 1
   } elseif ($lockExitCode -eq 3) {
-    Write-Host "[merge-test] REDIS_UNAVAILABLE — lock 없이 진행합니다."
+    Write-Host "MERGE_LOCK_UNAVAILABLE: REDIS_UNAVAILABLE — lock 없이 merge를 진행하지 않습니다."
+    exit 1
   }
 } else {
   Write-Host "[merge-test] merge_lock_cli.py 없음 — lock 스킵"
 }
 ```
 
-**중단 금지 계약**: front runner가 살아있는 동안 정상 대기(WAITING 로그)는 종료 사유가 아니다. 명시적 인터럽트 없이는 임의로 중단하지 않는다.
+**중단 금지 계약**: front runner가 살아있는 동안 정상 대기(WAITING 로그)는 24시간 대기 범위의 진행 업데이트이며 종료 사유가 아니다. 명시적 인터럽트 없이는 임의로 중단하지 않는다. Redis unavailable은 lock-less success 경로가 아니라 `MERGE_LOCK_UNAVAILABLE` hard stop 또는 사용자 승인 필요 상태다.
 
 > 이 단계는 plan-runner 자동 컨텍스트에서는 plan-runner가 lock을 자체 처리하므로 skip된다. Codex 직접 호출 등 독립 워커 시나리오에서만 실행된다.
 
