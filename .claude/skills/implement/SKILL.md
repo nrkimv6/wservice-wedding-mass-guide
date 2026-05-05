@@ -26,6 +26,7 @@ Deterministic setup, status, and advisory scanning must prefer helper CLI eviden
 - 같은 시점에 `TODO.md` 현재 작업 항목을 먼저 동기화한다.
 - plan 상단 `> branch:`, `> worktree:`, `> worktree-owner:`가 모두 채워지기 전에는 구현 파일을 수정하지 않는다.
 - 편집이 먼저 시작됐더라도 메타 누락 상태면 추가 수정 전에 plan/TODO/worktree 메타부터 복구한다.
+- pre-edit status/header mutation 뒤 plan/TODO가 touched whitelist dirty로 남으면 구현 파일 수정 전 docs commit을 수행하거나, 명시적 handoff evidence를 plan에 남긴 뒤 중단한다.
 - SSOT 위치와 edit 허용 위치를 혼동하지 않는다. `.agents/skills/`, `.claude/skills/`, `.worktrees/plans/docs/*`가 canonical 원본이어도 현재 impl worktree 밖이면 직접 수정 금지다.
 - unrelated `main` dirty를 무시할 수는 있어도 이 gate 자체는 생략할 수 없다.
 

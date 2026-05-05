@@ -97,14 +97,17 @@ $Whitelist = @("TODO.md", "docs/DONE.md")
 $InWhitelist  = $SelfResidual | Where-Object { $_ -in $Whitelist -or $_ -like "docs/plan/*.md" -or $_ -like "docs/archive/*.md" }
 $OutWhitelist = $SelfResidual | Where-Object { $_ -notin $InWhitelist }
 
-# whitelist 안: exact path set만 stage한다.
+# touched whitelist dirty는 exact path set만 stage하고, commit 실패 시 hard-fail한다.
 $Expected = [string[]]$InWhitelist
 foreach ($f in $Expected) { git -C $RepoRoot add -- $f }
 $Staged = git -C $RepoRoot diff --cached --name-only
 if (@(Compare-Object $Expected $Staged).Count -ne 0) {
   throw "staged mismatch: expected exact path set과 cached set이 다릅니다."
 }
-if ($Expected) { & commit.ps1 "docs: flush self residual dirty" -Files $Expected }
+if ($Expected) {
+  & commit.ps1 "docs: flush self residual dirty" -Files $Expected
+  if ($LASTEXITCODE -ne 0) { throw "touched whitelist dirty commit failed" }
+}
 
 # whitelist 밖: 최종 보고에 기록 (흐름 차단 없음)
 if ($OutWhitelist) { Write-Host "남은 dirty: $($OutWhitelist -join ', ')" }

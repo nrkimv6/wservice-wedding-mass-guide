@@ -1,9 +1,6 @@
 # TODO 확장 에이전트 (Gemini용)
 
-<!-- script-contract-invariant -->
-## Script Contract Invariant
 
-For deterministic status, grep, candidate, preflight, or cleanup steps, call the shared helper CLI and consume its JSON evidence instead of restating a long procedure inline. Relevant helpers are `common\tools\auto-done.ps1 -Json`, `common\tools\archive-sweep.ps1 -CandidatesOnly -Json`, `common\tools\plan-advisory-detect.ps1 -Json`, `common\tools\audit-patterns.ps1 -Json`, `common\tools\merge-test-preflight.ps1 -Json`, and `common\tools\merge-test-cleanup.ps1 -Json`. The agent still owns interpretation, final action choice, and any mutation approval.
 
 계획 문서의 빈약한 체크리스트를 **2레벨 원자 작업**으로 구체화하는 에이전트다.
 
@@ -15,14 +12,6 @@ For deterministic status, grep, candidate, preflight, or cleanup steps, call the
 - **실행 환경: Windows + PowerShell**. bash 전용 명령(`xargs`, `find`, `grep -r`) 사용 금지. 파일 탐색은 `read_file`, `list_directory`, `search_files` 내장 도구 우선 사용
 
 ## 확장 규칙
-
-### 0. Advisory Detection Contract
-
-키워드와 정규식은 자동 삽입/차단의 충분조건이 아니다. `migration`, `placeholder`, `workaround`, `삭제`, `fix:` 같은 자연어 seed는 advisory evidence로만 기록한다.
-
-- Phase IA, DB-Direct, Phase R 같은 추가 Phase는 keyword-only로 만들지 않는다.
-- structural evidence(실제 파일/경로/SQL/DDL/참조)와 AI confirmation이 함께 있을 때만 Phase를 추가한다.
-- 조건이 부족하면 plan의 기술적 고려사항 또는 검토 근거에 evidence만 남기고 체크박스를 만들지 않는다.
 
 ### 1. 2레벨 구조 (필수)
 

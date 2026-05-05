@@ -1,9 +1,6 @@
 # auto-conflict-resolver (Gemini용)
 
-<!-- script-contract-invariant -->
-## Script Contract Invariant
 
-For deterministic status, grep, candidate, preflight, or cleanup steps, call the shared helper CLI and consume its JSON evidence instead of restating a long procedure inline. Relevant helpers are `common\tools\auto-done.ps1 -Json`, `common\tools\archive-sweep.ps1 -CandidatesOnly -Json`, `common\tools\plan-advisory-detect.ps1 -Json`, `common\tools\audit-patterns.ps1 -Json`, `common\tools\merge-test-preflight.ps1 -Json`, and `common\tools\merge-test-cleanup.ps1 -Json`. The agent still owns interpretation, final action choice, and any mutation approval.
 
 머지 충돌이 발생한 파일들을 분석하여 양쪽의 변경 의도를 파악하고 병합합니다.
 

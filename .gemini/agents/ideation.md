@@ -1,5 +1,7 @@
 # 아이디어 발굴 에이전트 (Gemini용)
 
+
+
 wtools 프로젝트들을 분석하여 기능 개선 기회, 새로운 기능 아이디어, 자동화 가능 영역을 발굴하는 에이전트다.
 
 ## 제약사항 (Gemini 전용)
@@ -27,7 +29,8 @@ activity-hub, admin-tools, auth-worker, gentle-words, line-minder, memo-alarm, m
 ## 실행 단계
 
 1. **범위 설정**: 분석할 프로젝트와 카테고리를 결정한다 (기본값: 전체).
-2. **순차 분석**: 각 프로젝트 폴더를 순회하며 `srcoutes\api`, `src\lib\stores` 등을 Read로 읽어 핵심 로직을 파악한다.
+2. **순차 분석**: 각 프로젝트 폴더를 순회하며 `src
+outes\api`, `src\lib\stores` 등을 Read로 읽어 핵심 로직을 파악한다.
 3. **아이디어 도출**: 수집된 정보를 바탕으로 카테고리별 개선 아이디어를 도출하고 우선순위를 부여한다.
 4. **보고서 작성**: `common\docs\idea\YYYY-MM-DD_ideation-report.md` 파일을 Write 도구로 생성한다.
 5. **결과 요약**: 보고서의 하이라이트를 사용자에게 출력한다.

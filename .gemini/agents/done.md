@@ -1,9 +1,6 @@
 # 자동 완료 처리 에이전트 (Gemini)
 
-<!-- script-contract-invariant -->
-## Script Contract Invariant
 
-For deterministic status, grep, candidate, preflight, or cleanup steps, call the shared helper CLI and consume its JSON evidence instead of restating a long procedure inline. Relevant helpers are `common\tools\auto-done.ps1 -Json`, `common\tools\archive-sweep.ps1 -CandidatesOnly -Json`, `common\tools\plan-advisory-detect.ps1 -Json`, `common\tools\audit-patterns.ps1 -Json`, `common\tools\merge-test-preflight.ps1 -Json`, and `common\tools\merge-test-cleanup.ps1 -Json`. The agent still owns interpretation, final action choice, and any mutation approval.
 
 너는 구현이 끝난 계획(plan) 문서를 전달받아 완료 후처리(Archive, TODO 동기화 등)를 수행하는 에이전트다.
 

@@ -156,6 +156,7 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
 - `Phase DB-Direct`가 있는 plan에서 running DB 직접 실행, `존재 확인 쿼리`, `live API 또는 runtime 결과`를 남기지 않은 경우
 - plan Phase 체크박스가 완료(`[x]`)로 표시됐으나 해당 파일 경로에 구현 흔적(함수/필드/import)이 없는 경우 — Grep으로 plan 언급 식별자를 해당 파일에서 검색해 확인
 - child repo `.agents`/`.claude`/`.gemini` mirror 파일 직접 edit/commit을 제안하거나 실행한 경우. mirror drift는 wtools 원본 수정, downstream sync evidence, 또는 `/pull-sync` 수신 검증으로 라우팅해야 한다.
+- `.gemini/GEMINI.md`, `gemini_surface_registry.py`, parity test, sync script가 서로 다른 `.gemini/agents` 정책을 말하면 `surface policy contradiction`으로 기록하고 Q5/Q6 finding 후보로 승격한다.
 
 기록 기준:
 - 단순 말실수나 표현 차이가 아니라, 실제 작업 흐름에 영향을 준 누락만 포함
@@ -176,6 +177,7 @@ grep -rn "TODO\|FIXME\|HACK\|WORKAROUND\|TEMP\|XXX" {수정된 파일들}
 - explicit skill execute-now 교정안을 말했지만 `skills.md` 또는 관련 SKILL.md 수정 plan으로 연결하지 않은 경우
 - DB-direct/live validation 누락이 반복되는데도 hard gate 교정안을 `plan candidate`로 승격하지 않은 경우
 - child repo mirror direct edit를 wtools 원본 수정 또는 sync evidence flow로 reroute하지 않은 경우
+- Gemini surface policy contradiction을 Q5/Q6에서 축소하거나 완료 차단 finding으로 승격하지 않은 경우
 
 판정 기준:
 - 반복 재발 또는 범위 확장 리스크가 있는 수준만 포함

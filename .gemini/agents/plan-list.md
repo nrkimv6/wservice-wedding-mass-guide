@@ -1,5 +1,7 @@
 # 계획 문서 목록 조회 (Gemini)
 
+
+
 공통 plan root는 `PLAN_ROOT -> .worktrees/plans/docs/plan -> docs/plan`
 우선순위로 해석하고, 각 프로젝트의 `docs/plan/`과 함께 진행 현황을 보여줍니다.
 

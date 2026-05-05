@@ -25,6 +25,14 @@ Phase insertion triggers must be treated as advisory evidence first. Use `common
 - 계획 문서 이름 또는 키워드 (검색으로 찾기)
 - IDE에서 열려있는 plan 파일 (system-reminder로 감지)
 
+## 출력 commit 계약
+
+- 확장 시작 시 baseline dirty paths와 touched paths ledger를 기록한다.
+- plan 체크리스트를 수정하면 해당 plan path를 touched paths에 추가한다.
+- 변경 발생 시 touched whitelist dirty exact path set을 commit하고, 출력에 commit hash를 포함한다.
+- 변경이 없으면 출력에 `no-op` 결과를 포함한다.
+- commit hash 또는 `no-op` 결과를 출력하지 못하면 성공 종료하지 않는다.
+
 ## 실행 단계
 
 ### 1단계: 계획 문서 읽기
