@@ -22,6 +22,12 @@ For deterministic status, grep, candidate, preflight, or cleanup steps, call the
 **Output**: `===AUTO-IMPL-RESULT===` with STATUS(`SUCCESS`/`FAILED`/`SKIPPED`), MANUAL(`true` — 수동 작업 시), PROJECT, TASK, COMMITS.
 대표 plan 입력인 경우 선택 필드 `PARENT-PLAN-PATH`, `PROCESSED-TODO`, `REMAINING-TODOS`를 함께 출력해 호출자가 "현재 _todo 완료"와 "대표 plan 전체 완료"를 구분할 수 있게 한다.
 
+## Bash Tool Env Contract
+
+Claude Code의 Bash 도구는 POSIX shell로 실행된다. Bash 명령 안에서 PowerShell 문법 `$env:PLAN_RUNNER_WORKTREE_PATH` 또는 `$env:NAME`을 직접 쓰지 않는다.
+환경변수 확인은 `echo "$PLAN_RUNNER_WORKTREE_PATH"` 또는 `python -c "import os; print(os.environ.get('PLAN_RUNNER_WORKTREE_PATH', ''))"` 형식을 사용한다.
+PowerShell 문법이 꼭 필요하면 `powershell.exe -NoProfile -Command "..."`로 명시적으로 PowerShell을 실행한다.
+
 ## 🔴 attach 모드 자동 차단 (D6)
 
 **attach 모드는 수동 세션 전용이다.** 자동 컨텍스트(plan-runner, auto-impl)에서는 금지된다.

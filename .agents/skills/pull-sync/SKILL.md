@@ -66,17 +66,17 @@ git pull origin main
 |---|---|---|
 | 일반 코드/문서 | `app/`, `frontend/`, `scripts/`, `docs/plan`, `TODO.md` 등 | 해당 repo owner flow에서 resolve/test/commit한다. |
 | 운영 긴급 | 서비스 복구에 필요한 설정/운영 파일 | 복구 우선으로 resolve하고 사유와 검증 evidence를 남긴다. |
-| mirror surface | `.agents/`, `.claude/`, `.gemini/` | divergent commit evidence를 먼저 남기고 merge resolution으로 처리한다. |
+| mirror surface | `.agents/`, `.claude/`, `.gemini/` | root에서 resolve/commit하지 않는다. `pull --ff-only` 수신만 허용하고 실패 시 abort/preserve 후 upstream sync 재생성을 요구한다. |
 | unknown | 파일 성격을 판정할 수 없음 | 사용자에게 conflict 파일과 상태를 보고하고 결정 대기한다. |
 
-mirror surface conflict는 수동 sync 구현이 아니다. 아래 evidence를 확보한 뒤 현재 위에 쌓인 커밋을 보존하는 merge resolution으로 처리한다.
+mirror surface conflict는 수동 sync 구현이 아니다. 아래 evidence를 확보한 뒤 root에서 merge resolution으로 닫지 않는다. remote sync commit은 `git pull --ff-only`로만 수신하고, ff-only 실패나 conflict가 있으면 abort/preserve evidence를 남긴 뒤 upstream sync 재생성 또는 원격 정리를 요구한다.
 - `MERGE_HEAD`
 - `git merge-base ours theirs`
 - `git log --oneline ours..theirs`
 - divergent child-local commit hash
 - conflict 파일 surface 종류
 
-mirror conflict resolution은 `git checkout --theirs -- <path>` 또는 `git merge --strategy-option=theirs` 같은 merge resolution으로 표현하고, child repo mirror 파일을 직접 edit/commit해서 wtools 원본과 맞추는 구현 계획으로 승격하지 않는다.
+mirror conflict resolution을 `git checkout --theirs -- <path>` 또는 `git merge --strategy-option=theirs` 같은 local merge resolution으로 처리하지 않는다. child repo mirror 파일을 직접 edit/commit해서 wtools 원본과 맞추는 구현 계획으로 승격하지 않으며, root receiver는 remote fast-forward 수신 또는 upstream sync 재생성 evidence만 인정한다.
 
 ### 1.5단계: Redis 잔존 상태 정리 (monitor-page 전용)
 

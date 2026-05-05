@@ -162,7 +162,7 @@ plan 문서의 모든 체크박스가 `[x]`이면:
 
 planless branch는 archive 대상이 아니다. batch/done 보고에서는 `plan 없음` row로 분리하고, archive 없음 사유와 worktree/branch cleanup 결과를 별도 상태로 남긴다.
 root guard 차단은 정상 방어다. `/done`은 `.agents/`, `.claude/`, `.gemini/`, `app/`, `frontend/`, `scripts/`, `tests/` 같은 구현성 파일을 root main에서 직접 커밋하지 않는다.
-root guard가 staged `.agents/.claude/.gemini` sync merge를 차단하면 `ROOT_GUARD_BLOCKED_PENDING_SYNC_MERGE` evidence로 기록하고, root direct commit 대신 impl/pull-sync worktree reroute 또는 보존/abort evidence로 전환한다.
+root guard가 staged `.agents/.claude/.gemini` sync merge를 차단하면 `ROOT_GUARD_BLOCKED_PENDING_SYNC_MERGE` evidence로 기록하고, root direct commit 또는 local merge resolution으로 닫지 않는다. 보존/abort evidence를 남긴 뒤 upstream sync 재생성 또는 remote fast-forward 수신 evidence로만 전환한다.
 
 **⚠️ archive 우려점 사장(沈沒) 경고 (blocking 아님)**
 
