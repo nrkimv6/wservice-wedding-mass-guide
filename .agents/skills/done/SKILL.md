@@ -33,11 +33,20 @@ The deterministic completion flow is owned by `common\tools\auto-done.ps1`. Use 
 - **touched whitelist dirty**: docs commit root 기준 `TODO.md`, `docs/DONE.md`, `docs/plan/*.md`, `docs/archive/*.md`, `docs/history/*.md` 안에서 `$TouchedPaths`와 현재 dirty가 만나는 path. wtools에서는 `TODO.md`/`docs/DONE.md`가 `.worktrees/plans/TODO.md`/`.worktrees/plans/docs/DONE.md`를 뜻한다. repo root ledger는 touched whitelist가 아니다. 성공 종료 전 exact path set으로 커밋해야 하며, 커밋할 수 없으면 hard-fail한다.
 - **related-plan dirty**: `$TouchedPaths`에는 없더라도 현재 plan/Phase Z/검증 로그/직전 `/merge-test` 출력/직전 `impl/post-merge-*` branch나 merge evidence에 등장한 코드·테스트 path가 현재 dirty로 남은 상태. 특히 `tests/*.py` 일반 테스트, `app/*`, `frontend/*`, `scripts/*`는 whitelist에 직접 추가하지 않고 이 관련성 근거로만 승격한다.
 - **post-merge-owned dirty**: `/merge-test`의 post-merge repair branch, repair commit, final merge commit evidence에 포함된 path가 `/done` 진입 시 아직 dirty인 상태. 이는 self residual이 아니어도 현재 owner chain의 커밋 책임이다.
+- **UNTRACKED_ORIGIN_BLOB_RESIDUE**: current HEAD에는 없고 `origin/main` 같은 upstream ref에는 tracked이며 local untracked blob hash가 upstream blob hash와 같은 파일. normal unrelated dirty가 아니며 `pre-existing unrelated dirty`만으로 무시할 수 없다.
+- **UNTRACKED_OVERWRITE_RISK**: current HEAD에는 없고 upstream에는 tracked인 path가 local untracked로 남아 pull/merge 시 overwrite될 수 있는 파일. hash가 같지 않으면 origin blob residue는 아니지만 closeout evidence 표에는 별도 위험으로 남긴다.
+- **residue closeout gate**: archive move 전 target repo root와 downstream repo root를 `common\tools\plan-runner\core\residue_detector.py` 계약으로 검사한다. `UNTRACKED_ORIGIN_BLOB_RESIDUE`가 있으면 `commit`, `quarantine`, `explicit preserve with owner plan` 중 하나의 evidence가 있어야 하며, 없으면 `UNTRACKED_ORIGIN_BLOB_RESIDUE_BLOCKED`로 상태 변경 없이 중단한다. 실패 payload에는 path, `head_deleted`, `upstream_tracked`, `hash_equal`, `no_unmerged_state`, candidate owner plan, dirty-left plan을 포함한다.
 
 ## 트리거
 
 - "완료", "끝", "done", "마무리"
 - 구현이 끝났을 때
+
+## Corrective Action Boundary
+
+- 완료/정리 단계에서 leftover item 삭제와 기능 rollback을 같은 cleanup으로 묶지 않는다.
+- `TrackingItem id=5 삭제` 같은 특정 DB item 조치는 `data_cleanup`으로 분리하고, scheduler 경로 삭제, 기능 제거, commit revert, migration 제거 같은 `feature_rollback`은 별도 명시 승인 없이는 수행하지 않는다.
+- done closeout summary는 실행한 mutation class와 실행하지 않은 mutation class를 분리해 남긴다.
 
 ## 세션 targets / continue 계약 (필수)
 
@@ -48,6 +57,11 @@ The deterministic completion flow is owned by `common\tools\auto-done.ps1`. Use 
 - `/done`은 closeout 톤의 "최종 종료"가 아니라 **문서/아카이브 정리 owner**다.
   - 현재 target의 archive/DONE/TODO 정리를 끝냈더라도 **remaining targets**가 있으면 전체 완료로 말하지 않는다.
   - 출력은 `현재 target 완료, 남은 target N개` 형태로 남기고, 다음 target 처리(대개 `/implement` 재진입)로 **같은 턴에서 계속** 진행한다.
+- session targets는 처리 전 반드시 `eligible`, `blocked`, `already_archived`, `ignored` partition으로 분류한다.
+  - `eligible`이 1건 이상이면 `blocked` target이 있어도 eligible target의 archive/DONE/TODO 정리는 계속 진행한다.
+  - `blocked` target은 target-local reason(`plan_incomplete`, `phase_z_incomplete`, `branch_worktree_present`, `ds_evidence_missing`, `non_product_only`, `dirty_conflict` 등), 필요 owner, 남은 path를 closeout에 남긴다.
+  - `already_archived` target은 성공-equivalent로 집계하되 archive metadata/TODO/DONE을 재삽입하거나 재이동하지 않는다.
+  - `ignored`는 session target 밖 backlog 또는 명시 제외 항목만 허용하며, session target 누락을 ignored로 숨기지 않는다.
 - 사용자가 `계속`, `멈추지마`, `끝날 때까지` 등으로 재지시한 경우:
   - 중간 성공(archive 완료, 커밋 완료)은 종료점이 아니라 **진행 업데이트**다.
   - 실제 중단은 hard blocker(충돌/커밋 실패/필수 evidence 누락 등)에서만 허용한다.
@@ -123,6 +137,7 @@ AGENTS.md 문서 위치 규칙의 plan 경로/*.md
 4. 위 3개 값이 canonical metric `(done/total)`과 모두 일치하는지 확인
 5. 불일치가 있으면 경고 출력 후 커밋 전 수동 수정 (auto-done.ps1은 hard stop)
 6. plan/archive 본문에 `Phase Z` 또는 `> 머지커밋:`이 있으면, archive read-back에서 `Phase Z` 미완료 0건 + `> 머지커밋:`이 실제 merge commit evidence로 보존되는지 확인한다. `> 후속정리커밋:`이 있으면 현재 main HEAD 또는 현재 main HEAD로 이어지는 post-merge docs cleanup commit evidence로 검증한다.
+7. final summary는 `target_read_back.active_exists=false`, `target_read_back.archive_exists=true`, `done_ledger_state=present`, `todo_ledger_state=absent`가 확인된 target만 `완료`로 보고한다. code merge만 끝났거나 archive/DONE/TODO read-back이 모자란 target은 `archive pending` 또는 `blocked`로 분리한다.
 
 ### 1.5단계: 사전 검증 (구현완료 설정 전 게이트)
 
@@ -136,6 +151,7 @@ AGENTS.md 문서 위치 규칙의 plan 경로/*.md
 | **2.6 fix: Phase R 누락** | 파일명에 `_fix-`/`_fix_` 포함 또는 제목이 `fix:`로 시작 | plan 본문에 `재발 경로 분석` 또는 `Phase R` 존재 + Phase R 섹션 내 "미방어" 없음 | "fix: plan에 Phase R이 없습니다." + 중단 | Phase R 섹션 내 "미방어" 잔존 시에도 중단 |
 | **2.7 DB-Direct evidence** | plan/archive 본문에 `Phase DB-Direct` 존재 | `실행 SQL/명령`, `존재 확인 쿼리`, `live API 또는 runtime 결과` 3종 모두 확인 | "Phase DB-Direct 실행 증거 부족. /merge-test에서 evidence를 남기세요." + 중단 | 3종 중 하나라도 없으면 중단 |
 | **2.75 external remote evidence** | plan 또는 split `_todo-*` leaf 본문에 `push`, `origin/main`, `remote`, 외부 repo 목록이 존재 | `git ls-remote origin main`, `git show origin/main:<path>`, 또는 대상 repo의 `origin/main content read-back` evidence 확인 | "external remote evidence 대기: local commit만으로 구현완료/archive 처리할 수 없습니다." + 상태 변경 없이 중단 | 외부 repo push leaf는 remote read-back 전까지 완료 금지 |
+| **2.76 product-surface evidence scope** | plan 헤더에 `> completion-scope: product_surface` 또는 `> completion scope: product_surface` 존재 | evidence에 product surface path/read-back(`app/`, `frontend/`, `backend/`, `src/`, `packages/`, `services/`, `common/tools/` 등) 1개 이상 존재하거나 scratch/private utility evidence만 존재하지 않음 | `non_product_only`로 target-local blocked 처리. 상태 변경/archive/TODO→DONE 금지 | `scripts/scratch/`, `scratch/`, `tmp/`, `private/`, `.private/` 등만으로 product-surface plan 완료 금지 |
 | **2.8 owner set 역할 판정** | plan 헤더에 `> worktree-owner:` 필드 존재 | 역할 판정 후 분기 처리 완료 | 아래 별도 bullet 참조 | 필드 없으면 일반 단독 plan → 스킵 |
 
 **2.8 owner set 역할 판정 분기:**
@@ -166,7 +182,7 @@ plan 문서의 모든 체크박스가 `[x]`이면:
 
 planless branch는 archive 대상이 아니다. batch/done 보고에서는 `plan 없음` row로 분리하고, archive 없음 사유와 worktree/branch cleanup 결과를 별도 상태로 남긴다.
 root guard 차단은 정상 방어다. `/done`은 `.agents/`, `.claude/`, `.gemini/`, `app/`, `frontend/`, `scripts/`, `tests/` 같은 구현성 파일을 root main에서 직접 커밋하지 않는다.
-root guard가 staged `.agents/.claude/.gemini` sync merge를 차단하면 `ROOT_GUARD_BLOCKED_PENDING_SYNC_MERGE` evidence로 기록하고, root direct commit 또는 local merge resolution으로 닫지 않는다. 보존/abort evidence를 남긴 뒤 upstream sync 재생성 또는 remote fast-forward 수신 evidence로만 전환한다.
+root guard가 staged `.agents/.claude/.gemini` sync merge를 차단하면 `ROOT_GUARD_BLOCKED_PENDING_SYNC_MERGE` evidence로 기록하고, root direct commit 또는 local merge resolution으로 닫지 않는다. 보존/abort evidence를 남긴 뒤 ff-only 복구 절차(사용자 `git push origin main`으로 source 정렬 후 retry, 또는 upstream sync 재생성)나 remote fast-forward 수신 evidence로만 전환한다. archive closeout 중 downstream sync evidence가 없고 source repo가 ahead이면 `git push origin main` 또는 GitHub Actions `sync-skills.yml` `workflow_dispatch`를 시도하고, 실패하면 `DOWNSTREAM_SYNC_TRIGGER_FAILED`로 중단한다.
 
 **⚠️ archive 우려점 사장(沈沒) 경고 (blocking 아님)**
 
@@ -350,6 +366,7 @@ bump 필요 시 실행 명령 + CHANGELOG 형식 → [_recipes.md](./_recipes.md
 - skill source 변경이 포함된 owner chain에서는 `python common/tools/plan-runner/scripts/sync_gemini_surfaces.py --check`가 marker drift를 보고하면 `/done` 성공 종료를 차단한다. sync 적용 또는 보존 evidence 없이 `dirty 0`으로 보고하지 않는다.
 - archive 이동은 source deletion과 destination add를 expected staged set에 함께 넣는다.
 - commit.ps1 호출 전 `git diff --cached --name-status`가 expected staged set과 정확히 일치하지 않으면 **staged mismatch** hard stop으로 중단하고 커밋하지 않는다.
+- auto-done이 commit 단계에서 timeout, lock, commit wrapper failure로 끊기면 JSON의 `expected_paths`, `staged_paths`, `lock_path`, `lock_exists`, `running_git_processes`를 먼저 읽는다. stale lock/process를 확인한 뒤 `expected_paths`와 정확히 일치하는 staged set만 커밋하고, 성공 후 archive metadata와 `target_read_back`을 다시 수행한다. unrelated dirty/staged path가 하나라도 섞이면 수동 복구 전까지 완료 보고 금지.
 - whitelist 밖 touched dirty → 흐름을 중단하지 않고 최종 보고의 "남은 dirty" 목록에 기록한다.
 
 ### 7.6단계: main+plans dirty 사전 점검

@@ -8,7 +8,7 @@ description: "구현 워크플로우 (plan→TODO→DONE). Use when: 구현해, 
 <!-- script-contract-invariant -->
 ## Script Contract Invariant
 
-Deterministic setup, status, and advisory scanning must prefer helper CLI evidence over re-implementing long inline procedures. Use `common\tools\plan-advisory-detect.ps1 -PlanFile <plan> -Json` for advisory-only plan triggers and `common\tools\merge-test-preflight.ps1 -PlanFile <plan> -RepoRoot <repo> -Json` when branch/worktree or pending-merge evidence is needed. AI keeps ownership of interpretation and scope decisions; helper output is evidence, not automatic approval to mutate.
+Deterministic setup, status, and advisory scanning must prefer helper CLI evidence over re-implementing long inline procedures when `common\tools` exists. Use `common\tools\plan-advisory-detect.ps1 -PlanFile <plan> -Json` for advisory-only plan triggers and `common\tools\merge-test-preflight.ps1 -PlanFile <plan> -RepoRoot <repo> -Json` when branch/worktree or pending-merge evidence is needed. If a downstream repo has no `common\tools` helper surface, record `helper_unavailable` and use the merge-test direct read-back checklist rather than treating helper absence as `GIT_GUARD_NOT_ACTIVE`. AI keeps ownership of interpretation and scope decisions; helper output is evidence, not automatic approval to mutate.
 > Routing gate: branch/worktree present -> /merge-test; absent -> /done
 # 구현 워크플로우
 
@@ -31,9 +31,10 @@ Deterministic setup, status, and advisory scanning must prefer helper CLI eviden
 - unrelated `main` dirty를 무시할 수는 있어도 이 gate 자체는 생략할 수 없다.
 
 ## Git Guard Session Gate
-- wtools에서 `/implement`를 실행할 때 첫 git mutation 전 `common\tools\enable-git-guard.ps1 -Action enable-session`을 실행한다.
+- wtools 또는 `common\tools`가 있는 repo에서 `/implement`를 실행할 때 첫 git mutation 전 `common\tools\enable-git-guard.ps1 -Action enable-session`을 실행한다.
 - 이어서 `common\tools\enable-git-guard.ps1 -Action status`로 현재 세션 PATH가 `common\tools`를 앞세우고 `git`이 `common\tools\git.cmd`를 해석하는지 확인한다.
-- guard entrypoint가 없거나 session 활성화/상태 확인이 실패하면 `GIT_GUARD_NOT_ACTIVE`로 중단한다. linked worktree에서 `git checkout main`/`git switch main`이 가능한 상태로 계속 진행하면 안 된다.
+- repo에 `common\tools`가 있는데 guard entrypoint가 없거나 session 활성화/상태 확인이 실패하면 `GIT_GUARD_NOT_ACTIVE`로 중단한다. linked worktree에서 `git checkout main`/`git switch main`이 가능한 상태로 계속 진행하면 안 된다.
+- repo에 `common\tools`가 없으면 guard hard stop이 아니라 `helper_unavailable` downstream fallback으로 기록하고, `/merge-test` handoff에서 직접 read-back checklist를 사용한다.
 - `.agents`와 `.claude`는 문구를 맞추는 대상이 아니지만, 이 guard 불변조건은 두 엔진 표면에서 동등해야 한다.
 
 ## 세션 targets / continue 계약 (필수)
@@ -192,6 +193,13 @@ Claude가 구현 요청 받으면:
 - "가능하면 바로 고쳐", "문제 맞으면 수정해", "검토 후 적용해"처럼 같은 발화에 조건부 실행 의도가 포함된 경우
 
 단, 실행 의도가 있어도 이후 worktree/precondition gate는 그대로 통과해야 한다. "조사해줘" 계열은 CLAUDE.md의 조사 read-only gate가 우선한다.
+
+**Corrective action approval boundary**
+- corrective action은 실행 전 `data_cleanup`, `doc_correction`, `code_bugfix`, `feature_rollback`, `db_mutation`, `workflow_rule_change` 중 하나 이상으로 분류한다.
+- 코드/DB/git mutation 전 4줄 preview를 출력한다: `요청 해석`, `실행할 작업`, `실행하지 않을 작업`, `승인 근거`.
+- `TrackingItem id=5 삭제` 같은 특정 DB item 조치는 기능 코드 변경과 별도 approval unit으로 분리한다.
+- 기능 제거, scheduler 경로 삭제, commit revert, migration 제거는 `기능 롤백 승인` 또는 동등한 명시 문장이 있어야 실행한다. `재발 방지`, `정리`, `cleanup` 같은 일반 표현만으로 `feature_rollback`을 승인한 것으로 보지 않는다.
+- 같은 발화에 데이터 정리와 기능 rollback이 함께 있으면 두 approval unit으로 분리하고, 승인 근거가 없는 unit은 실행하지 않는다.
 
 **0. 사용자가 구현할 항목을 명시했는가?**
 

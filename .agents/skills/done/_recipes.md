@@ -121,6 +121,8 @@ if ($OutWhitelist) { Write-Host "남은 dirty: $($OutWhitelist -join ', ')" }
 | `related-plan` | 현재 plan 본문, Phase Z, 검증 로그, 직전 `/merge-test` 출력에 등장한 path가 현재 dirty | 관련성 evidence와 exact path set을 기록하고 커밋 |
 | `post-merge-owned` | 직전 `impl/post-merge-*` branch, repair commit, final merge commit evidence에 포함된 path가 현재 dirty | repair evidence를 남기고 커밋 |
 | `preexisting-unrelated` | baseline dirty였고 현재 plan/검증 evidence와 무관 | 커밋하지 않고 보존 evidence로 보고 |
+| `UNTRACKED_ORIGIN_BLOB_RESIDUE` | current HEAD deleted + upstream tracked + local hash equals upstream hash | archive move 전 hard blocker. `commit`, `quarantine`, `explicit preserve with owner plan` evidence 중 하나가 필요 |
+| `UNTRACKED_OVERWRITE_RISK` | current HEAD deleted + upstream tracked + local untracked path가 pull/merge overwrite 대상 | origin blob residue와 분리해 표에 남기고 owner/evidence를 확인 |
 | `protected-secret` | `.env*`, `credentials.json`, `*.key`, `*.pem`, `secrets/**` | 제품 커밋 금지, fail-fast 또는 별도 보존 보고 |
 | `unknown-protected` | protected path인데 owner/evidence 불명 | 보존 branch 또는 명시 보고. 성공 종료 시 dirty 0 또는 보존 evidence 필수 |
 
