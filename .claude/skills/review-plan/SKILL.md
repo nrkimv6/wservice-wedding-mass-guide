@@ -87,7 +87,7 @@ Regex and keyword detections are advisory evidence unless a helper contract expl
 
 ### 1단계: 계획서 재검토
 
-대상 계획서 각각에 대해 아래 8가지를 검증한다.
+대상 계획서 각각에 대해 아래 9가지를 검증한다.
 
 **A. side effect 체크:**
 - 계획서에 명시된 수정 대상이 다른 모듈/기능에 영향 없는지
@@ -152,6 +152,16 @@ advisory evidence가 있으면 아래 3단계를 검증한다:
   - **삽입 bullet 템플릿**: `- 프로덕션 환경에서 동일 에러 재현 여부를 먼저 확인하고, placeholder/fallback이 런타임 동작을 바꾸지 않는지 검증한다.`
 - `🚫 차단`: 임시 해법이 프로덕션에 반영되는 구조라는 검증 evidence가 있음 → expand-todo 수행 전에 종료 (계획서 수정 없이는 확장 진행 불가)
   - 차단 메시지에 반드시 포함할 3요소: **감지된 패턴** / **왜 위험한지** (프로덕션에서의 새 실패 경로) / **요구 수정 방향** (환경 설정 변경 또는 검증 위치 이동)
+
+**I. T4/T5 실서버 계약 검사:**
+- 계획서에 T4 Phase, E2E 테스트명령, 또는 `tests/**/*e2e*`/`tests/**/*integration*` 파일 언급이 있으면 해당 테스트 파일을 Read한다.
+- T4 evidence는 `pytest.mark.e2e`와 `pytest.mark.http_live`가 함께 있고, frontend readiness 또는 `/merge-test` readiness 전제가 있으며, `page.route("**/*", ...)` 전체 route mock만으로 화면을 구성하지 않아야 `live`로 분류한다.
+- T4 파일에 `page.route("**/*")` 전체 mock이 있고 `pytest.mark.http_live`가 없으면 `mock_only`로 분류하고, T3 재분류 요구 + live T4 follow-up TODO를 review 결과표에 기록한다. 일부 요청만 mock하는 `page.route()`도 T4 확정이 아니라 검토 필요로 남긴다.
+- 계획서에 T5 Phase, HTTP 통합 테스트명령, 또는 `tests/**/*http*`/`tests/**/*api*` 파일 언급이 있으면 해당 테스트 파일을 Read한다.
+- T5 evidence는 `pytest.mark.http_live`와 `requests.get("http://localhost:8001/...")`, `httpx.get("http://localhost:8001/...")`, 또는 project live readiness helper 같은 localhost live 호출이 있어야 `http_live`로 분류한다.
+- T5 파일이 `from fastapi.testclient import TestClient` 단독 증거이면 `testclient_only`로 분류하고, T3 재분류 요구 + live T5 follow-up TODO를 review 결과표에 기록한다.
+- T4/T5 결과표에는 `T4/T5 계약` 열 또는 비고 marker로 `live`, `mock_only`, `http_live`, `testclient_only`, `absent` 중 하나를 남긴다. `mock_only`/`testclient_only`면 expand-todo 전 deterministic 보정 또는 차단 여부를 명시한다.
+- T4/T5가 `해당 없음`인데 feature area live smoke가 없으면 "live smoke 없음" 경고를 남긴다. 기존 mock-only/TestClient-only 테스트는 삭제 대상으로 만들지 않고 T3 재분류 + live follow-up만 생성한다.
 
 **재검토 실패 시:**
 - 해당 계획서 파일은 유지한다. 자동 삭제/재생성하지 않는다.

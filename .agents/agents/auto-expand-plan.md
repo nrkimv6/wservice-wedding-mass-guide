@@ -118,6 +118,10 @@ For deterministic status, grep, candidate, preflight, or cleanup steps, call the
    - T3: 재현/통합 TC (mock 최소화, 실제 의존성 사용. fix: plan이면 필수 — 근본 원인 재현 fixture + TC 체크박스 자동 생성)
    - T4: E2E 테스트 — **반드시 Glob으로 `tests/**/*e2e*`, `tests/**/*integration*` 파일 탐색 후 결정**. 1개라도 존재하면 포함 필수. Glob 파일 발견 시 Read하여 TestClient/mock 기반(AsyncMock/MagicMock/patch 다수 사용 + 실서버/Playwright 미사용)이면 T3 재분류. "CLI 도구라서", "프레임워크 없어서" 같은 인상 기반 스킵 절대 금지. Phase 헤더 유지, 해당 없으면 **블록쿼트 사유만 기재** (`> T4 해당 없음: {사유}`), **체크박스 생성 금지**
    - T5: HTTP 통합 테스트 — **반드시 Glob으로 `tests/**/*http*`, `tests/**/*api*` 파일 탐색 후 결정**. HTTP 서버가 아닌 것이 코드로 확인된 경우에만 해당 없음 처리. Phase 헤더 유지, **블록쿼트 사유만 기재, 체크박스 생성 금지**
+   - **T4 live contract**: T4 체크박스/테스트명령은 `pytest.mark.e2e`와 `pytest.mark.http_live`를 함께 가진 live smoke만 허용한다. frontend readiness 또는 `/merge-test` readiness 전제를 명시하고, `page.route("**/*", ...)` 전체 route mock만으로 화면을 구성한 테스트는 T4가 아니라 T3/mock-only로 재분류한다.
+   - **T4 feature-area 원칙**: T4는 plan 단위로 smoke 파일을 양산하지 않고 feature area/UI 화면 단위 live smoke를 우선 재사용한다. 기존 live smoke 파일이 있으면 그 파일에 TC를 추가하고, mock-only 파일만 있으면 기존 테스트는 T3로 남긴 뒤 live smoke follow-up TODO를 만든다.
+   - **T5 live contract**: T5 체크박스/테스트명령은 `pytest.mark.http_live`와 running API 접근 evidence를 함께 요구한다. `requests.get("http://localhost:8001/...")`, `httpx.get("http://localhost:8001/...")`, 또는 project live readiness helper 같은 localhost live 호출이 있어야 하며, `from fastapi.testclient import TestClient` 단독 증거는 T5가 아니라 T3/TestClient 통합으로 재분류한다.
+   - **T4/T5 분류 marker**: 계획서에는 필요 시 `live`, `mock_only`, `http_live`, `testclient_only`, `absent` 중 하나와 `needs_live_tc` 여부를 evidence로 남긴다. `mock_only`/`testclient_only`면 기존 테스트를 삭제하지 않고 T3 재분류 + live T4/T5 follow-up을 생성한다.
    - **T4/T5 금지 사유**: "단위 테스트로 커버됨", "수동 테스트", "실제 환경 필요", "CLI 도구", "라이브러리" — 이런 이유로 스킵 불가. **Glob 탐색 결과 파일 없음**만 유효한 스킵 사유
    - **🔴 탐색 없이 스킵 결정 = 규칙 위반**: T4/T5 스킵 전 Glob 탐색을 반드시 실행하고 결과를 근거로 제시할 것
 4.5. **TC Phase 스킵 재검증** (Python 변경 시 필수):

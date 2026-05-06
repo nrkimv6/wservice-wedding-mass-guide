@@ -269,6 +269,23 @@ fix 금지어: `근본 수정`, `근본 해결`, `완전 해결`, `최종 수정
 T4/T5 Glob 자동 복구: `> T4 해당 없음:` 블록쿼트 삭제 + TC 작성 + 실행 + 체크 (중단 없음 — dev-runner 파이프라인 호환).
 mock 기반 파일(`tests/**/*e2e*`) 발견 시 Read로 확인: AsyncMock/MagicMock 기반이면 T3(integration) 재분류, 실서버/Playwright면 T4 실행.
 
+### T4/T5 live contract classification
+
+T4/T5는 파일 존재나 pytest pass만으로 완료 처리하지 않는다. candidate file은 반드시 Read로 source를 확인하고 아래 표로 분류한다.
+
+| 후보 패턴 | 계층 판정 | closeout 동작 |
+|-----------|-----------|---------------|
+| `pytest.mark.http` + `from fastapi.testclient import TestClient` 또는 `TestClient(` 단독 | T3 | T5 evidence가 아니다. T5 체크박스 `[x]` 금지, 필요 시 T3 재분류 |
+| `pytest.mark.e2e` + `page.route("**/*")` 또는 `page.route('**/*')` 전체 route mock | T3 | T4 evidence가 아니다. T4 체크박스 `[x]` 금지, `T4_MOCK_ONLY_DETECTED` |
+| `pytest.mark.e2e` + `pytest.mark.http_live` + no full-route mock | T4 | live readiness evidence 이후 T4 실행 가능 |
+| `pytest.mark.http_live` + `requests`/`httpx` localhost API 접근 | T5 | live readiness evidence 이후 T5-http_live 실행 가능 |
+
+1.7단계 mock-only detector:
+- T4 후보 파일을 Read한다. `page.route("**/*")` 또는 `page.route('**/*')`가 있고 `pytest.mark.http_live`가 없으면 `T4_MOCK_ONLY_DETECTED` blocker로 기록한다.
+- T5 후보 파일을 Read한다. `from fastapi.testclient import TestClient` 또는 `TestClient(` 단독 사용이 있고 `pytest.mark.http_live`가 없으면 `T5_TESTCLIENT_ONLY_DETECTED` blocker로 기록한다.
+- blocker 발생 시 해당 T4/T5 체크박스를 `[x]`로 올리지 않는다. live test 추가 또는 T3 재분류를 요구한다.
+- feature area 단위 live smoke 원칙: T4 live file은 plan 단위가 아니라 화면/feature area 단위로 재사용한다. 기존 live smoke가 있으면 같은 파일에 시나리오를 추가하고, 없으면 새 live smoke 파일을 만든다. live smoke가 없고 mock-only만 존재하면 T4 완료가 아니라 `T4_MOCK_ONLY_DETECTED` 또는 `T4_LIVE_SMOKE_MISSING`으로 남긴다.
+
 ### 1.9단계: 동일 부모 배치 대상 수집 (_todo-N / 다중 프로젝트 공통)
 
 > **attach 모드 비포함**: 배치 수집은 `parent_plan_path` 단일 기준. attached plan은 배치 자동 포함 안 됨.

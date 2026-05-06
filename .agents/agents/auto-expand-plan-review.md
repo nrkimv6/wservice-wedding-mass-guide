@@ -34,6 +34,17 @@ JSON 필수 필드:
 - `summary`
 - `priority`
 - `stage` (`review`)
+- `t4_pattern` (`live | mock_only | absent`)
+- `t5_pattern` (`http_live | testclient_only | absent`)
+- `needs_live_tc` (`boolean`)
+
+## T4/T5 live contract review
+
+- T4 후보 파일은 Read해서 `pytest.mark.e2e` + `pytest.mark.http_live` + frontend readiness 또는 `/merge-test` readiness 전제를 확인한다. `page.route("**/*", ...)` 전체 route mock만 있거나 `http_live`가 없으면 `t4_pattern: "mock_only"`로 기록한다.
+- T5 후보 파일은 Read해서 `pytest.mark.http_live`와 localhost live 호출 evidence를 확인한다. 허용 evidence는 `requests.get("http://localhost:8001/...")`, `httpx.get("http://localhost:8001/...")`, 또는 project live readiness helper다. `from fastapi.testclient import TestClient` 단독이면 `t5_pattern: "testclient_only"`로 기록한다.
+- `t4_pattern`은 live smoke가 있으면 `live`, mock-only면 `mock_only`, 후보가 없으면 `absent`다.
+- `t5_pattern`은 live HTTP evidence가 있으면 `http_live`, TestClient-only면 `testclient_only`, 후보가 없으면 `absent`다.
+- `mock_only` 또는 `testclient_only`이면 `needs_live_tc: true`로 설정한다. 이 경우 기존 mock-only/TestClient-only 테스트 삭제가 아니라 T3 재분류 + live T4/T5 follow-up이 필요하다고 `summary`에 남긴다.
 
 ## 출력 계약
 
