@@ -541,6 +541,12 @@ if ($lock_acquired) {
 
 T4/T5 phase 또는 `T4/T5 evidence table` requirement가 있는 target은 상태 전이 직전에 plan/todo 본문을 다시 읽고 target별 evidence row completeness를 검증한다. `stage`, `command`, `cwd`, `result`, `exit_code`, `log_ref`, `blocker_code` 중 하나라도 비었거나 필수 T4/T5 row가 없으면 `구현완료`로 올리지 않는다.
 
+검증 실패 row는 반드시 `failure_class`, `blocks_archive`, `blocks_other_targets`, `next_owner`를 함께 기록한다.
+- `failure_class` 허용값: `product_regression`, `contract_regression`, `test_fixture_stale`, `environment_failure`.
+- `product_regression` 또는 `contract_regression`: 현재 target의 archive는 차단하되, 다른 target 차단 여부는 `blocks_other_targets`로 별도 판단한다.
+- `test_fixture_stale` 또는 `environment_failure`: 기본값은 `blocks_other_targets=false`이며, 전체 보류/전체 중지 근거로 승격하지 않는다.
+- failure scope가 분류되기 전에는 `전체 보류`, `전체 중지`, `모두 실패` 표현을 금지하고 target-local blocked/warning으로만 남긴다.
+
 - missing/incomplete row: 상태를 `보류(t4_t5_evidence_missing)` 또는 동등한 target-local blocked 상태로 유지하고 archive 금지.
 - `result=미실행`: 상태를 `보류(t4_t5_not_run)`으로 유지하고 archive 금지.
 - `result=실패` 또는 non-empty blocker code: 상태를 `보류(<blocker_code>)`로 유지하고 archive 금지. 예: `보류(T5_CLAIM_HTTP_FIXTURE_MISSING)`.

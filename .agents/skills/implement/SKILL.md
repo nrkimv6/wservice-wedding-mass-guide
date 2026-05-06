@@ -58,6 +58,8 @@ Deterministic setup, status, and advisory scanning must prefer helper CLI eviden
   - `_todo`가 남아 있는 동안 `대표 plan 전체 완료`, `session 종료` 표현을 금지한다.
 - 현재 target의 구현이 끝났더라도 **remaining targets**가 있으면 전체 완료로 말하지 않는다.
   - 출력은 `현재 target 완료, 남은 target N개` 형태로 남기고, 다음 target으로 **같은 턴에서 계속** 진행한다.
+- post-merge 검증 실패는 `product_regression`, `contract_regression`, `test_fixture_stale`, `environment_failure` 중 하나로 `failure_class`를 분류하고, `blocks_archive`, `blocks_other_targets`, `next_owner`를 남기기 전에는 전체 보류/전체 중지로 말하지 않는다.
+  - `test_fixture_stale` 또는 `environment_failure`이고 `blocks_other_targets=false`이면 현재 target의 warning/blocker로만 남기고 다른 eligible target이나 remaining leaf 진행을 계속한다.
 - explicit continue 재지시가 없어도 **current target에 실행 가능한 leaf가 남아 있으면 같은 턴에서 계속 진행**한다.
 - `leaf 몇 개 완료`, `Phase 일부 완료`, `현재 target 일부 완료`는 종료 사유가 아니다.
 - 사용자가 `계속`, `멈추지마`, `끝날 때까지` 등으로 재지시한 경우:

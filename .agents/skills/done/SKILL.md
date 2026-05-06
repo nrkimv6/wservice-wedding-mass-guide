@@ -60,6 +60,8 @@ The deterministic completion flow is owned by `common\tools\auto-done.ps1`. Use 
 - session targets는 처리 전 반드시 `eligible`, `blocked`, `already_archived`, `ignored` partition으로 분류한다.
   - `eligible`이 1건 이상이면 `blocked` target이 있어도 eligible target의 archive/DONE/TODO 정리는 계속 진행한다.
   - `blocked` target은 target-local reason(`plan_incomplete`, `phase_z_incomplete`, `branch_worktree_present`, `ds_evidence_missing`, `non_product_only`, `dirty_conflict` 등), 필요 owner, 남은 path를 closeout에 남긴다.
+  - 검증 실패로 blocked된 target은 `failure_class`, `blocks_archive`, `blocks_other_targets`, `next_owner`를 같이 남긴다. `failure_class`는 `product_regression`, `contract_regression`, `test_fixture_stale`, `environment_failure` 중 하나로 분류한다. `blocks_other_targets=false`인 row는 session 전체 중단 근거가 아니며 다른 eligible target의 archive/DONE/TODO 정리를 계속한다.
+  - `failure_class=test_fixture_stale` 또는 `environment_failure`는 전체 보류/전체 중지 근거로 승격하지 않고 target-local warning/blocker로만 남긴다.
   - `already_archived` target은 성공-equivalent로 집계하되 archive metadata/TODO/DONE을 재삽입하거나 재이동하지 않는다.
   - `ignored`는 session target 밖 backlog 또는 명시 제외 항목만 허용하며, session target 누락을 ignored로 숨기지 않는다.
 - 완료 집계 표는 `already_archived`와 이번 턴에 실제 처리한 `processed_this_turn`을 분리해 출력한다.
