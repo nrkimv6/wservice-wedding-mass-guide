@@ -207,6 +207,8 @@ if ($NewDirty) {
 ```
 
 - `ROOT_PROTECTED_DIRTY_CREATED`는 실패 final이 아니라 repair trigger다.
+- 이 repair flow는 post-merge 중 생긴 dirty의 사후 처리 규칙이며, child repo `.agents`/`.claude`/`.gemini` mirror 파일을 root에서 직접 edit/commit하는 예외가 아니다.
+- downstream mirror 반영은 wtools 원본 변경 후 sync commit, remote fast-forward 수신, 또는 downstream read-back evidence로만 검증한다.
 - repair branch 생성 실패 시 dirty path를 보존 branch 또는 dirty 보고 최종 evidence로 남기고, `/done`이 `related-plan dirty`로 이어받을 수 있게 Phase Z에 기록한다.
 - `main에 먼저 dirty 작성 -> 나중에 impl/post-merge branch 사후 생성` 순서가 감지되면 같은 repair acceptance case로 처리한다.
 
