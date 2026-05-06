@@ -8,6 +8,7 @@
 - 단, 경로를 실제로 결정할 때는 아래 helper 우선순위를 따른다.
 - **plans-aware != plans-only**: plans 워크트리를 지원한다는 뜻이지, 모든 프로젝트가 항상 `.worktrees/plans`를 써야 한다는 뜻이 아니다.
 - wtools 공통 문서는 `.worktrees/plans/docs/*`를 canonical로 사용한다.
+- wtools task ledger는 `.worktrees/plans/TODO.md`와 `.worktrees/plans/docs/DONE.md`가 canonical이다. repo root `TODO.md`/`docs/DONE.md`는 legacy/stub로만 취급한다.
 
 ## 경로 해석 우선순위
 
@@ -58,7 +59,8 @@ function Resolve-DocsCommitCandidates {
 
     $dirPrefixes = @(
         "docs/plan/",
-        "docs/archive/"
+        "docs/archive/",
+        "docs/history/"
     )
     $fileExact = @("TODO.md", "docs/DONE.md")
 
@@ -135,4 +137,5 @@ function Test-WorktreeDirty {
 
 - `Resolve-DocsCommitRoot` 반환 경로에서만 커밋한다.
 - `Resolve-DocsCommitCandidates` 반환 파일만 `git add`한다.
+- plans commit root 기준 exact file은 `TODO.md`, `docs/DONE.md`이고, directory lineage는 `docs/plan/`, `docs/archive/`, `docs/history/`다.
 - `git add -A` / `git add .` / `git add docs/`는 plans 워크트리에서도 금지한다.

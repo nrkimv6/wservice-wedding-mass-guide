@@ -72,16 +72,16 @@ agent가 파일을 수정/생성/git mv할 때마다 추가:
 
 ```powershell
 $TouchedPaths.Add("docs/plan/2026-xx-xx_foo.md")   # plan 신규 생성 후
-$TouchedPaths.Add("TODO.md")                        # TODO.md 수정 후
-$TouchedPaths.Add("docs/DONE.md")                   # DONE.md 수정 후
+$TouchedPaths.Add("TODO.md")                        # docs commit root 기준 TODO.md 수정 후 (wtools: .worktrees/plans/TODO.md)
+$TouchedPaths.Add("docs/DONE.md")                   # docs commit root 기준 DONE.md 수정 후 (wtools: .worktrees/plans/docs/DONE.md)
 $TouchedPaths.Add("docs/archive/2026-xx-xx_foo.md") # archive git mv 후
 ```
 
 | 액션 | 추가 대상 path |
 |------|--------------|
 | plan 신규 생성 | 생성된 plan path |
-| TODO.md 수정 | `TODO.md` |
-| docs/DONE.md 수정 | `docs/DONE.md` |
+| TODO.md 수정 | docs commit root 기준 `TODO.md` |
+| docs/DONE.md 수정 | docs commit root 기준 `docs/DONE.md` |
 | git mv (archive) | 원본 path + archive destination path |
 | review-plan 보정 | 보정된 계획서 path |
 
@@ -93,8 +93,8 @@ $SelfResidual = $CurrentDirty | Where-Object { $TouchedPaths.Contains($_) }
 
 # whitelist는 candidate classification 전용이다. stage pathspec에는 broad glob을 쓰지 않는다.
 $Whitelist = @("TODO.md", "docs/DONE.md")
-# plans 워크트리 glob 패턴: docs/plan/*.md, docs/archive/*.md
-$InWhitelist  = $SelfResidual | Where-Object { $_ -in $Whitelist -or $_ -like "docs/plan/*.md" -or $_ -like "docs/archive/*.md" }
+# plans 워크트리 glob 패턴: docs/plan/*.md, docs/archive/*.md, docs/history/*.md
+$InWhitelist  = $SelfResidual | Where-Object { $_ -in $Whitelist -or $_ -like "docs/plan/*.md" -or $_ -like "docs/archive/*.md" -or $_ -like "docs/history/*.md" }
 $OutWhitelist = $SelfResidual | Where-Object { $_ -notin $InWhitelist }
 
 # touched whitelist dirty는 exact path set만 stage하고, commit 실패 시 hard-fail한다.
@@ -245,7 +245,7 @@ CHANGELOG.md가 없으면 파일 자동 생성 후 추가.
 
 ```powershell
 ⚠️ main/plans 워크트리에 미커밋 변경 N건. 화이트리스트 후보와 블랙리스트 후보를 먼저 분리하세요.
-화이트리스트: docs/plan/**, docs/archive/**, TODO.md, docs/DONE.md, tests/**/fixtures/**
+화이트리스트: docs/plan/**, docs/archive/**, docs/history/**, TODO.md, docs/DONE.md, tests/**/fixtures/**
 블랙리스트: .env*, credentials.json, *.key, *.pem, secrets/**
 현재 실행이 수정한 파일만 add하세요. 기존 잔존 dirty와 묶어서 커밋하지 마세요.
 git -C "$RepoRoot" status --porcelain

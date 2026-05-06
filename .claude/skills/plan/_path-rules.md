@@ -7,6 +7,8 @@
 **절대 금지**: `docs/plan/` 또는 `.worktrees/plans/docs/plan/`을 직접 문자열로 스킬에 하드코딩하지 않는다.  
 모든 스킬/에이전트는 아래 **경로 해석 우선순위**를 따라 plan 루트를 결정한다.
 
+wtools task ledger는 `.worktrees/plans/TODO.md`와 `.worktrees/plans/docs/DONE.md`가 canonical이다. repo root `TODO.md`/`docs/DONE.md`는 legacy/stub로만 취급한다.
+
 ## 경로 해석 우선순위 (Get-PlanRoot 로직)
 
 스킬이 plan 경로를 결정해야 할 때 아래 순서로 확인한다:
@@ -50,7 +52,7 @@ function Resolve-DocsCommitCandidates {
     $commitRoot = (Resolve-DocsCommitRoot $RepoRoot).Replace('\','/').TrimEnd('/')
     if (-not (Test-Path $commitRoot)) { return @() }
 
-    $dirPrefixes = @("docs/plan/", "docs/archive/")
+    $dirPrefixes = @("docs/plan/", "docs/archive/", "docs/history/")
     $fileExact   = @("TODO.md", "docs/DONE.md")
 
     $candidates = foreach ($editedPath in $EditedPaths) {
@@ -152,4 +154,5 @@ git push
 
 - `Resolve-DocsCommitRoot` 반환 경로에서만 커밋한다.
 - `Resolve-DocsCommitCandidates` 반환 파일만 `git add`한다.
+- plans commit root 기준 exact file은 `TODO.md`, `docs/DONE.md`이고, directory lineage는 `docs/plan/`, `docs/archive/`, `docs/history/`다.
 - `git add -A` / `git add .` / `git add docs/`는 plans 워크트리에서도 금지한다.

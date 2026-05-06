@@ -63,6 +63,8 @@ $PlansBaseDirty = (git -C $PlansRoot status --short) | ForEach-Object { $_.Subst
 $TouchedPaths = [System.Collections.Generic.HashSet[string]]::new()
 ```
 
+docs commit root 기준 `TODO.md`는 wtools에서 `.worktrees/plans/TODO.md`, `docs/DONE.md`는 `.worktrees/plans/docs/DONE.md`다.
+
 ### self residual dirty 계산 inline snippet
 
 ```powershell
@@ -71,7 +73,7 @@ $SelfResidual = $CurrentDirty | Where-Object { $TouchedPaths.Contains($_) }
 
 # whitelist는 candidate classification 전용이다. stage pathspec에는 broad glob을 쓰지 않는다.
 $Whitelist = @("TODO.md", "docs/DONE.md")
-$InWhitelist  = $SelfResidual | Where-Object { $_ -in $Whitelist -or $_ -like "docs/plan/*.md" -or $_ -like "docs/archive/*.md" }
+$InWhitelist  = $SelfResidual | Where-Object { $_ -in $Whitelist -or $_ -like "docs/plan/*.md" -or $_ -like "docs/archive/*.md" -or $_ -like "docs/history/*.md" }
 $OutWhitelist = $SelfResidual | Where-Object { $_ -notin $InWhitelist }
 
 # touched whitelist dirty는 exact path set만 stage하고, commit 실패 시 hard-fail한다.
@@ -219,7 +221,7 @@ CHANGELOG.md가 없으면 파일 자동 생성 후 추가.
 
 ```powershell
 ⚠️ main/plans 워크트리에 미커밋 변경 N건. 화이트리스트 후보와 블랙리스트 후보를 먼저 분리하세요.
-화이트리스트: docs/plan/**, docs/archive/**, TODO.md, docs/DONE.md, tests/**/fixtures/**
+화이트리스트: docs/plan/**, docs/archive/**, docs/history/**, TODO.md, docs/DONE.md, tests/**/fixtures/**
 블랙리스트: .env*, credentials.json, *.key, *.pem, secrets/**
 현재 실행이 수정한 파일만 add하세요. 기존 잔존 dirty와 묶어서 커밋하지 마세요.
 git -C "$RepoRoot" status --porcelain

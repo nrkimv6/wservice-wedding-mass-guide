@@ -24,7 +24,7 @@ Deterministic setup, status, and advisory scanning must prefer helper CLI eviden
 ## PRE-EDIT HARD GATE
 - `/implement`의 첫 액션은 구현 파일 수정이 아니라 workflow 준비다.
 - 대상 파일을 건드리기 전에 plan 상태를 `구현중`으로 맞춘다.
-- 같은 시점에 `TODO.md` 현재 작업 항목을 먼저 동기화한다.
+- 같은 시점에 docs commit root 기준 `TODO.md` 현재 작업 항목을 먼저 동기화한다. wtools에서는 이 파일이 `.worktrees/plans/TODO.md`다.
 - plan 상단 `> branch:`, `> worktree:`, `> worktree-owner:`가 모두 채워지기 전에는 구현 파일을 수정하지 않는다.
 - 편집이 먼저 시작됐더라도 메타 누락 상태면 추가 수정 전에 plan/TODO/worktree 메타부터 복구한다.
 - pre-edit status/header mutation 뒤 plan/TODO가 touched whitelist dirty로 남으면 구현 파일 수정 전 docs commit을 수행하거나, 명시적 handoff evidence를 plan에 남긴 뒤 중단한다.
@@ -111,11 +111,11 @@ plan 문서에서 구현할 항목 선택 시:
 **plan 문서 업데이트:**
 ```markdown
 ## 구현 순서 제안
-1. [→TODO] P1: 캘린더 내보내기 → {project}/TODO.md   ← 선택됨 + 목적지 표시
+1. [→TODO] P1: 캘린더 내보내기 → .worktrees/plans/TODO.md   ← 선택됨 + 목적지 표시
 2. [ ] P2: 지역 필터
 ```
 
-**TODO.md에 추가:**
+**docs commit root 기준 TODO.md에 추가:**
 ```markdown
 # TODO
 
@@ -147,7 +147,7 @@ plan 문서에서 구현할 항목 선택 시:
 
 ### 3. TODO → DONE 완료
 
-**TODO.md에서 제거, docs/DONE.md 상단에 추가:**
+**docs commit root 기준 TODO.md에서 제거, docs/DONE.md 상단에 추가:**
 ```markdown
 # DONE (최근 20개)
 
@@ -185,7 +185,7 @@ Gate: branch/worktree present -> /merge-test; absent -> /done
 
 **Hard handoff contract:** current target의 `remaining executable leaf = 0`, session `remaining targets = 0`, `next owner step = /merge-test`이고 plan/todo 헤더에 `> branch:` 또는 `> worktree:`가 있으면 `/merge-test`가 current target의 다음 실행 step이다. 이 상태에서는 final closeout을 금지하고, 사용자가 명시한 local/project skill path precedence를 유지한 채 같은 턴에서 exact local `/merge-test` skill을 읽고 실행한다.
 
-`/done` owner는 TODO→DONE 이동, plan 체크, archive, DONE.md 정리, wtools/TODO.md 동기화, 완료 검증, 커밋을 처리합니다.
+`/done` owner는 docs commit root 기준 TODO→DONE 이동, plan 체크, archive, DONE.md 정리, 완료 검증, 커밋을 처리합니다. wtools에서는 `.worktrees/plans/TODO.md`와 `.worktrees/plans/docs/DONE.md`가 canonical이며 root `TODO.md`/`docs/DONE.md`/`wtools/TODO.md`는 직접 갱신하지 않습니다.
 
 ## 실행 단계
 
@@ -310,19 +310,20 @@ Codex가 구현 요청 받으면:
    - **T4(E2E)/T5(HTTP 통합)는 implement에서 실행/체크 금지** — `/merge-test`에서 main 머지 후 실행
    - **T3(재현/통합TC)는 implement에서 T2 직후 실행** — fix: plan이면 필수
 
-2. **TODO.md 업데이트**
+2. **plans TODO ledger 업데이트**
    - plan에서 선택 시: `[→TODO]` 표시, plan 상태 "구현중"
-   - TODO.md의 Pending에 추가 (출처 표시)
+   - docs commit root 기준 `TODO.md`의 Pending에 추가 (출처 표시)
    - 작업 시작 시 In Progress로 이동
 
-3. **wtools/TODO.md 동기화 (wtools만 해당)**
+3. **wtools plans ledger 경계 확인 (wtools만 해당)**
    - **wtools 감지 조건**: 현재 디렉토리에 `common/tools/` 폴더가 있는지 확인
-     - **있으면**: wtools 내부 → 아래 동기화 실행
+     - **있으면**: wtools 내부 → `.worktrees/plans/TODO.md`만 task ledger write 대상으로 사용
      - **없으면**: 외부 프로젝트 → 이 단계 **스킵**
-   - wtools/TODO.md 열기
+   - `.worktrees/plans/TODO.md` 열기
    - 해당 프로젝트 섹션 찾기
    - 변경된 항목 반영 (Pending → In Progress 이동, 진행률 갱신)
    - "마지막 업데이트" 날짜를 오늘로 갱신
+   - repo root `TODO.md`, `docs/DONE.md`, `wtools/TODO.md`는 legacy/stub 또는 downstream mirror read-back 대상이며 implement 단계에서 직접 쓰지 않는다.
 
    ### 🔴 항목 완료 후 반드시 실행 (다음 항목 진행 전 게이트)
    1. plan 파일 Edit → `[ ]` → `[x]` 변환
@@ -395,7 +396,7 @@ implement 고유 핵심 상태:
 
 ## 커밋 규칙
 
-plan, TODO.md, DONE.md 변경도 함께 커밋:
+plan, docs commit root 기준 TODO.md/DONE.md 변경도 함께 커밋:
 ```powershell
 commit "feat: 기능 구현"
 ```

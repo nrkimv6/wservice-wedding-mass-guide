@@ -3,9 +3,9 @@ name: pull-sync
 description: "git pull 후 plan/TODO 자동 동기화. Use when: 풀 동기화, pull sync, 풀 받아, 업데이트 받아"
 ---
 
-# git pull 후 TODO 자동 동기화
+# git pull 후 plans task ledger 자동 동기화
 
-하위 프로젝트들을 git pull하고, 변경된 plan 문서를 분석하여 TODO/DONE을 자동으로 동기화합니다.
+하위 프로젝트들을 git pull하고, 변경된 plan 문서를 분석하여 `.worktrees/plans/TODO.md`와 `.worktrees/plans/docs/DONE.md`를 자동으로 동기화합니다. repo root `TODO.md`, `docs/DONE.md`, `wtools/TODO.md`는 legacy/stub 또는 downstream mirror read-back 대상이며 직접 갱신하지 않습니다.
 
 ## 트리거
 
@@ -64,7 +64,8 @@ git pull origin main
 
 | 분류 | 대상 | 처리 |
 |---|---|---|
-| 일반 코드/문서 | `app/`, `frontend/`, `scripts/`, `docs/plan`, `TODO.md` 등 | 해당 repo owner flow에서 resolve/test/commit한다. |
+| 일반 코드/문서 | `app/`, `frontend/`, `scripts/`, `docs/plan` 등 | 해당 repo owner flow에서 resolve/test/commit한다. |
+| plans lineage ledger | `.worktrees/plans/TODO.md`, `.worktrees/plans/docs/DONE.md` | docs commit root owner flow에서 resolve/test/commit한다. |
 | 운영 긴급 | 서비스 복구에 필요한 설정/운영 파일 | 복구 우선으로 resolve하고 사유와 검증 evidence를 남긴다. |
 | mirror surface | `.agents/`, `.claude/`, `.gemini/` | root에서 resolve/commit하지 않는다. `pull --ff-only` 수신만 허용하고 실패 시 abort/preserve 후 upstream sync 재생성을 요구한다. |
 | unknown | 파일 성격을 판정할 수 없음 | 사용자에게 conflict 파일과 상태를 보고하고 결정 대기한다. |
@@ -136,7 +137,7 @@ git diff ${BEFORE_HASH} --name-only
    ```
 
 3. DONE.md에 기록:
-   - `{project}/docs/DONE.md` 상단에 추가
+   - `.worktrees/plans/docs/DONE.md` 상단에 추가
    - DONE.md 없으면 생성
    ```markdown
    ## 2026-02-05: {plan 제목}
@@ -145,8 +146,8 @@ git diff ${BEFORE_HASH} --name-only
 
 #### 3-C: 미완료 plan 처리
 
-**TODO.md 반영:**
-1. `{project}/TODO.md`의 Pending 섹션 확인
+**plans/TODO.md 반영:**
+1. `.worktrees/plans/TODO.md`의 Pending 섹션 확인
 2. 해당 plan 항목 검색:
    - **이미 있으면** → 진행률만 갱신
      ```markdown
@@ -157,15 +158,9 @@ git diff ${BEFORE_HASH} --name-only
      - [ ] **{제목}** — [plan]({경로}) (0/27, 0%)
      ```
 
-### 4단계: wtools/TODO.md 글로벌 동기화
+### 4단계: root legacy ledger 미갱신 확인
 
-**동기화 로직 (기존 `/check-repos` 6단계와 동일):**
-
-1. wtools/TODO.md 열기
-2. 각 프로젝트 섹션 찾기
-3. 변경된 프로젝트의 항목/진행률 갱신
-4. 모든 TODO 완료된 프로젝트 → "완료 ✅" 섹션으로 이동
-5. "마지막 업데이트" 날짜를 오늘로 갱신
+`.worktrees/plans/TODO.md`와 `.worktrees/plans/docs/DONE.md`만 canonical ledger로 갱신한다. repo root `TODO.md`, `docs/DONE.md`, `wtools/TODO.md`는 이 단계에서 쓰지 않는다.
 
 ### 5단계: 결과 리포트
 
@@ -188,7 +183,7 @@ git diff ${BEFORE_HASH} --name-only
 | activity-hub | layout-fix.md | 완료 (18/18) | → archive + DONE.md |
 | line-minder | auth-layout.md | 미완료 (5/27) | → TODO.md 갱신 |
 
-### wtools/TODO.md
+### plans/TODO.md
 - ✅ 동기화 완료 (마지막 업데이트: 2026-02-05)
 
 ### Redis 정리 (monitor-page)
@@ -209,7 +204,9 @@ git diff ${BEFORE_HASH} --name-only
 실행 후 확인:
 - [ ] Git Pull 결과 테이블 확인
 - [ ] Plan 변경 감지 테이블 확인
-- [ ] wtools/TODO.md 동기화됨
+- [ ] `.worktrees/plans/TODO.md` 동기화됨
+- [ ] `.worktrees/plans/docs/DONE.md` 동기화됨
+- [ ] root legacy ledger 미변경 확인됨
 - [ ] 스킵된 프로젝트 확인 및 정리
 
 ## 환경
