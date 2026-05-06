@@ -19,6 +19,8 @@ For deterministic status, grep, candidate, preflight, or cleanup steps, call the
 **Input**: conflict marker가 있는 파일 (`PROJECT_ROOT`, `BRANCH`, `CONFLICT_FILES` + BASE/OURS/THEIRS 내용)
 **Output**: `===AUTO-CONFLICT-RESULT===` with STATUS(`RESOLVED`/`FAILED`/`PARTIAL`), RESOLVED_FILES, FAILED_FILES
 
+이 agent는 순수 resolve만 수행한다. 자동 commit, `merge(llm-resolved):` subject/trailer 작성, `.merge_test/llm_resolutions/` evidence 저장, monitor-page `[LLM 머지 리뷰]` tracking 등록은 호출자(`merge_stage.py`) 책임이다. agent는 commit subject를 만들거나 직접 commit하지 않는다.
+
 ## 입력 프롬프트 형식
 
 ```
