@@ -9,6 +9,8 @@ description: "계획 문서 작성. Use when: 계획해, plan, 아이디어, 기
 
 `/plan` 또는 `[$plan](...SKILL.md)`가 직접 들어오면, 현재 턴에서 plan 파일 생성/수정까지 진행한다. direct invocation은 설명-only 모드가 아니며, 프로젝트/범위 정보가 실제로 부족할 때만 짧게 확인 질문을 한다.
 
+direct invocation 시 같은 이름의 global/duplicate skill(`C:\Users\Narang\.codex\skills\plan\SKILL.md` 등)을 대체 사용하지 않는다. 별도 공통 skill 정의가 필요한 경우가 아니면 wtools 로컬 `.claude/skills/plan` 원본을 우선한다.
+
 ## 트리거
 
 - "계획해", "plan", "아이디어", "기획"
@@ -81,7 +83,8 @@ task ledger 판단도 `_path-rules.md` helper의 docs commit root를 따른다. 
 
 ### 3단계: 계획 문서 작성
 
-계획 문서를 작성한 뒤, 같은 폴더의 **`_template.md`를 Read 도구로 읽고** 적절한 형태(단일/분리)로 출력한다.
+계획 문서를 작성한 뒤, 이 `SKILL.md`가 있는 스킬 디렉터리의 **`_template.md`를 Read 도구로 읽고** 적절한 형태(단일/분리)로 출력한다.
+- `docs/plan/_template.md` 또는 `.worktrees/plans/docs/plan/_template.md`를 찾지 않는다. plan 출력 폴더에는 `_template.md`가 없는 것이 정상이다.
 - 메타 헤더 작성 시각은 반드시 `> 작성일시: YYYY-MM-DD HH:MM` 형식(분 단위, 로컬 시간)으로 기입한다.
 - `기준커밋` 헤더는 전파 게이트 판정이 `필수`일 때만 기록 규칙을 강제한다.
   - 기본값: plan 작성 시점의 `HEAD` short hash
@@ -96,7 +99,7 @@ task ledger 판단도 `_path-rules.md` helper의 docs commit root를 따른다. 
 
 **Phase 기반 분리**: 작업 수가 31개 이상이고, 상호 의존 없는 Phase 그룹이 2개 이상 존재할 때 분리. Phase 간 순차 의존(A의 출력이 B의 입력)이면 같은 파일에 유지.
 
-**실행:** 같은 폴더의 `_template.md`를 **Read 도구로 읽고** 지시에 따른다.
+**실행:** 이 `SKILL.md`가 있는 스킬 디렉터리의 `_template.md`를 **Read 도구로 읽고** 지시에 따른다.
 
 ### 3.1단계: `/implement` 대상 plan의 worktree lifecycle 규칙
 

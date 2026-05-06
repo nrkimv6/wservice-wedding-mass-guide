@@ -9,6 +9,8 @@
 
 wtools task ledger는 `.worktrees/plans/TODO.md`와 `.worktrees/plans/docs/DONE.md`가 canonical이다. repo root `TODO.md`/`docs/DONE.md`는 legacy/stub로만 취급한다.
 
+plan root 해석 규칙은 plan 문서의 저장/조회 위치에만 적용한다. `/plan` 스킬이 읽는 `_template.md`는 plan 출력 폴더가 아니라 `SKILL.md`가 있는 스킬 디렉터리의 파일이다.
+
 ## 경로 해석 우선순위 (Get-PlanRoot 로직)
 
 스킬이 plan 경로를 결정해야 할 때 아래 순서로 확인한다:

@@ -9,6 +9,7 @@
 - **plans-aware != plans-only**: plans 워크트리를 지원한다는 뜻이지, 모든 프로젝트가 항상 `.worktrees/plans`를 써야 한다는 뜻이 아니다.
 - wtools 공통 문서는 `.worktrees/plans/docs/*`를 canonical로 사용한다.
 - wtools task ledger는 `.worktrees/plans/TODO.md`와 `.worktrees/plans/docs/DONE.md`가 canonical이다. repo root `TODO.md`/`docs/DONE.md`는 legacy/stub로만 취급한다.
+- plan root 해석 규칙은 plan 문서의 저장/조회 위치에만 적용한다. `/plan` 스킬이 읽는 `_template.md`는 plan 출력 폴더가 아니라 `SKILL.md`가 있는 스킬 디렉터리의 파일이다.
 
 ## 경로 해석 우선순위
 

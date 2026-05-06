@@ -328,7 +328,7 @@ finding을 plan으로 승격하기 전에 아래 4가지를 판정한다:
      - conflict 발생 시 방치하지 말고 `/pull-sync` conflict 분류 정책으로 위임한다.
    - 수정 대상이 특정 프로젝트의 `app/`, `frontend/`, `scripts/` 등 → **해당 프로젝트**의 `docs/plan/`에 생성
    - 복수 프로젝트에 걸친 변경 → **wtools** `.worktrees/plans/docs/plan/`에 생성
-2. `/plan` 스킬의 `_template.md` 형식으로 계획서 작성
+2. `/plan` 스킬 디렉터리의 `_template.md` 형식으로 계획서 작성
 3. 파일명: `{plan경로}/YYYY-MM-DD_{주제}.md`
 4. 헤더에 `> 출처: /reflect에서 자동 생성` 표기
 
