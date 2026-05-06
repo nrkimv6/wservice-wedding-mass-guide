@@ -61,6 +61,10 @@ The deterministic completion flow is owned by `common\tools\auto-done.ps1`. Use 
   - `blocked` target은 target-local reason(`plan_incomplete`, `phase_z_incomplete`, `branch_worktree_present`, `ds_evidence_missing`, `non_product_only`, `dirty_conflict` 등), 필요 owner, 남은 path를 closeout에 남긴다.
   - `already_archived` target은 성공-equivalent로 집계하되 archive metadata/TODO/DONE을 재삽입하거나 재이동하지 않는다.
   - `ignored`는 session target 밖 backlog 또는 명시 제외 항목만 허용하며, session target 누락을 ignored로 숨기지 않는다.
+- 완료 집계 표는 `already_archived`와 이번 턴에 실제 처리한 `processed_this_turn`을 분리해 출력한다.
+  이미 archive된 target은 session read-back에는 포함하지만, 이번 턴 완료 수를 부풀리는 근거로 쓰지 않는다.
+- `blocked` 또는 `excluded_unconfirmed` row가 하나라도 있으면 `전체 완료`, `모두 완료`, `마무리 완료` 표현을 금지한다.
+- 사용자가 "남은 거"를 물으면 global backlog가 아니라 현재 session targets의 `remaining`/`blocked`/`excluded_unconfirmed`만 기준으로 답한다.
 - 사용자가 `계속`, `멈추지마`, `끝날 때까지` 등으로 재지시한 경우:
   - 중간 성공(archive 완료, 커밋 완료)은 종료점이 아니라 **진행 업데이트**다.
   - 실제 중단은 hard blocker(충돌/커밋 실패/필수 evidence 누락 등)에서만 허용한다.
@@ -132,7 +136,8 @@ CLAUDE.md 문서 위치 규칙의 plan 경로/*.md
 4. 위 3개 값이 canonical metric `(done/total)`과 모두 일치하는지 확인
 5. 불일치가 있으면 경고 출력 후 커밋 전 수동 수정 (auto-done.ps1은 hard stop)
 6. plan/archive 본문에 `Phase Z` 또는 `> 머지커밋:`이 있으면, archive read-back에서 `Phase Z` 미완료 0건 + `> 머지커밋:`이 실제 merge commit evidence로 보존되는지 확인한다. `> 후속정리커밋:`이 있으면 현재 main HEAD 또는 현재 main HEAD로 이어지는 post-merge docs cleanup commit evidence로 검증한다.
-7. final summary는 `target_read_back.active_exists=false`, `target_read_back.archive_exists=true`, `done_ledger_state=present`, `todo_ledger_state=absent`가 확인된 target만 `완료`로 보고한다. code merge만 끝났거나 archive/DONE/TODO read-back이 모자란 target은 `archive pending` 또는 `blocked`로 분리한다.
+7. plan/archive 본문에 T4/T5 phase 또는 `T4/T5 evidence table` requirement가 있으면 archive 전 `stage|command|cwd|result|exit_code|log_ref|blocker_code` schema의 T4/T5 evidence table, 또는 explicit `> T4 E2E 해당 없음:`/`> T5 HTTP 해당 없음:` read-back을 확인한다.
+8. final summary는 `target_read_back.active_exists=false`, `target_read_back.archive_exists=true`, `done_ledger_state=present`, `todo_ledger_state=absent`가 확인된 target만 `완료`로 보고한다. code merge만 끝났거나 archive/DONE/TODO read-back이 모자란 target은 `archive pending` 또는 `blocked`로 분리한다.
 
 ### 1.5단계: 사전 검증 (구현완료 설정 전 게이트)
 
@@ -147,6 +152,7 @@ CLAUDE.md 문서 위치 규칙의 plan 경로/*.md
 | **2.7 DB-Direct evidence** | plan/archive 본문에 `Phase DB-Direct` 존재 | `실행 SQL/명령`, `존재 확인 쿼리`, `live API 또는 runtime 결과` 3종 모두 확인 | "Phase DB-Direct 실행 증거 부족. /merge-test에서 evidence를 남기세요." + 중단 | 3종 중 하나라도 없으면 중단 |
 | **2.75 external remote evidence** | plan 또는 split `_todo-*` leaf 본문에 `push`, `origin/main`, `remote`, 외부 repo 목록이 존재 | `git ls-remote origin main`, `git show origin/main:<path>`, 또는 대상 repo의 `origin/main content read-back` evidence 확인 | "external remote evidence 대기: local commit만으로 구현완료/archive 처리할 수 없습니다." + 상태 변경 없이 중단 | 외부 repo push leaf는 remote read-back 전까지 완료 금지 |
 | **2.76 product-surface evidence scope** | plan 헤더에 `> completion-scope: product_surface` 또는 `> completion scope: product_surface` 존재 | evidence에 product surface path/read-back(`app/`, `frontend/`, `backend/`, `src/`, `packages/`, `services/`, `common/tools/` 등) 1개 이상 존재하거나 scratch/private utility evidence만 존재하지 않음 | `non_product_only`로 target-local blocked 처리. 상태 변경/archive/TODO→DONE 금지 | `scripts/scratch/`, `scratch/`, `tmp/`, `private/`, `.private/` 등만으로 product-surface plan 완료 금지 |
+| **2.77 T4/T5 evidence table** | plan/archive 본문에 `Phase T4`, `Phase T5`, 또는 `T4/T5 evidence table` requirement 존재 | target별 `stage`, `command`, `cwd`, `result`, `exit_code`, `log_ref`, `blocker_code` row completeness 확인. 해당 없음은 explicit blockquote read-back과 non-empty `blocker_code` 필요 | `t4_t5_evidence_missing`, `t4_t5_not_run`, `t4_t5_blocked` 중 하나로 target-local blocked 처리. 상태 변경/archive/TODO→DONE 금지 | `merge`/`broad pytest`/`collect-only`만으로 archive 금지 |
 | **2.8 owner set 역할 판정** | plan 헤더에 `> worktree-owner:` 필드 존재 | 역할 판정 후 분기 처리 완료 | 아래 별도 bullet 참조 | 필드 없으면 일반 단독 plan → 스킵 |
 | **2.9 Phase 파일 vs git 이력 교차 경고** | plan 본문 Phase 1~N에 `app/`, `scripts/`, `frontend/` 패턴 파일 경로 언급 존재 | (경고만, non-blocking) | plan Phase 언급 파일 중 `git log --name-only HEAD~20` 이력에 없는 파일 목록을 `⚠️ Plan Phase에 언급된 파일 중 git 이력에서 수정 흔적 없음: {파일 목록}. 미구현 가능성을 확인하세요.` 로 출력 | hard block 금지 — 외부 PR/다른 worktree 구현 시 false positive 방지 |
 

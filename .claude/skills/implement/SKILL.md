@@ -40,9 +40,16 @@ Deterministic setup, status, and advisory scanning must prefer helper CLI eviden
 ## 세션 targets / continue 계약 (필수)
 
 - 사용자가 같은 세션에 plan 경로를 2개 이상 명시하면, 그 목록은 **session targets**로 고정한다.
+- 같은 턴에 사용자가 명시한 plan 경로 수는 `declared_target_count`로 기록한다. 대표 plan에서 `> **실행 TODO:**` 링크나 sibling `_todo-*`로 확장한 수는 `expanded_target_count`로 별도 기록한다.
 - 사용자가 여러 plan/branch의 병렬 진행이나 일괄 상태 보고를 요구하면 **batch target ledger**를 유지한다.
-  - ledger 컬럼은 최소 `target`, `plan`, `branch`, `worktree`, `status`, `next owner`를 포함한다.
+  - ledger 컬럼은 최소 `target`, `plan`, `branch`, `worktree`, `status`, `next owner`, `user_declared`, `discovered`, `eligible`, `excluded`, `processed`, `remaining`을 포함한다.
   - 각 target의 상태를 `done`, `pending`, `failed`, `unknown`, `planless`, `excluded`, `discarded`로 분리해 기록한다.
+  - `제외`가 포함된 지시는 제외 대상과 남은 진행 대상을 ledger로 먼저 read-back한 뒤 진행한다.
+  - 제외 대상이 plan title/status 기준인지, 이미 구현 중인 외부 runner 기준인지 불명확하면 해당 row는 `excluded_unconfirmed`로 두고 count mismatch blocker를 남긴다.
+  - 명시 제외 row만 `user_confirmed=true` evidence를 가질 수 있다. `user_confirmed`가 없으면 excluded row를 완료 집계에 포함하지 않는다.
+  - 사용자가 `N건 진행`, `계획서 N건`처럼 기대 수를 언급하면 closeout 직전에 `processed + remaining + excluded = expected_count`를 검증한다.
+  - `processed_count < expected_count - excluded_count`이면 final closeout 대신 다음 eligible target으로 같은 턴에서 계속 진행한다.
+  - `excluded_unconfirmed` row는 전체 완료 집계에 넣지 않는다.
   - 하나라도 `pending/failed/unknown/planless`이면 `전체 완료`, `모두 완료`, `마무리 완료` 표현을 금지한다.
 - 사용자가 명시한 경로가 대표 plan(`*_todo-N.md` 아님)이고 `> **실행 TODO:**` 링크 또는 sibling `_todo-*.md`가 있으면, 미완료 `_todo` 전부를 **session targets**에 자동 추가한다.
   - 출력은 `대표 plan`, `discovered _todo`, `session targets 추가`, `남은 target N개` 형식으로 남긴다.
@@ -170,6 +177,8 @@ Gate: branch/worktree present -> /merge-test; absent -> /done
 위 템플릿은 실행 전 read-back 근거다. `Decision: /merge-test`를 출력하는 것만으로 턴을 종료하지 않는다.
 
 **Hard handoff contract:** current target의 `remaining executable leaf = 0`, session `remaining targets = 0`, `next owner step = /merge-test`이고 plan/todo 헤더에 `> branch:` 또는 `> worktree:`가 있으면 `/merge-test`가 current target의 다음 실행 step이다. 이 상태에서는 final closeout을 금지하고, 사용자가 명시한 local/project skill path precedence를 유지한 채 같은 턴에서 exact local `/merge-test` skill을 읽고 실행한다.
+
+**Same-turn owner chain contract:** 위 조건에서 수동 `/implement`는 설명-only 종료가 아니라 `implement -> merge-test -> done` 실행 chain을 계속 탄다. `/merge-test`가 archive/TODO/DONE 후처리까지 끝내거나 hard blocker를 반환하기 전까지 `leaf 완료`, `T1/T2/T3 통과`, `머지대기 전이` 같은 중간 성공은 closeout으로 말하지 않는다. 종료 직전 read-back은 `remaining executable leaf`, `remaining targets`, `next owner step`, `remote evidence`를 출력하되, 실행 가능한 `/merge-test` 또는 `/done` next owner가 있으면 계속 실행한다.
 
 `/done` owner는 docs commit root 기준 TODO→DONE 이동, plan 체크, archive, DONE.md 정리, 완료 검증, 커밋을 처리합니다. wtools에서는 `.worktrees/plans/TODO.md`와 `.worktrees/plans/docs/DONE.md`가 canonical이며 root `TODO.md`/`docs/DONE.md`/`wtools/TODO.md`는 직접 갱신하지 않습니다.
 
