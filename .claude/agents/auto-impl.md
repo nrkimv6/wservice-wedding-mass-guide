@@ -181,6 +181,8 @@ DETAIL: {에러 요약 또는 "all passed"}
 - RESULT 블록 뒤에 `사용자 escalation 처리` 행을 추가하고, 무엇을 다시 확인했고 무엇을 고쳤는지, 남은 `remaining targets`가 있으면 어떤 TODO/owner에 남겼는지 적는다.
 - 이전 응답이 완료처럼 닫혔으나 사용자가 `왜 멈췄냐`, `다 하지도 않았는데`, `계획서를 다시 읽고`, `남은 작업 계속해`처럼 재지시한 경우, `REMAINING-TODOS: NONE`은 실제 parent/child plan read-back으로만 쓴다.
 - escalation evidence는 안전 훈계가 아니라 작업 품질 누락 신호다. 표현 평가 대신 plan/TODO/status/diff/read-back으로 재확인한 내용을 보고한다.
+- git recovery를 수행했거나 `stash`, `index.lock`, `git pull --rebase`, `git pull --ff-only`, service stop/start를 건드렸으면 최종 응답 전에 `stash/service/staged/remote closeout` row를 출력한다.
+- 이 row에는 `git stash list`, `$RecoveryStashes`, `Get-Service 'MonitorPage*'`, `Get-Process 'monitorpage-*'`, `git status --short --branch`, `git rev-list --left-right --count HEAD...origin/main` 결과를 요약한다.
 
 ## 출력 형식 (반드시 이 형식으로)
 

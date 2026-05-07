@@ -156,6 +156,7 @@ CLAUDE.md 문서 위치 규칙의 plan 경로/*.md
 6. plan/archive 본문에 `Phase Z` 또는 `> 머지커밋:`이 있으면, archive read-back에서 `Phase Z` 미완료 0건 + `> 머지커밋:`이 실제 merge commit evidence로 보존되는지 확인한다. `> 후속정리커밋:`이 있으면 현재 main HEAD 또는 현재 main HEAD로 이어지는 post-merge docs cleanup commit evidence로 검증한다.
 7. plan/archive 본문에 T4/T5 phase 또는 `T4/T5 evidence table` requirement가 있으면 archive 전 `stage|command|cwd|result|exit_code|log_ref|blocker_code` schema의 T4/T5 evidence table, 또는 explicit `> T4 E2E 해당 없음:`/`> T5 HTTP 해당 없음:` read-back을 확인한다.
 8. final summary는 `target_read_back.active_exists=false`, `target_read_back.archive_exists=true`, `done_ledger_state=present`, `todo_ledger_state=absent`가 확인된 target만 `완료`로 보고한다. code merge만 끝났거나 archive/DONE/TODO read-back이 모자란 target은 `archive pending` 또는 `blocked`로 분리한다.
+9. `active_exists=false`, `archive_exists=true`, `DONE present`, `TODO absent`, `상태=구현완료`, `진행률=100%` read-back 전에는 "완료", "다 했다", "추가 작업 없음"이라고 말하지 않는다. 하나라도 부족하면 `target_read_back_incomplete`로 남긴다.
 
 ### 1.5단계: 사전 검증 (구현완료 설정 전 게이트)
 
