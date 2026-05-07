@@ -27,11 +27,11 @@ Phase insertion triggers must be treated as advisory evidence first. Use `common
 
 ## 출력 commit 계약
 
-- 확장 시작 시 baseline dirty paths와 touched paths ledger를 기록한다.
-- plan 체크리스트를 수정하면 해당 plan path를 touched paths에 추가한다.
-- 변경 발생 시 touched whitelist dirty exact path set을 commit하고, 출력에 commit hash를 포함한다.
-- 변경이 없으면 출력에 `no-op` 결과를 포함한다.
-- commit hash 또는 `no-op` 결과를 출력하지 못하면 성공 종료하지 않는다.
+- 확장 시작 시 docs commit root에서 `common/tools/docs-dirty-guard.ps1 -Mode Begin -RepoRoot <docs-commit-root>`를 호출한다. PowerShell을 사용할 수 없는 shell surface는 `common/tools/docs-dirty-guard.sh --mode begin --repo-root <docs-commit-root>`를 사용한다.
+- plan 체크리스트를 수정하면 해당 plan exact path를 touched set에 추가하고, 수정 직후 `Commit`에 touched exact path만 전달한다.
+- 변경 발생 시 guard `Commit` summary의 commit hash를 출력에 포함한다. PowerShell canonical은 `D:\work\project\tools\common\commit.ps1 -Files`를 경유한다.
+- 변경이 없으면 guard `Commit status=no-op` 또는 `End status=ok` 결과를 포함한다.
+- 최종 응답 직전 `End`를 호출한다. commit hash, `no-op`, 또는 `End status=ok` 결과를 출력하지 못하면 성공 종료하지 않는다.
 
 ## 실행 단계
 

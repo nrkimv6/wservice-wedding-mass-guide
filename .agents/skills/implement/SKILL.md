@@ -377,6 +377,10 @@ Codex가 구현 요청 받으면:
    - 기존 테스트 통과 확인
    - **⚠️ frontend verify (webapp-testing / `npm run build` / `npm run check` / `npm run check:watch` / `svelte-kit sync` / `svelte-check` / `vite build` / `node ... svelte-kit.js sync`)는 워크트리에서 실행 금지** — 반드시 `/merge-test`에서 main 머지 후 실행
    - `_build_worktree.ps1` 같은 helper 예외는 setup 전용이며, implement 중 임의 probe의 근거로 쓰면 안 된다.
+   - **Svelte compiler error / Vite compile overlay 입력 처리**: overlay가 입력이면 `file/line`, `compiler message`, 연결 docs URL(예: `https://svelte.dev/e/const_tag_invalid_placement`)을 plan evidence에 남긴다.
+   - implement 단계에서는 source edit, targeted unit/static test, `rg` 기반 static search evidence까지만 수행한다. `npm run check/build`, `svelte-check`, `vite build`, `svelte-kit sync`는 `/merge-test` owner로 넘긴다.
+   - compile overlay recurrence search: error symbol 또는 helper function 이름으로 `rg` 검색을 수행하고, 같은 directory related component와 sibling `.svelte` 파일을 확인한다.
+   - recurrence search 결과의 found-but-not-changed 파일은 같은 helper function이 있어도 markup nesting 또는 parent contract가 안전한 이유를 짧게 기록한다.
 
 5. **완료 처리**
    - plan 또는 `_todo`에 `Phase DB-Direct`가 있으면 종료 안내에 아래 잔여 항목을 반드시 남긴다: `main 머지 후 running DB 직접 실행 필요`, `실행 SQL/명령`, `존재 확인 쿼리`, `live API 또는 runtime 결과`

@@ -49,6 +49,32 @@ Svelte 5 프로젝트에서 Svelte 4 문법 사용 금지. 코드 생성/수정 
 - `on:` 디렉티브 전면 금지 — 네이티브 이벤트 속성만 사용
 - 이벤트 수식어(`|preventDefault`, `|stopPropagation`)는 핸들러 내부에서 직접 호출
 - `$$props`, `$$restProps` → `$props()`의 스프레드 패턴 사용
+- `{@const}`는 Svelte compiler contract상 `{#snippet}`, `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<svelte:fragment>`, `<svelte:boundary>`, `<Component>` 같은 허용 parent의 **immediate child**여야 한다.
+- HTML element 내부에 내려간 `{@const}` 금지. 반복 block에서는 `{@const}`를 `{#each}` immediate child 위치로 올리거나, script/helper derived 값으로 이동한다.
+
+```svelte
+<!-- ❌ 금지: {@const}가 HTML element 내부에 있어 Svelte compiler overlay 발생 -->
+{#each runners as runner}
+  <div class="row">
+    {@const staleLabel = resolveStaleLabel(runner)}
+    <span>{staleLabel}</span>
+  </div>
+{/each}
+
+<!-- ✅ 허용: {@const}가 {#each} immediate child -->
+{#each runners as runner}
+  {@const staleLabel = resolveStaleLabel(runner)}
+  <div class="row">
+    <span>{staleLabel}</span>
+  </div>
+{/each}
+```
+
+**Svelte compiler overlay 대응 checklist**:
+- compiler message, file/line, markup nesting을 먼저 읽고 `{@const}`가 어떤 parent의 immediate child인지 확인한다.
+- compile overlay를 단일 파일 수정으로 닫지 않는다. error symbol 또는 helper function 이름으로 `rg -n "<helper|symbol>" <component-dir> -g "*.svelte"` recurrence search evidence를 남긴다.
+- 같은 component directory의 sibling `.svelte` 파일에서 같은 helper function이나 markup branch를 검색한다.
+- found-but-not-changed 파일은 parent/markup nesting이 안전한 이유를 짧게 기록한다.
 
 ### 1. 선택/벌크 액션 — createSelection()
 

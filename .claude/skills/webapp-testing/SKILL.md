@@ -32,6 +32,10 @@ npm run build
 
 같은 frontend checkout에서 `svelte-kit sync`, `npm run check`, `svelte-check`, `npm run build`, `vite build`를 병렬 실행하지 않는다. 이 명령들은 `.svelte-kit` generated output을 공유하므로 항상 순차 실행한다. `.svelte-kit` 파일의 `EPERM`/`EBUSY`가 나오면 check/build 병렬 실행 여부를 먼저 확인하고 단독 재실행 결과를 기록한다.
 
+### Svelte Compiler Overlay 기록
+
+`npm run check` 또는 build 계열에서 Svelte compiler / Vite compile overlay가 발생하면 `file/line`, `compiler message`, `recurrence search seed`를 결과에 남긴다. `{@const}` placement 오류는 `immediate child` contract 위반 여부와 같은 helper function 기반 sibling `.svelte` 검색 필요성을 함께 기록한다.
+
 ### 3. 로컬 개발 서버
 
 ```powershell

@@ -26,6 +26,12 @@ For deterministic status, grep, candidate, preflight, or cleanup steps, call the
 > **스킬 경로 참조**: 프롬프트에 `스킬 파일:` 줄이 있으면 해당 파일을 우선 참조하여 done 절차를 수행한다.
 > 기본 참조 경로: `D:\work\project\tools\monitor-page\.agents\skills\done\SKILL.md`
 
+## Helper JSON Resume/Evidence Contract
+
+- T4/T5 inline code evidence table 셀은 helper가 보존해야 한다. `command`, `cwd`, `blocker_code` 값이 backtick으로 감싸져 있어도 사람이 먼저 parser-safe rewrite를 수행하지 않는다.
+- `common\tools\auto-done.ps1 -Json` 또는 Python helper가 `already_archived_resume=true`를 반환하면 archive 이동을 반복하지 않는다.
+- already-archived resume에서는 JSON의 `searched_paths`와 `resumed_steps`를 read-back하고, archive 이동 이후 TODO/DONE/read-back/commit 잔여 단계만 계속한다.
+
 ## 입력 규약
 
 프롬프트 첫 줄에 (선택적으로 스킬 파일 경로 참조가 있고) plan 파일 절대경로가 전달된다:

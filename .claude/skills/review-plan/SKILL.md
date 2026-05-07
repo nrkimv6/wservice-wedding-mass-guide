@@ -54,12 +54,11 @@ Regex and keyword detections are advisory evidence unless a helper contract expl
 
 ### 0-pre단계: touched docs commit guarantee
 
-- review-plan 시작 시 baseline dirty paths와 touched paths ledger를 만든다.
-- 1단계 보정 또는 `/expand-todo` 호출 전후로 수정한 입력 plan/TODO path를 touched paths에 추가한다.
-- 각 `/expand-todo` 호출 직후 `current dirty ∩ touched paths`를 계산한다.
-- touched whitelist dirty가 남으면 입력 plan/TODO exact path set만 stage하고 성공 종료 전 commit한다.
-- touched whitelist dirty를 commit할 수 없거나 새로 만든 unowned dirty가 남으면 hard-fail한다.
-- unrelated active plan dirty는 읽기/수정/stage 대상에서 제외하고, 이번 입력 plan 변경만 commit한다.
+- review-plan 시작 시 docs commit root에서 `common/tools/docs-dirty-guard.ps1 -Mode Begin -RepoRoot <docs-commit-root>`를 호출한다. PowerShell을 사용할 수 없는 shell surface는 `common/tools/docs-dirty-guard.sh --mode begin --repo-root <docs-commit-root>`를 사용한다.
+- 1단계 보정 또는 `/expand-todo` 호출 전후로 수정한 입력 plan/TODO exact path를 touched set으로 유지한다.
+- 각 `/expand-todo` 호출 직후 touched exact path set만 `Commit`에 전달한다. PowerShell canonical은 `D:\work\project\tools\common\commit.ps1 -Files`를 경유한다.
+- 성공 종료 직전 `End`를 호출한다. touched whitelist dirty를 commit할 수 없거나 `End`가 새 unowned dirty/staged diff를 보고하면 hard-fail한다.
+- unrelated active plan dirty는 baseline으로만 취급하고 읽기/수정/stage 대상에서 제외한다. 이번 입력 plan 변경만 guard-owned dirty로 commit한다.
 
 ### 0단계: necessity revalidation
 

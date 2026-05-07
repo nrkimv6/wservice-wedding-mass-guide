@@ -22,6 +22,9 @@ The deterministic completion flow is owned by `common\tools\auto-done.ps1`. Use 
 - plan 헤더에 `> branch:` 또는 `> worktree:`가 있으면 `/done`을 중단하고 `/merge-test`를 먼저 실행한다.
 - plan 헤더에 두 필드가 모두 없을 때만 `/done`이 직접 archive/TODO→DONE/커밋을 처리한다.
 - 이 기준은 `/implement`의 완료 후 owner 선택 및 `/merge-test`의 전제 조건과 같은 계약이다.
+- 사용자가 "파일 닫어", "파일 닫기", "닫어", "닫기", "마무리"처럼 closeout을 지시하면 대상 plan의 `> branch:`/`> worktree:` 헤더를 먼저 읽는다.
+- `branch/worktree present -> /merge-test; absent -> /done` 판정은 같은 턴에서 수행하며, 사용자에게 같은 지시를 다시 입력하라고 떠넘기지 않는다.
+- `/merge-test` owner가 필요하면 같은 턴에서 local/project `/merge-test` `SKILL.md`를 읽고 이어간다.
 
 ### 세션 dirty 계약 (정의)
 
@@ -35,6 +38,9 @@ The deterministic completion flow is owned by `common\tools\auto-done.ps1`. Use 
 - **UNTRACKED_ORIGIN_BLOB_RESIDUE**: current HEAD에는 없고 `origin/main` 같은 upstream ref에는 tracked이며 local untracked blob hash가 upstream blob hash와 같은 파일. normal unrelated dirty가 아니며 `pre-existing unrelated dirty`만으로 무시할 수 없다.
 - **UNTRACKED_OVERWRITE_RISK**: current HEAD에는 없고 upstream에는 tracked인 path가 local untracked로 남아 pull/merge 시 overwrite될 수 있는 파일. hash가 같지 않으면 origin blob residue는 아니지만 closeout evidence 표에는 별도 위험으로 남긴다.
 - **residue closeout gate**: archive move 전 target repo root와 downstream repo root를 `common\tools\plan-runner\core\residue_detector.py` 계약으로 검사한다. `UNTRACKED_ORIGIN_BLOB_RESIDUE`가 있으면 `commit`, `quarantine`, `explicit preserve with owner plan` 중 하나의 evidence가 있어야 하며, 없으면 `UNTRACKED_ORIGIN_BLOB_RESIDUE_BLOCKED`로 상태 변경 없이 중단한다. 실패 payload에는 path, `head_deleted`, `upstream_tracked`, `hash_equal`, `no_unmerged_state`, candidate owner plan, dirty-left plan을 포함한다.
+- **preexisting staged paths**: 스킬 시작 시점과 commit 직전의 `git diff --cached --name-status`로 읽은 staged path 목록. current owner의 expected staged set이 아니면 unrelated staged inclusion 위험이다.
+- **expected staged set**: 현재 owner가 실제로 생성/수정/삭제/이동한 exact path set이다. archive move pair는 source deletion과 destination add를 expected staged set에 함께 넣는다.
+- **staged ownership**: commit 직전 staged set이 비어 있거나 expected staged set과 정확히 일치해야 하는 계약이다. preexisting staged가 current owner expected staged set이 아니면 `commit.ps1` 호출 전 hard stop이다.
 
 ## 트리거
 
@@ -70,6 +76,16 @@ The deterministic completion flow is owned by `common\tools\auto-done.ps1`. Use 
 - 사용자가 `계속`, `멈추지마`, `끝날 때까지` 등으로 재지시한 경우:
   - 중간 성공(archive 완료, 커밋 완료)은 종료점이 아니라 **진행 업데이트**다.
   - 실제 중단은 hard blocker(충돌/커밋 실패/필수 evidence 누락 등)에서만 허용한다.
+
+### 명시 다중 skill 호출 결과표
+
+- 사용자가 `[$done] [$reflect]`처럼 여러 skill을 같은 턴에 명시하면 각 skill을 독립 target으로 취급하고 아래 결과표를 출력한다.
+- 이미 완료된 plan에 대한 `/done`은 no-op 분기로 처리하되, archive/DONE/commit evidence를 read-back하고 `already_archived`로 보고한다. archive/TODO/DONE을 재삽입하거나 재이동하지 않는다.
+- 일부 skill을 실행하지 못했으면 `남은 조치`에 같은 턴에서 이어갈 owner 또는 blocker를 적는다.
+
+| skill | 실행 여부 | evidence | 남은 조치 |
+|-------|-----------|----------|-----------|
+| `{skill}` | `{executed|already_archived|blocked|skipped}` | `{archive path, DONE row, commit hash, blocker code}` | `{next owner 또는 없음}` |
 
 ## 실행 단계
 
@@ -157,6 +173,10 @@ CLAUDE.md 문서 위치 규칙의 plan 경로/*.md
 | **2.77 T4/T5 evidence table** | plan/archive 본문에 `Phase T4`, `Phase T5`, 또는 `T4/T5 evidence table` requirement 존재 | target별 `stage`, `command`, `cwd`, `result`, `exit_code`, `log_ref`, `blocker_code` row completeness 확인. 해당 없음은 explicit blockquote read-back과 non-empty `blocker_code` 필요 | `t4_t5_evidence_missing`, `t4_t5_not_run`, `t4_t5_blocked` 중 하나로 target-local blocked 처리. 상태 변경/archive/TODO→DONE 금지 | `merge`/`broad pytest`/`collect-only`만으로 archive 금지 |
 | **2.8 owner set 역할 판정** | plan 헤더에 `> worktree-owner:` 필드 존재 | 역할 판정 후 분기 처리 완료 | 아래 별도 bullet 참조 | 필드 없으면 일반 단독 plan → 스킵 |
 | **2.9 Phase 파일 vs git 이력 교차 경고** | plan 본문 Phase 1~N에 `app/`, `scripts/`, `frontend/` 패턴 파일 경로 언급 존재 | (경고만, non-blocking) | plan Phase 언급 파일 중 `git log --name-only HEAD~20` 이력에 없는 파일 목록을 `⚠️ Plan Phase에 언급된 파일 중 git 이력에서 수정 흔적 없음: {파일 목록}. 미구현 가능성을 확인하세요.` 로 출력 | hard block 금지 — 외부 PR/다른 worktree 구현 시 false positive 방지 |
+
+**T4/T5 evidence parser contract:** inline code evidence table 셀은 `common\tools\auto-done.ps1` helper가 보존해야 한다. 사람이 먼저 backtick을 제거하거나 parser-safe rewrite로 표를 고치는 방식은 fallback이 아니며, helper가 `command`, `cwd`, `blocker_code`를 읽지 못하면 helper/parser 결함으로 분류한다.
+
+**already_archived_resume contract:** helper JSON이 `already_archived_resume=true`를 반환하면 archive 이동을 반복하지 않는다. `searched_paths`와 `resumed_steps`를 read-back해 TODO/DONE/read-back/commit 잔여 단계만 이어가며, active path 부재 자체를 실패로 승격하지 않는다.
 
 **2.8 owner set 역할 판정 분기:**
 
@@ -369,6 +389,9 @@ bump 필요 시 실행 명령 + CHANGELOG 형식 → [_recipes.md](./_recipes.md
 - negative requirement: 일반 코드 path(`tests/*.py`, `app/*`, `frontend/*`, `scripts/*`)를 done 자동 커밋 whitelist에 직접 추가하지 않는다. 반드시 `related-plan dirty` 또는 `post-merge-owned dirty` 판정 경로를 통해서만 커밋 후보가 된다.
 - skill source 변경이 포함된 owner chain에서는 `python common/tools/plan-runner/scripts/sync_gemini_surfaces.py --check`가 marker drift를 보고하면 `/done` 성공 종료를 차단한다. sync 적용 또는 보존 evidence 없이 `dirty 0`으로 보고하지 않는다.
 - archive 이동은 source deletion과 destination add를 expected staged set에 함께 넣는다.
+- commit.ps1 호출 전 `git diff --cached --name-status`가 비어 있거나 current owner expected staged set과 정확히 일치해야 한다.
+- preexisting staged가 current owner expected staged set이 아니면 **staged ownership** 위반으로 hard stop하고 커밋하지 않는다.
+- `commit.ps1 -Files` warning은 success가 아니라 staged ownership 재검증 trigger다. warning 이후에는 `git diff --cached --name-status`를 다시 읽고 expected staged set mismatch가 없을 때만 완료 보고한다.
 - commit.ps1 호출 전 `git diff --cached --name-status`가 expected staged set과 정확히 일치하지 않으면 **staged mismatch** hard stop으로 중단하고 커밋하지 않는다.
 - auto-done이 commit 단계에서 timeout, lock, commit wrapper failure로 끊기면 JSON의 `expected_paths`, `staged_paths`, `lock_path`, `lock_exists`, `running_git_processes`를 먼저 읽는다. stale lock/process를 확인한 뒤 `expected_paths`와 정확히 일치하는 staged set만 커밋하고, 성공 후 archive metadata와 `target_read_back`을 다시 수행한다. unrelated dirty/staged path가 하나라도 섞이면 수동 복구 전까지 완료 보고 금지.
 - whitelist 밖 touched dirty → 흐름을 중단하지 않고 최종 보고의 "남은 dirty" 목록에 기록한다.

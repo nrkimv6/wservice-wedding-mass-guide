@@ -11,6 +11,13 @@ description: "계획 문서 작성. Use when: 계획해, plan, 아이디어, 기
 
 direct invocation 시 같은 이름의 global/duplicate skill(`C:\Users\Narang\.codex\skills\plan\SKILL.md` 등)을 대체 사용하지 않는다. 별도 공통 skill 정의가 필요한 경우가 아니면 wtools 로컬 `.agents/skills/plan` 원본을 우선한다.
 
+## Docs Dirty Guard Contract
+
+- direct invocation에서 plan/TODO/DONE 같은 docs lineage를 수정할 가능성이 있으면, 수정 전 docs commit root에서 `common/tools/docs-dirty-guard.ps1 -Mode Begin -RepoRoot <docs-commit-root>`를 호출한다. PowerShell을 사용할 수 없는 shell surface는 `common/tools/docs-dirty-guard.sh --mode begin --repo-root <docs-commit-root>`를 사용한다.
+- docs commit root는 실제 커밋 루트여야 한다. wtools 공통 문서가 `.worktrees/plans` 아래 있으면 `RepoRoot`는 main worktree가 아니라 `.worktrees/plans`다.
+- plan/TODO/DONE 수정 직후 touched exact path만 `-TouchedFiles`/`--touched-files`로 전달해 `Commit`을 호출한다. PowerShell 경로는 `D:\work\project\tools\common\commit.ps1 -Files`를 경유한다.
+- 최종 응답 직전에는 `End`를 호출한다. `End`가 baseline 외 dirty 또는 staged diff를 보고하면 성공 응답을 금지하고 blocker로 보고한다. 변경이 없으면 guard의 `no-op` 또는 `End status=ok` summary를 결과에 포함한다.
+
 ## 트리거
 
 - "계획해", "plan", "아이디어", "기획"
