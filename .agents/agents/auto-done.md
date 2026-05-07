@@ -145,6 +145,8 @@ auto-done 완료: {plan 제목}
 - archive: {archive 경로}
 - todo_archive: {_todo archive 경로}
 - commit: {커밋 해시 또는 "완료"}
+- 사용자 escalation 처리: {무엇을 다시 확인했고 무엇을 고쳤는지 또는 해당 없음}
+- remaining targets: {없음 또는 남은 TODO/owner}
 ```
 
 실패 시:
@@ -152,6 +154,13 @@ auto-done 완료: {plan 제목}
 ```
 auto-done 실패: {plan 제목}
 ERROR: {오류 메시지}
+- 사용자 escalation 처리: {재지시/질책이 있었다면 다시 확인한 범위와 blocked owner}
 ```
+
+## 사용자 escalation closeout gate
+
+- 같은 세션에 사용자 재지시/질책/강한 불만 신호가 있었으면 최종 출력에서 active plan/archive/DONE/root/head/service 상태와 `사용자 escalation 처리`를 분리해 보고한다.
+- `사용자 escalation 처리`에는 무엇을 다시 확인했고 무엇을 고쳤는지, 남은 `remaining targets` 또는 blocked owner를 포함한다.
+- escalation evidence는 안전 훈계가 아니라 작업 품질 누락 신호다. 표현 평가 대신 plan/TODO/status/read-back 근거를 남긴다.
 
 
