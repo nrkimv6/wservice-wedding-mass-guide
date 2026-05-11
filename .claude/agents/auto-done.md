@@ -97,16 +97,17 @@ done SKILL.md 2단계~8단계를 순서대로 실행:
 
 ### 3. TODO → DONE 이동
 
+- **wtools canonical DONE ledger**: 완료 기록은 `.worktrees/plans/docs/DONE.md`에만 쓴다. root/common의 `common/docs/DONE.md`, `common\docs\DONE.md`, `{project}/docs/DONE.md`, `{프로젝트}/docs/DONE.md`는 wtools 완료 ledger가 아니며 작성 대상으로 삼지 않는다.
 - 각 `_todo-N.md`의 `> 대상 프로젝트:` 헤더를 읽어 **프로젝트별** 처리:
   - 해당 프로젝트의 `TODO.md` 열기
   - plan과 연관된 항목을 `In Progress`/`Pending`에서 제거
-  - 해당 프로젝트의 `docs/DONE.md` 상단에 `- [x] {오늘날짜}: {제목}` 추가
-- `> 대상 프로젝트:` 필드가 없는 레거시 파일: 기존 방식(단일 프로젝트) 유지
+  - `.worktrees/plans/docs/DONE.md` 상단에 `- [x] {오늘날짜}: {제목}` 추가
+- `> 대상 프로젝트:` 필드가 없는 레거시 파일도 wtools에서는 `.worktrees/plans/docs/DONE.md`에 기록한다.
 
 ### 4. DONE.md 아카이브 (10개 초과 시)
 
-- `.worktrees/plans/`가 있으면 오래된 항목 → `.worktrees/plans/docs/archive/DONE-YYYY-MM.md`로 이동
-- `.worktrees/plans/`가 없으면 오래된 항목 → `docs/archive/DONE-YYYY-MM.md`로 이동
+- `.worktrees/plans/docs/DONE.md`의 오래된 항목 → `.worktrees/plans/docs/archive/DONE-YYYY-MM.md`로 이동
+- `.worktrees/plans/`가 없는 non-wtools legacy 프로젝트에서만 기존 `docs/DONE.md` → `docs/archive/DONE-YYYY-MM.md` 규칙을 적용한다.
 
 ### 5. wtools/TODO.md 동기화
 

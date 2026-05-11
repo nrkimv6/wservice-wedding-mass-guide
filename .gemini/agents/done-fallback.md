@@ -28,8 +28,9 @@
    - `{프로젝트}/TODO.md` 및 `wtools/TODO.md`에서 해당 plan 제목의 행을 제거하거나 상태를 완료로 변경한다.
 
 5. **DONE 기록** (Edit)
-   - `{프로젝트}/docs/DONE.md`에 완료 항목(`- [x] YYYY-MM-DD: {제목}`)을 최상단에 추가한다.
-   - DONE.md 항목이 5개를 초과하면 오래된 항목을 별도 아카이브(`DONE-YYYY-MM.md`)로 분리한다.
+   - wtools의 canonical DONE ledger는 `.worktrees/plans/docs/DONE.md`이다. 완료 항목(`- [x] YYYY-MM-DD: {제목}`)은 이 파일 최상단에 추가한다.
+   - root/common의 `common/docs/DONE.md`, `common\docs\DONE.md`, `{project}/docs/DONE.md`, `{프로젝트}/docs/DONE.md`는 wtools 완료 ledger가 아니며 fallback 작성 대상으로 삼지 않는다.
+   - `.worktrees/plans/docs/DONE.md` 항목이 5개를 초과하면 오래된 항목을 `.worktrees/plans/docs/archive/DONE-YYYY-MM.md`로 분리한다.
 
 6. **커밋** (Shell)
    - 변경 사항을 `powershell.exe -Command "git add -A"` 후 커밋한다.

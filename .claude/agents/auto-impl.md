@@ -124,7 +124,7 @@ plan 문서 없이 진행된 소규모 수정이나 버그 픽스의 경우, 나
 3. 기존 스크립트에 의한 plan 문서의 archive 이동이 발생하지 않았을 것
 
 ### 기록 위치
-- **단일 프로젝트**: 해당 `{project}/docs/DONE.md`에 추가 기입 (필요 시 파일 생성)
+- **wtools 완료 ledger**: `.worktrees/plans/docs/DONE.md`에 추가 기입. `{project}/docs/DONE.md`, `{프로젝트}/docs/DONE.md`, `common/docs/DONE.md`, `common\docs\DONE.md`는 wtools 작성 대상이 아니다.
 - **공통/다중 프로젝트**: AGENTS.md/CLAUDE.md `문서 위치 규칙`의 history 경로에 `YYYY-MM-DD_{작업명}-changes.md` 신규 생성 (기본: `docs/history/`)
 
 ### 수정 이력 템플릿

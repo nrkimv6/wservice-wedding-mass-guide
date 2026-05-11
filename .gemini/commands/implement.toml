@@ -59,9 +59,9 @@ plan 문서에서 구현할 항목 선택:
 
 ### 4단계: 아카이브 (20개 초과 시)
 
-docs/DONE.md가 20개 초과하면:
-- 오래된 항목 → `docs/history/DONE-YYYY-MM.md`
-- docs/DONE.md는 최근 20개만 유지
+`.worktrees/plans/docs/DONE.md`가 20개 초과하면:
+- 오래된 항목 → `.worktrees/plans/docs/history/DONE-YYYY-MM.md`
+- `.worktrees/plans/docs/DONE.md`는 최근 20개만 유지
 
 ## 커밋 규칙
 

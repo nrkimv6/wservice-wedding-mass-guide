@@ -61,7 +61,7 @@ Conventional Commits 형식: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
 | 아카이브 | `.worktrees/plans/docs/archive/` |
 | 가이드 | `common/docs/guide/` |
 | 프로젝트 TODO | `{project}/TODO.md` |
-| 프로젝트 완료 | `{project}/docs/DONE.md` |
+| 완료 ledger | `.worktrees/plans/docs/DONE.md` |
 
 ## Slash Commands (`.gemini/commands/`)
 
