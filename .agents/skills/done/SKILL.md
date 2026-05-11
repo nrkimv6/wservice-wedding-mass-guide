@@ -211,7 +211,7 @@ plan 문서의 모든 체크박스가 `[x]`이면:
 
 planless branch는 archive 대상이 아니다. batch/done 보고에서는 `plan 없음` row로 분리하고, archive 없음 사유와 worktree/branch cleanup 결과를 별도 상태로 남긴다.
 root guard 차단은 정상 방어다. `/done`은 `.agents/`, `.claude/`, `.gemini/`, `app/`, `frontend/`, `scripts/`, `tests/` 같은 구현성 파일을 root main에서 직접 커밋하지 않는다.
-root guard가 staged `.agents/.claude/.gemini` sync merge를 차단하면 `ROOT_GUARD_BLOCKED_PENDING_SYNC_MERGE` evidence로 기록하고, root direct commit 또는 local merge resolution으로 닫지 않는다. 보존/abort evidence를 남긴 뒤 ff-only 복구 절차(사용자 `git push origin main`으로 source 정렬 후 retry, 또는 upstream sync 재생성)나 remote fast-forward 수신 evidence로만 전환한다. archive closeout 중 downstream sync evidence가 없고 source repo가 ahead이면 `git push origin main` 또는 GitHub Actions `sync-skills.yml` `workflow_dispatch`를 시도하고, 실패하면 `DOWNSTREAM_SYNC_TRIGGER_FAILED`로 중단한다.
+root guard가 staged `.agents/.claude/.gemini` sync merge를 차단하면 `ROOT_GUARD_BLOCKED_PENDING_SYNC_MERGE` evidence로 기록하고, root direct commit 또는 local merge resolution으로 닫지 않는다. 보존/abort evidence를 남긴 뒤 ff-only 복구 절차 또는 upstream sync 재생성, remote fast-forward 수신 evidence로만 전환한다. archive closeout 중 downstream sync evidence가 없으면 source repo에서 `git fetch origin` + `git rev-list --left-right --count HEAD...origin/main`을 먼저 실행하고, `ahead-only`(`left>0 && right=0`, `behind=0`)일 때만 `git push origin main` 또는 GitHub Actions `sync-skills.yml` `workflow_dispatch`를 시도한다. `diverged`(`left>0 && right>0`)이면 push-first 금지이며 `DOWNSTREAM_DIVERGED_PUSH_BLOCKED`로 중단한다. ff-only 불가능/권한 문제의 `NON_FF_SYNC_BLOCKED`와 diverged 상태의 `DOWNSTREAM_DIVERGED_PUSH_BLOCKED`는 서로 다른 blocker로 보고한다. trigger 실패는 `DOWNSTREAM_SYNC_TRIGGER_FAILED`로 중단한다.
 
 **⚠️ archive 우려점 사장(沈沒) 경고 (blocking 아님)**
 

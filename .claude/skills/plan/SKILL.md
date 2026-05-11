@@ -138,6 +138,8 @@ wtools 원본 skill/agent/common-doc 변경이 하위 프로젝트 canonical, mi
 - 위치: `Downstream Sync Phase`는 `Phase Z`보다 앞에 두고, 테스트 phase가 있으면 `Phase T4`/`Phase T5`보다도 앞에 둔다. 즉 sync evidence 확보가 `before T4/T5` 선행조건이어야 한다.
 - evidence: `downstream sync evidence`에는 wtools 원본 commit hash, downstream file read-back 결과, downstream commit hash 또는 generated surface read-back 결과 중 해당 surface에 맞는 근거를 적는다.
 - 차단: 필요한 `downstream sync evidence`가 없으면 T4/T5 체크박스를 만들거나 실행하지 말고 `DOWNSTREAM_SYNC_EVIDENCE_MISSING`으로 중단한다고 적는다.
+- receiver sync 계획은 실행 전 `git fetch origin` + `git rev-list --left-right --count HEAD...origin/main`으로 `ahead-only`, `behind-only`, `diverged`, `equal`을 먼저 분류하게 한다. `git status --short --branch`는 display evidence이며 routing source of truth가 아니다.
+- `ahead-only`(`left>0 && right=0`, `behind=0`)일 때만 push-first 후보를 둘 수 있고, `diverged`(`left>0 && right>0`) 상태는 push-first 금지 및 `DOWNSTREAM_DIVERGED_PUSH_BLOCKED`로 계획한다.
 - child repo root main에서 `.agents/.claude/.gemini` mirror sync merge 예외를 만들거나 `MERGE_HEAD + sync subject + mirror-only staged` 조건으로 commit을 허용하는 계획은 쓰지 않는다. receiver repo의 sync 반영은 remote fast-forward 수신 또는 upstream sync 재생성 evidence로만 계획한다.
 
 ### 4단계: plans/TODO.md ledger 등록 (wtools만 해당)
