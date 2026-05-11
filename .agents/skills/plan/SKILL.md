@@ -85,6 +85,11 @@ task ledger 판단도 `_path-rules.md` helper의 docs commit root를 따른다. 
 - corrective action plan은 최소 `승인된 요구사항`, `검토 옵션/제안 (미승인)`, `수행하지 않을 작업`을 분리해 작성한다.
 - `사용자가 원하면`, `추천`, `어떨까`, `가능할까` 같은 상담성 표현은 구현 승인 근거가 아니다. 실행 TODO로 전환하려면 사용자의 후속 명시 승인 문장을 approval evidence로 남긴다.
 
+**🔴 child/follow-up/stub scope split 금지:**
+- child/follow-up/stub 계획 생성 자체가 scope 변경이다. 사용자 명시 승인 evidence 없이 parent 작업을 요구사항·실행 TODO·후속 plan·linked child plan으로 분리하지 않는다.
+- 승인 evidence 없는 분리 의도는 `검토 옵션/제안 (미승인)` 섹션에만 기록하고 parent scope를 축소하지 않는다.
+- 모델별 authoring surface 변경(`.agents` vs `.claude`)은 해당 모델 surface만 승인 범위로 잡고, 동일 문구를 다른 모델 surface에 강제하지 않는다.
+
 ### 2단계: 코드베이스 분석
 
 **반드시 대상 프로젝트의 실제 코드를 읽고** 계획을 세운다:
@@ -100,6 +105,7 @@ task ledger 판단도 `_path-rules.md` helper의 docs commit root를 따른다. 
 - 메타 헤더에 `> 기준커밋: <hash | 없음>`을 기록한다.
   - 기본값: plan 작성 시점의 `HEAD` short hash
   - 레거시/판단불가: hash를 확정할 수 없으면 `없음`으로 기록
+- wtools authoring surface 변경 plan은 메타 헤더에 `> surface 분류: 공통 정책 | 모델별 메커니즘 | 분류 모호` 중 하나를 기록한다. 분류 모호인 경우 본문에 `## surface 분류` 섹션을 추가해 판단 근거를 기술한다.
 
 | 형태 | 판단 기준 | 결과물 |
 |------|----------|--------|
@@ -135,6 +141,11 @@ task ledger 판단도 `_path-rules.md` helper의 docs commit root를 따른다. 
 ### 3.2단계: Downstream Sync Phase 삽입 규칙
 
 wtools 원본 skill/agent/common-doc 변경이 하위 프로젝트 canonical, mirror, 또는 generated surface를 통해 소비되는 계획서라면, TODO에 `Downstream Sync Phase`를 반드시 넣는다. wtools 내부의 `.agents`, `.claude`, `.gemini` surface를 하나의 mirror 묶음으로 취급하지 않고 각 surface 역할에 맞춰 evidence를 남긴다.
+
+- **surface 분류별 Downstream Sync 의무:**
+  - `공통 정책` 변경: 다른 모델 surface(`agents`↔`claude`↔`gemini`) cross-sync 검토 필수. read-back evidence 확보 후 T4/T5 허용.
+  - `모델별 메커니즘` 변경: 해당 모델 surface receiver의 ff-only read-back만 수행하고 다른 모델 surface에 동일 문구 강제 금지. Downstream Sync Phase는 receiver 해당 surface만 대상으로 삽입한다.
+  - `분류 모호`: plan 본문 `surface 분류` 섹션 확인 후 위 규칙을 적용한다.
 
 - 트리거: `.agents/skills`, `.claude/skills`, `.agents/agents`, `.claude/agents`, common-doc plan/archive/TODO 계약처럼 wtools 원본 변경이 downstream canonical, mirror, 또는 generated surface로 반영되어야 하는 경우.
 - downstream 예시: monitor-page `.agents/.claude` mirror, 프로젝트별 local skill mirror, Gemini generated agent surface(`common/tools/plan-runner/gemini-agents/*.md`), interactive convenience command(`.gemini/commands/*.toml`).

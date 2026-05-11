@@ -170,6 +170,7 @@ AGENTS.md 문서 위치 규칙의 plan 경로/*.md
 
 | 게이트 | 트리거 조건 | 통과 조건 | 실패 시 동작 | 비고 |
 |--------|-------------|-----------|--------------|------|
+| **2.45 parent-child open gate** | plan 헤더에 linked child plan 링크(`_todo-N.md` back-link 또는 `> linked child:` 필드) 존재 | linked child plan이 없거나, 있어도 모두 `구현완료`/`완료` 상태이거나, 명시 detach approval evidence가 있음 | `PARENT_CHILD_OPEN_BLOCKED: {child plan path list}` + 중단. 상태 변경/archive/TODO→DONE 금지 | detach approval evidence: plan 본문 또는 review-plan 결과에 사용자 명시 승인 문장이 있는 child |
 | **2.5 branch/worktree 차단** | plan 헤더에 `> branch:` 또는 `> worktree:` 필드 존재 | 두 필드 모두 없음 | "plan에 활성 branch/worktree가 있습니다. 먼저 /merge-test를 실행하세요." + 중단 | 자동 파이프라인(plan-runner Stage 6) 면제 |
 | **2.55 post-merge finalization** | plan/archive 본문에 `Phase Z` 또는 `> 머지커밋:` 존재 | `Phase Z` 미완료 0건 + `> 머지커밋:`이 실제 merge commit evidence로 보존됨. `> 후속정리커밋:`이 있으면 current HEAD 또는 current HEAD로 이어지는 post-merge docs cleanup evidence와 일치 | "archive false-complete 위험: Phase Z/머지커밋/후속정리커밋 finalization이 덜 끝났습니다. /merge-test owner step을 먼저 마무리하세요." + 중단 | stale merge metadata/unchecked Phase Z 차단 |
 | **2.6 fix: Phase R 누락** | 파일명에 `_fix-`/`_fix_` 포함 또는 제목이 `fix:`로 시작 | plan 본문에 `재발 경로 분석` 또는 `Phase R` 존재 + Phase R 섹션 내 "미방어" 없음 | "fix: plan에 Phase R이 없습니다." + 중단 | Phase R 섹션 내 "미방어" 잔존 시에도 중단 |

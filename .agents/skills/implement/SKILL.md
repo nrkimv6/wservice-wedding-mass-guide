@@ -76,6 +76,7 @@ Deterministic setup, status, and advisory scanning must prefer helper CLI eviden
 - 종료/closeout 직전에는 반드시 `remaining executable leaf`, `remaining targets`, `split _todo-* 미완료`, `next owner step`, `remote evidence`를 다시 계산한다.
   - 셋 이상 중 하나라도 남아 있으면 `구현완료`, `전체 완료`, `마무리` 표현을 금지하고 진행 업데이트 후 계속 실행하거나 hard blocker를 보고한다.
   - 대표 plan와 split `_todo-N` plan은 parent/child 완료 판정을 분리해 read-back한다.
+  - **linked child plan open gate**: 완료 보고 직전에 plan의 linked child plan(`_todo-N.md` 링크 또는 `> linked child:` 필드)을 enumerate한다. child가 active/incomplete 상태이면 parent 완료 보고를 금지하고 child를 remaining target으로 유지한다. `/merge-test` owner에게 `parent-child open` 상태를 handoff한다.
   - leaf 본문에 `push`, `origin/main`, `remote`, 외부 repo 목록이 있으면 local commit만으로 체크하지 않고 `git ls-remote origin main`, `git show origin/main:<path>`, 또는 대상 repo의 `origin/main` content read-back evidence를 요구한다.
   - remote evidence가 없으면 해당 leaf를 `[x]`로 올리지 않고 `remote evidence 대기`로 남긴다.
 

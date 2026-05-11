@@ -162,6 +162,12 @@ advisory evidence가 있으면 아래 3단계를 검증한다:
 - T4/T5 결과표에는 `T4/T5 계약` 열 또는 비고 marker로 `live`, `mock_only`, `http_live`, `testclient_only`, `absent` 중 하나를 남긴다. `mock_only`/`testclient_only`면 expand-todo 전 deterministic 보정 또는 차단 여부를 명시한다.
 - T4/T5가 `해당 없음`인데 feature area live smoke가 없으면 "live smoke 없음" 경고를 남긴다. 기존 mock-only/TestClient-only 테스트는 삭제 대상으로 만들지 않고 T3 재분류 + live follow-up만 생성한다.
 
+**J. scope split / surface 분류 검증:**
+- generated plan 본문에 `후속`/`stub`/`별도 plan`/`child detach` 키워드가 있고 사용자 명시 승인 evidence(approval evidence 문장)가 없으면 `CODEX_SCOPE_SPLIT_UNAPPROVED`로 재검토 실패 처리한다.
+- wtools authoring surface 변경 plan에 헤더 `> surface 분류:` 필드도 없고 본문 `## surface 분류` 섹션도 없으면 `SURFACE_CLASSIFICATION_MISSING`으로 재검토 실패 처리한다.
+- scope split 판정값 (`해당 없음` / `승인 있음` / `🚫 차단: CODEX_SCOPE_SPLIT_UNAPPROVED`)을 결과표 `scope split` 칸에 기록한다.
+- surface 분류 판정값 (`공통 정책` / `모델별 메커니즘` / `분류 모호` / `🚫 누락: SURFACE_CLASSIFICATION_MISSING`)을 결과표 `surface 분류` 칸에 기록한다.
+
 **재검토 실패 시:**
 - 해당 계획서 파일은 유지한다. 자동 삭제/재생성하지 않는다.
 - 로컬 drift 충돌, related-plan 충돌, 입력 누락 같은 실패 사유를 결과표와 종료 메시지에 그대로 남긴다.
@@ -294,10 +300,10 @@ expand-todo의 5.6단계가 expand 결과를 자체 커밋한다. review-plan의
 ```markdown
 ## 계획서 재검토 결과
 
-| # | 계획서 | 재검토 | 로컬변경 | 연관 active plan | archive 참조 | 환경오염 | expand | 실패메타데이터 | 비고 |
-|---|--------|--------|----------|------------------|-------------|---------|--------|----------------|------|
-| 1 | {파일명} | ✅ 통과 | {영향 없음/참조만/보정 반영} | {0-hit/중복 회피/선행관계} | {0-hit/참조 반영} | {해당 없음/⚠️ 경고: {패턴}/🚫 차단: {사유}} | ✅ {N}개 작업 | {카테고리/종료코드/처리결과} | — |
-| 2 | {파일명} | ❌ 실패 | {재검토 실패/보정 반영} | {충돌/0-hit} | {참조만/0-hit} | {해당 없음/⚠️ 경고: {패턴}/🚫 차단: {사유}} | — | {있음/없음} | {사유} |
+| # | 계획서 | 재검토 | 로컬변경 | 연관 active plan | archive 참조 | 환경오염 | scope split | surface 분류 | expand | 실패메타데이터 | 비고 |
+|---|--------|--------|----------|------------------|-------------|---------|-------------|-------------|--------|----------------|------|
+| 1 | {파일명} | ✅ 통과 | {영향 없음/참조만/보정 반영} | {0-hit/중복 회피/선행관계} | {0-hit/참조 반영} | {해당 없음/⚠️ 경고: {패턴}/🚫 차단: {사유}} | {해당 없음/승인 있음/🚫 CODEX_SCOPE_SPLIT_UNAPPROVED} | {공통 정책/모델별 메커니즘/분류 모호/🚫 누락} | ✅ {N}개 작업 | {카테고리/종료코드/처리결과} | — |
+| 2 | {파일명} | ❌ 실패 | {재검토 실패/보정 반영} | {충돌/0-hit} | {참조만/0-hit} | {해당 없음/⚠️ 경고: {패턴}/🚫 차단: {사유}} | {해당 없음/🚫 CODEX_SCOPE_SPLIT_UNAPPROVED} | {🚫 SURFACE_CLASSIFICATION_MISSING} | — | {있음/없음} | {사유} |
 
 ### 검토 근거 및 상세 내역
 
