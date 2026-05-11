@@ -17,6 +17,21 @@ The deterministic completion flow is owned by `common\tools\auto-done.ps1`. Use 
 
 구현 완료 후 문서 정리와 커밋을 자동으로 처리합니다.
 
+## STOP/CONTINUE Decision Table
+
+5개 입력을 순서대로 확인한다. 첫 번째 매칭 row가 우선이다.
+
+| 우선순위 | 입력 상태 | 판정 | 즉각 행동 |
+|---------|----------|------|---------|
+| 1 | `hard blocker` 있음 | **blocked** | 중단 + blocker 보고 |
+| 2 | `remaining executable leaf` > 0 | **continue** | 같은 턴에서 다음 leaf |
+| 3 | `remaining targets` > 0 | **continue** | 같은 턴에서 다음 target |
+| 4 | `archive/read-back` 미완료 (TODO→DONE 이동, plan 체크, archive, DONE.md, 커밋 포함) | **continue** | read-back 완료까지 진행 |
+| 5 | `next owner step` 있음 | **continue** | 해당 owner 실행 |
+| 6 | 위 조건 모두 해당 없음 | **final** | 완료 보고 허용 |
+
+> archive/read-back은 TODO→DONE 이동 + plan 체크 + archive 커밋 + DONE.md 기록 + 4-surface read-back 확인 전부를 포함한다. 하나라도 미완이면 row 4 `continue`.
+
 ## Routing Gate Summary
 
 - Gate: `branch/worktree present -> /merge-test; absent -> /done`
@@ -26,6 +41,8 @@ The deterministic completion flow is owned by `common\tools\auto-done.ps1`. Use 
 - 사용자가 "파일 닫어", "파일 닫기", "닫어", "닫기", "마무리"처럼 closeout을 지시하면 대상 plan의 `> branch:`/`> worktree:` 헤더를 먼저 읽는다.
 - `branch/worktree present -> /merge-test; absent -> /done` 판정은 같은 턴에서 수행하며, 사용자에게 같은 지시를 다시 입력하라고 떠넘기지 않는다.
 - `/merge-test` owner가 필요하면 같은 턴에서 local/project `/merge-test` `SKILL.md`를 읽고 이어간다.
+
+→ 상단 STOP/CONTINUE Decision Table 우선. 이 섹션은 세부 근거 참조용.
 
 ### 세션 dirty 계약 (정의)
 
@@ -87,6 +104,8 @@ The deterministic completion flow is owned by `common\tools\auto-done.ps1`. Use 
 | skill | 실행 여부 | evidence | 남은 조치 |
 |-------|-----------|----------|-----------|
 | `{skill}` | `{executed|already_archived|blocked|skipped}` | `{archive path, DONE row, commit hash, blocker code}` | `{next owner 또는 없음}` |
+
+→ 상단 STOP/CONTINUE Decision Table 우선. 이 섹션은 세부 근거 참조용.
 
 ## 실행 단계
 
@@ -162,6 +181,8 @@ AGENTS.md 문서 위치 규칙의 plan 경로/*.md
 7. plan/archive 본문에 T4/T5 phase 또는 `T4/T5 evidence table` requirement가 있으면 archive 전 `stage|command|cwd|result|exit_code|log_ref|blocker_code` schema의 T4/T5 evidence table, 또는 explicit `> T4 E2E 해당 없음:`/`> T5 HTTP 해당 없음:` read-back을 확인한다.
 8. final summary는 `target_read_back.active_exists=false`, `target_read_back.archive_exists=true`, `done_ledger_state=present`, `todo_ledger_state=absent`가 확인된 target만 `완료`로 보고한다. code merge만 끝났거나 archive/DONE/TODO read-back이 모자란 target은 `archive pending` 또는 `blocked`로 분리한다.
 9. `active_exists=false`, `archive_exists=true`, `DONE present`, `TODO absent`, `상태=구현완료`, `진행률=100%` read-back 전에는 "완료", "다 했다", "추가 작업 없음"이라고 말하지 않는다. 하나라도 부족하면 `target_read_back_incomplete`로 남긴다.
+
+→ 상단 STOP/CONTINUE Decision Table 우선. 이 섹션은 세부 근거 참조용.
 
 ### 1.5단계: 사전 검증 (구현완료 설정 전 게이트)
 

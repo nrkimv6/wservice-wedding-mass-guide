@@ -15,6 +15,21 @@ Deterministic setup, status, and advisory scanning must prefer helper CLI eviden
 > **본문 분리 원칙**: 호출 컨텍스트가 다르면 본문도 다르다. 공유 레시피는 [`_recipes.md`](./_recipes.md)로만.
 > **호출 컨텍스트**: 독립 워커(Codex/plan-runner). 결과는 plan 파일 체크박스 갱신 + artifact 출력 기준으로 구조화.
 
+## STOP/CONTINUE Decision Table
+
+5개 입력을 순서대로 확인한다. 첫 번째 매칭 row가 우선이다.
+
+| 우선순위 | 입력 상태 | 판정 | 즉각 행동 |
+|---------|----------|------|---------|
+| 1 | `hard blocker` 있음 | **blocked** | 중단 + blocker 보고 |
+| 2 | `remaining executable leaf` > 0 | **continue** | 같은 턴에서 다음 leaf |
+| 3 | `remaining targets` > 0 | **continue** | 같은 턴에서 다음 target |
+| 4 | `next owner step` 있음 | **continue** | 같은 턴에서 owner skill 실행 — `branch/worktree 있음 → /merge-test`, `없음 → /done` |
+| 5 | `archive/read-back` 미완료 | **continue** | `/done` owner 대기 |
+| 6 | 위 조건 모두 해당 없음 | **final** | 완료 보고 허용 |
+
+> 중간 성공(T1/T2 통과, leaf 일부, 머지대기)은 판정 입력이 아니라 진행 업데이트다.
+
 ## Skill Path Precedence
 - 사용자가 `[$implement](...SKILL.md)` 또는 파일시스템 경로로 local/project skill 파일을 명시한 경우, 반드시 그 exact file을 Read 기준으로 삼는다.
 - 같은 name의 global/duplicate skill(`C:\Users\Narang\.codex\skills\implement\SKILL.md` 등)은 대체 사용하지 않는다.
@@ -79,6 +94,8 @@ Deterministic setup, status, and advisory scanning must prefer helper CLI eviden
   - **linked child plan open gate**: 완료 보고 직전에 plan의 linked child plan(`_todo-N.md` 링크 또는 `> linked child:` 필드)을 enumerate한다. child가 active/incomplete 상태이면 parent 완료 보고를 금지하고 child를 remaining target으로 유지한다. `/merge-test` owner에게 `parent-child open` 상태를 handoff한다.
   - leaf 본문에 `push`, `origin/main`, `remote`, 외부 repo 목록이 있으면 local commit만으로 체크하지 않고 `git ls-remote origin main`, `git show origin/main:<path>`, 또는 대상 repo의 `origin/main` content read-back evidence를 요구한다.
   - remote evidence가 없으면 해당 leaf를 `[x]`로 올리지 않고 `remote evidence 대기`로 남긴다.
+
+→ 상단 STOP/CONTINUE Decision Table 우선. 이 섹션은 세부 근거 참조용.
 
 plan → TODO → DONE 흐름으로 작업을 관리합니다.
 
@@ -194,7 +211,11 @@ Gate: branch/worktree present -> /merge-test; absent -> /done
 
 위 템플릿은 실행 전 read-back 근거다. `Decision: /merge-test`를 출력하는 것만으로 턴을 종료하지 않는다.
 
+→ 판정 기준: 상단 STOP/CONTINUE Decision Table. 아래는 세부 근거.
+
 **Hard handoff contract:** current target의 `remaining executable leaf = 0`, session `remaining targets = 0`, `next owner step = /merge-test`이고 plan/todo 헤더에 `> branch:` 또는 `> worktree:`가 있으면 `/merge-test`가 current target의 다음 실행 step이다. 이 상태에서는 final closeout을 금지하고, 사용자가 명시한 local/project skill path precedence를 유지한 채 같은 턴에서 exact local `/merge-test` skill을 읽고 실행한다.
+
+→ 판정 기준: 상단 STOP/CONTINUE Decision Table. 아래는 세부 근거.
 
 **Same-turn owner chain contract:** 위 조건에서 수동 `/implement`는 설명-only 종료가 아니라 `implement -> merge-test -> done` 실행 chain을 계속 탄다. `/merge-test`가 archive/TODO/DONE 후처리까지 끝내거나 hard blocker를 반환하기 전까지 `leaf 완료`, `T1/T2/T3 통과`, `머지대기 전이` 같은 중간 성공은 closeout으로 말하지 않는다. 종료 직전 read-back은 `remaining executable leaf`, `remaining targets`, `next owner step`, `remote evidence`를 출력하되, 실행 가능한 `/merge-test` 또는 `/done` next owner가 있으면 계속 실행한다.
 
