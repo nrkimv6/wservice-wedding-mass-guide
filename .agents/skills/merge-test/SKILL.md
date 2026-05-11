@@ -442,6 +442,7 @@ skipped residue는 quarantine diff/log로 기록한다.
 실제 main merge 성공 직후 `git rev-parse --short HEAD` / `Get-Date "yyyy-MM-dd HH:mm"`로 해시+시각을 추출하여
 target 헤더의 `> 상태:` 바로 아래에 `> 반영일시:` + `> 머지커밋:` 두 줄을 Edit으로 삽입한다.
 - `머지커밋`의 canonical source는 실제 merge commit evidence다. impl 브랜치 마지막 커밋이나 중간 merge hash를 재사용하지 않는다.
+- plan-runner runtime(`handle_merge_stage`)은 merge 성공 직후 `write_merge_commit_to_plan`을 자동 호출해 `> 머지커밋:` 헤더를 upsert한다. 이후 `run_post_merge_tests`는 T4/T5 evidence rows를 upsert한다. 두 writer가 모두 실행된 뒤 `/done`이 read-back 가능 상태가 된다.
 - Phase Z cleanup, TODO/DONE 보정, archive metadata 보정처럼 merge 이후 main HEAD를 이동시키는 docs cleanup commit은 `> 후속정리커밋:`으로 별도 기록한다.
 
 **머지 충돌 시:**
