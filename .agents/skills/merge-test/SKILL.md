@@ -31,6 +31,14 @@ Preflight and cleanup evidence must come from helper CLI contracts before any me
 - plan 헤더에 두 필드가 모두 없으면 `/merge-test`를 우회하고 `/done`을 직접 실행한다.
 - 이 기준은 `/implement`의 완료 후 owner 선택 및 `/done`의 branch/worktree 차단 게이트와 같은 계약이다.
 
+## Blocker Classification Contract
+
+- `merge-test-preflight.ps1 -Json`의 `blocker_type`, `local_merge_possible`, `remote_diverged`, `push_blocked`, `direct_root_commit_blocked`, `failed_command`, `failed_exit_code`, `failed_stderr_excerpt`를 읽기 전에는 `머지 막힘`, `merge blocked`, `blocked`로 local merge 실패를 선언하지 않는다.
+- `remote_diverged=true`는 remote sync/push 위험이다. 이 값만으로 `local_merge_blocked`로 승격하지 않고, `push_blocked` 또는 `remote_sync_blocked`와 함께 보고한다.
+- root 직접 커밋 guard 실패는 `direct_root_commit_blocked`로 보고한다. `local_merge_possible=true`이면 merge worktree fallback 또는 remote fast-forward receiver flow를 next owner로 남긴다.
+- final summary에는 `phase | blocker_type | local_merge_possible | remote_diverged | command | exit_code | next_owner` 컬럼을 포함한다.
+- 예시: `merge | push_blocked | true | true | git push origin main | 1 | remote_sync_owner`는 local merge 가능 + push blocked case이며, local merge blocker가 아니다.
+
 ## 워크플로우 위치
 
 ```

@@ -8,7 +8,7 @@ description: "구현 완료 후처리 (plan 체크, archive, TODO→DONE, commit
 <!-- script-contract-invariant -->
 ## Script Contract Invariant
 
-The deterministic completion flow is owned by `common\tools\auto-done.ps1`. Use `-DryRun -Json` for preflight evidence and `-Json` for structured result reporting when possible. AI remains responsible for routing (`/merge-test` vs `/done`), conflict classification, and deciding whether helper failure requires owner intervention.
+The deterministic completion flow is owned by `common\tools\auto-done.ps1`. Use `-DryRun -Json` for preflight evidence and `-Json` for structured result reporting when possible. In `-Json` mode, blocked results are machine-readable contract payloads; consume the `tool=auto-done` JSON object from stdout and do not depend on trailing human `Write-Error` text. AI remains responsible for routing (`/merge-test` vs `/done`), conflict classification, and deciding whether helper failure requires owner intervention.
 > Routing gate: branch/worktree present -> /merge-test; absent -> /done
 # 구현 완료 후처리
 
