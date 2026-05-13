@@ -219,6 +219,12 @@ Gate: branch/worktree present -> /merge-test; absent -> /done
 
 **Same-turn owner chain contract:** 위 조건에서 수동 `/implement`는 설명-only 종료가 아니라 `implement -> merge-test -> done` 실행 chain을 계속 탄다. `/merge-test`가 archive/TODO/DONE 후처리까지 끝내거나 hard blocker를 반환하기 전까지 `leaf 완료`, `T1/T2/T3 통과`, `머지대기 전이` 같은 중간 성공은 closeout으로 말하지 않는다. 종료 직전 read-back은 `remaining executable leaf`, `remaining targets`, `next owner step`, `remote evidence`를 출력하되, 실행 가능한 `/merge-test` 또는 `/done` next owner가 있으면 계속 실행한다.
 
+**Final response preflight gate:** final response 직전에는 `remaining executable leaf`, `remaining targets`, `branch/worktree`, `next owner step`, `remote evidence`를 다시 계산한다. `next owner step=/merge-test`이면 final response 대신 exact local `merge-test` skill을 읽고 실행한다. `merge-test executed`, `hard blocker`, `user explicit stop` 중 하나가 evidence로 남기 전에는 final을 금지한다.
+
+**Subagent owner-chain reread marker:** subagent 결과 수집, 코드 커밋, plan progress commit, targeted tests passed, worktree clean 같은 중간 성공 이후에도 owner-chain read-back을 다시 수행한다. 추가 dirty/post-merge 보강이 발견되면 final 전에 owner worktree 또는 `/merge-test` 단계로 라우팅한다.
+
+**Chain break exceptions only marker:** same-turn owner chain 중단 예외는 `hard blocker` 또는 `user explicit stop`뿐이다. `구현 커밋 완료`, `worktree clean`, `targeted tests passed`만으로 final closeout을 만들거나 사용자가 `/merge-test`를 별도 재입력해야 하는 흐름은 `incident_class=owner_chain_not_executed`로 분류한다.
+
 `/done` owner는 docs commit root 기준 TODO→DONE 이동, plan 체크, archive, DONE.md 정리, 완료 검증, 커밋을 처리합니다. wtools에서는 `.worktrees/plans/TODO.md`와 `.worktrees/plans/docs/DONE.md`가 canonical이며 root `TODO.md`/`docs/DONE.md`/`wtools/TODO.md`는 직접 갱신하지 않습니다.
 
 ## 실행 단계

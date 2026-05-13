@@ -321,6 +321,7 @@ expand-todo의 5.6단계가 expand 결과를 자체 커밋한다. review-plan의
 - **코드 직접 수정 금지** — 계획서 검증과 확장만 수행
 - **다른 active plan/archive 무단 수정 금지** — 다른 문서는 수정하지 않는다. 현재 입력 계획서 보정만 허용한다.
 - **expand-todo는 Skill 호출 SSOT** — Phase R 자동 삽입, 테스트 Phase, V1~V6 정합성 검증 등 expand 규칙은 Skill 호출이 자동 적용한다. review-plan 본문에 이 규칙들을 중복 기재하지 않는다.
+- wtools authoring surface(`.agents`, `.claude`, `.gemini`, `.agent`) 변경 계획에서 cross-surface 검토 결과 표가 누락되면 `SURFACE_REVIEW_TABLE_MISSING`으로 재검토 실패 또는 보정 대상으로 분류한다.
 - `.agents`와 `.claude`는 엔진별 canonical surface다. review-plan/reflect 변경 시 동일 문구를 강제하지 말고, Codex(`.agents`)와 Claude(`.claude`) 각각에서 advisory 계약 invariant가 동등하게 유지되는지 확인한다.
 - **환경 아티팩트 예시** — H 체크에서 "개발/워크트리 환경에서만 발생"으로 판정되는 대표 사례:
   - 워크트리 `.svelte-kit/ambient.d.ts` 비어있음 (`node_modules` 없어서 svelte-kit sync 미실행)
