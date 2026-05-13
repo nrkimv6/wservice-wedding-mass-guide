@@ -66,6 +66,15 @@ Deterministic setup, status, and advisory scanning must prefer helper CLI eviden
   - owner chain의 다음 단계(`/merge-test`, `/done` 등)가 deterministic하게 남아 있으면 설명으로 멈추지 말고 **같은 턴에서 계속 실행**한다.
   - 실제 중단은 hard blocker(충돌/필수 게이트 실패 등)에서만 허용한다.
 
+### compaction resume gate (필수)
+
+- 세션 시작 시 context summary에 아래 중 하나가 명시되어 있으면, 사용자 재지시 없이 즉시 재개한다:
+  - `pending task`, `남은 작업`, `pending pytest fix`, `다음 단계` 등 미완료 작업 기술
+  - `pending` 상태인 leaf 체크박스 또는 plan summary 내 `[ ]`
+  - `현재 작업` 또는 `9. Optional Next Step` 섹션의 concrete action
+- compaction resume은 explicit `계속` 발화와 동등하다. 재개 전에 사용자에게 확인을 구하지 않는다.
+- 재개 후 첫 출력은 `컨텍스트 재개 — {pending task 요약}` 한 줄이며, 즉시 작업을 실행한다.
+
 ## 실행 대상 계약 (leaf-only, 필수)
 
 - 실행 대상은 **자식 없는 미완료 체크박스(leaf)** 만 허용한다.

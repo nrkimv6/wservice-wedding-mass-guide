@@ -67,6 +67,7 @@ COMMITS: {커밋 메시지}
 - **PRE-EDIT HARD GATE**: 구현 파일 수정 전 plan 상태 `구현중` + branch/worktree/worktree-owner 메타 채워짐 확인 필수
 - **leaf-only 실행 계약**: 부모 체크박스 직접 실행/체크 금지. 자식 leaf만 실행하고, 부모는 자식 완료 후 자동 승격만 허용
 - **current-target leaf drain 기본값**: explicit continue 재지시가 없어도 current target에 실행 가능한 leaf가 남아 있으면 같은 턴에서 계속 실행
+- **compaction resume 기본값**: context summary에 `pending task`, `남은 작업`, `[ ]` leaf, `현재 작업`, `9. Optional Next Step` 같은 미완료 action이 있으면 explicit continue와 동등하게 즉시 재개하고, 첫 출력은 `컨텍스트 재개 — {pending task 요약}`으로 남긴다
 - **closeout gate**: 종료 직전 `remaining executable leaf`, `remaining targets`, `next owner step`을 다시 계산하고, 하나라도 남아 있으면 진행 업데이트 후 계속 실행
 - **탐색성 요청 승인 gate**: "있을까?", "가능할까?", "추천해줘", "좋겠어" 같은 탐색성 발화는 구현 승인으로 보지 않는다. 상세 검토/계획 확장은 가능하지만 명시 실행 의도 전에는 파일 수정과 git mutation을 금지한다. "가능하면 바로 고쳐"처럼 조건부 실행 의도가 같은 발화에 있으면 구현 요청으로 볼 수 있으나 mirror의 worktree/precondition gate를 그대로 따른다
 - **T4/T5 implement 금지 3축**: (1) pre-merge, (2) non-root-worktree, (3) non-main — 3축 중 하나라도 해당하면 T4/T5 금지
